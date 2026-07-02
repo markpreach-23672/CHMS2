@@ -101,11 +101,21 @@ async function processStep(base44, step, person) {
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
     body = body.replace(/\{\{last_name\}\}/g, person.last_name || '');
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: person.email,
-        subject: step.subject || 'Welcome',
-        body
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Church <onboarding@resend.dev>',
+          to: person.email,
+          subject: step.subject || 'Welcome',
+          text: body
+        })
       });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(`Resend API error (${res.status}): ${errText}`);
+      }
     } catch (err) {
       console.error(`Email send failed for ${person.email}: ${err.message}`);
     }
