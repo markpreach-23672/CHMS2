@@ -42,9 +42,17 @@
       "title": "Recurring",
       "default": false
     },
-    "google_event_id": {
+    "external_event_id": {
       "type": "string",
-      "title": "Google Calendar Event ID"
+      "title": "External Calendar Event ID"
+    },
+    "sync_provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "outlook"
+      ],
+      "title": "Sync Provider"
     }
   },
   "required": [
