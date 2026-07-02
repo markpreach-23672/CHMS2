@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import GivingDashboard from '@/components/giving/GivingDashboard';
 import EmailStatementDialog from '@/components/giving/EmailStatementDialog';
 import PrintStatementDialog from '@/components/giving/PrintStatementDialog';
+import PledgesTab from '@/components/giving/PledgesTab';
 import moment from 'moment';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -119,6 +120,7 @@ export default function Giving() {
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="donations">Donations</TabsTrigger>
           <TabsTrigger value="funds">Funds</TabsTrigger>
+          <TabsTrigger value="pledges">Pledges</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -209,6 +211,10 @@ export default function Giving() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="pledges">
+          <PledgesTab pledges={pledges} donations={donations} people={people} funds={funds} loading={loading} setPledges={setPledges} />
         </TabsContent>
       </Tabs>
 
