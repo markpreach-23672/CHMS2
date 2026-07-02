@@ -1,0 +1,55 @@
+{
+  "name": "ReportDefinition",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Report Name"
+    },
+    "population_type": {
+      "type": "string",
+      "enum": [
+        "everyone",
+        "tag",
+        "saved_search"
+      ],
+      "default": "everyone",
+      "title": "Population Type"
+    },
+    "population_id": {
+      "type": "string",
+      "title": "Population ID"
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Columns",
+      "default": []
+    },
+    "sort_field": {
+      "type": "string",
+      "title": "Sort Field",
+      "default": "last_name"
+    },
+    "sort_direction": {
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "default": "asc",
+      "title": "Sort Direction"
+    }
+  },
+  "required": [
+    "name",
+    "population_type",
+    "columns"
+  ]
+}

@@ -19,6 +19,7 @@ import ConnectCards from '@/pages/ConnectCards';
 import SearchPage from '@/pages/Search';
 import Settings from '@/pages/Settings';
 import Families from '@/pages/Families';
+import Reports from '@/pages/Reports';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/connect-cards" element={<ConnectCards />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/families" element={<Families />} />
+        <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/giving/statement/:id" element={<GivingStatement />} />
