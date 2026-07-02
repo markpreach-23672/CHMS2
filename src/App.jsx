@@ -22,6 +22,8 @@ import Families from '@/pages/Families';
 import Reports from '@/pages/Reports';
 import Volunteers from '@/pages/Volunteers';
 import PublicConnectCard from '@/pages/PublicConnectCard';
+import Forms from '@/pages/Forms';
+import PublicForm from '@/pages/PublicForm';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -61,6 +63,7 @@ const AuthenticatedApp = () => {
         <Route path="/families" element={<Families />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/volunteers" element={<Volunteers />} />
+        <Route path="/forms" element={<Forms />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/giving/statement/:id" element={<GivingStatement />} />
@@ -77,6 +80,13 @@ function AppShell() {
     return (
       <Routes>
         <Route path="/card/:cardId" element={<PublicConnectCard />} />
+      </Routes>
+    );
+  }
+  if (pathname.startsWith('/form/')) {
+    return (
+      <Routes>
+        <Route path="/form/:formId" element={<PublicForm />} />
       </Routes>
     );
   }

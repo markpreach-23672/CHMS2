@@ -1,0 +1,167 @@
+{
+  "name": "Form",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Form Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "header_image_url": {
+      "type": "string",
+      "title": "Header Image URL"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Field ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "essay",
+              "name",
+              "email",
+              "phone",
+              "address",
+              "select",
+              "radio",
+              "checkbox",
+              "date",
+              "section",
+              "payment",
+              "file"
+            ],
+            "title": "Field Type"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "Options"
+          },
+          "payment_options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                }
+              }
+            },
+            "title": "Payment Options"
+          },
+          "maps_to": {
+            "type": "string",
+            "title": "Maps To Profile Field"
+          },
+          "placeholder": {
+            "type": "string",
+            "title": "Placeholder"
+          }
+        }
+      },
+      "title": "Form Fields",
+      "default": []
+    },
+    "folder_id": {
+      "type": "string",
+      "title": "Folder ID"
+    },
+    "confirmation_message": {
+      "type": "string",
+      "title": "Confirmation Message"
+    },
+    "submit_button_text": {
+      "type": "string",
+      "title": "Submit Button Text",
+      "default": "Submit"
+    },
+    "notify_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Notification Emails",
+      "default": []
+    },
+    "send_submitter_confirmation": {
+      "type": "boolean",
+      "title": "Send Submitter Confirmation",
+      "default": false
+    },
+    "confirmation_subject": {
+      "type": "string",
+      "title": "Confirmation Email Subject"
+    },
+    "confirmation_body": {
+      "type": "string",
+      "title": "Confirmation Email Body"
+    },
+    "tag_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tag IDs",
+      "default": []
+    },
+    "workflow_id": {
+      "type": "string",
+      "title": "Workflow ID"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    },
+    "is_archived": {
+      "type": "boolean",
+      "title": "Archived",
+      "default": false
+    },
+    "template_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "registration",
+        "blank"
+      ],
+      "title": "Template Type",
+      "default": "general"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

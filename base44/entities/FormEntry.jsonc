@@ -1,0 +1,48 @@
+{
+  "name": "FormEntry",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "form_id": {
+      "type": "string",
+      "title": "Form ID"
+    },
+    "data": {
+      "type": "object",
+      "title": "Submission Data",
+      "default": {}
+    },
+    "person_id": {
+      "type": "string",
+      "title": "Linked Person ID"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending",
+        "paid",
+        "free"
+      ],
+      "title": "Payment Status",
+      "default": "none"
+    },
+    "payment_amount": {
+      "type": "number",
+      "title": "Payment Amount",
+      "default": 0
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Submitted At"
+    }
+  },
+  "required": [
+    "form_id",
+    "data"
+  ]
+}
