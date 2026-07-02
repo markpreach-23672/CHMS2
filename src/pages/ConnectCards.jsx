@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send, AlertCircle } from 'lucide-react';
+import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send, AlertCircle, QrCode, Pencil } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SubmitEntryDialog from '@/components/connectcards/SubmitEntryDialog';
+import CardForm from '@/components/connectcards/CardForm';
+import ShareCardDialog from '@/components/connectcards/ShareCardDialog';
 
 export default function ConnectCards() {
   const [cards, setCards] = useState([]);
@@ -21,20 +23,25 @@ export default function ConnectCards() {
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [submitCard, setSubmitCard] = useState(null);
   const [users, setUsers] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [shareCard, setShareCard] = useState(null);
+  const [editingCard, setEditingCard] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [c, w, e, u] = await Promise.all([
+      const [c, w, e, u, t] = await Promise.all([
         base44.entities.ConnectCard.list(),
         base44.entities.Workflow.list(),
         base44.entities.WorkflowEnrollment.list(),
         base44.entities.User.list(),
+        base44.entities.Tag.list(),
       ]);
       setCards(c);
       setWorkflows(w);
       setEnrollments(e);
       setUsers(u);
+      setTags(t);
 
       const stepsMap = {};
       await Promise.all(w.map(async (wf) => {
@@ -186,6 +193,8 @@ export default function ConnectCards() {
                         <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100"><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSubmitCard(card)}><Send size={14} className="mr-1.5" />Submit Entry</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setShareCard(card)}><QrCode size={14} className="mr-1.5" />Share / Embed</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditingCard(card)}><Pencil size={14} className="mr-1.5" />Edit Card</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCard(card)}>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -288,19 +297,27 @@ export default function ConnectCards() {
       </div>
 
       {/* Card Form */}
-      {showCardForm && (
+      {(showCardForm || editingCard) && (
         <CardForm
           workflows={workflows}
+          tags={tags}
+          editingCard={editingCard}
           onSave={async (data) => {
             try {
-              const created = await base44.entities.ConnectCard.create(data);
-              setCards((prev) => [...prev, created]);
-              setShowCardForm(false);
+              if (editingCard) {
+                const updated = await base44.entities.ConnectCard.update(editingCard.id, data);
+                setCards((prev) => prev.map((c) => c.id === editingCard.id ? updated : c));
+                setEditingCard(null);
+              } else {
+                const created = await base44.entities.ConnectCard.create(data);
+                setCards((prev) => [...prev, created]);
+                setShowCardForm(false);
+              }
             } catch (err) {
-              alert('Failed to create card.');
+              alert('Failed to save card.');
             }
           }}
-          onClose={() => setShowCardForm(false)}
+          onClose={() => { setShowCardForm(false); setEditingCard(null); }}
         />
       )}
 
@@ -310,6 +327,11 @@ export default function ConnectCards() {
           card={submitCard}
           onClose={() => setSubmitCard(null)}
         />
+      )}
+
+      {/* Share Card Dialog */}
+      {shareCard && (
+        <ShareCardDialog card={shareCard} onClose={() => setShareCard(null)} />
       )}
 
       {/* Workflow Form */}
@@ -477,51 +499,6 @@ function AddStepButton({ onAdd, users }) {
         <Button size="sm" onClick={handleAdd} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs">Add Step</Button>
       </div>
     </div>
-  );
-}
-
-function CardForm({ workflows, onSave, onClose }) {
-  const [name, setName] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [workflowId, setWorkflowId] = useState('');
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>New Connect Card</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-xs font-medium text-slate-600">Card Name *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. First-Time Guest Card" className="mt-1" autoFocus />
-          </div>
-          <div>
-            <Label className="text-xs font-medium text-slate-600">Display Title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Welcome! Tell us about you." className="mt-1" />
-          </div>
-          <div>
-            <Label className="text-xs font-medium text-slate-600">Text Keyword</Label>
-            <Input value={keyword} onChange={(e) => setKeyword(e.target.value.toUpperCase())} placeholder="e.g. GUEST" className="mt-1 font-mono" />
-          </div>
-          <div>
-            <Label className="text-xs font-medium text-slate-600">Trigger Workflow</Label>
-            <select value={workflowId} onChange={(e) => setWorkflowId(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
-              <option value="">None</option>
-              {workflows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <Label className="text-xs font-medium text-slate-600">Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" rows={2} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ name, title: title || undefined, description: description || undefined, keyword: keyword || undefined, workflow_id: workflowId || undefined, is_active: true })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">Create Card</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

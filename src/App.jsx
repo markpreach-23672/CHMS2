@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -21,6 +21,7 @@ import Settings from '@/pages/Settings';
 import Families from '@/pages/Families';
 import Reports from '@/pages/Reports';
 import Volunteers from '@/pages/Volunteers';
+import PublicConnectCard from '@/pages/PublicConnectCard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -70,6 +71,18 @@ const AuthenticatedApp = () => {
 };
 
 
+function AppShell() {
+  const { pathname } = useLocation();
+  if (pathname.startsWith('/card/')) {
+    return (
+      <Routes>
+        <Route path="/card/:cardId" element={<PublicConnectCard />} />
+      </Routes>
+    );
+  }
+  return <AuthenticatedApp />;
+}
+
 function App() {
 
   return (
@@ -77,7 +90,7 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
-          <AuthenticatedApp />
+          <AppShell />
         </Router>
         <Toaster />
       </QueryClientProvider>

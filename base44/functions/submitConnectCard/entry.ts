@@ -3,14 +3,12 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const churches = await base44.asServiceRole.entities.Church.list();
     const fromEmail = churches[0]?.resend_from_email || 'Church <onboarding@resend.dev>';
 
     const body = await req.json();
-    const { connect_card_id, first_name, last_name, email, phone, message } = body;
+    const { connect_card_id, field_data, first_name, last_name, email, phone, message } = body;
 
     if (!connect_card_id) {
       return Response.json({ error: 'Connect card ID is required' }, { status: 400 });
@@ -21,30 +19,84 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Connect card not found or inactive' }, { status: 404 });
     }
 
-    // Create or find person by email
+    // Build person data from field_data (new) or individual fields (backward compat)
+    const data = field_data || {};
+    const personData = {};
+    const customData = {};
+
+    const fields = Array.isArray(card.fields) ? card.fields : [];
+    if (fields.length > 0) {
+      for (const field of fields) {
+        const value = data[field.key];
+        if (value === undefined || value === '' || value === false) continue;
+        if (field.maps_to === 'custom') {
+          customData[field.key] = value;
+        } else if (field.maps_to) {
+          personData[field.maps_to] = value;
+        }
+      }
+    } else {
+      if (first_name) personData.first_name = first_name;
+      if (last_name) personData.last_name = last_name;
+      if (email) personData.email = email;
+      if (phone) personData.phone = phone;
+      if (message) personData.notes = message;
+    }
+
+    // Ensure minimum person data
+    if (!personData.first_name) personData.first_name = data.first_name || first_name || 'Guest';
+    if (!personData.last_name) personData.last_name = data.last_name || last_name || '';
+    if (!personData.email) personData.email = data.email || email || '';
+    if (!personData.phone) personData.phone = data.phone || phone || '';
+    if (!personData.status) personData.status = 'visitor';
+
+    const matchEmail = personData.email;
+    const matchPhone = personData.phone;
+
+    // Find existing person by email or phone (prevent duplicates)
     let person;
-    if (email) {
-      const existing = await base44.asServiceRole.entities.Person.filter({ email });
+    if (matchEmail) {
+      const existing = await base44.asServiceRole.entities.Person.filter({ email: matchEmail });
       person = existing[0];
     }
-    if (!person) {
-      person = await base44.asServiceRole.entities.Person.create({
-        first_name: first_name || 'Guest',
-        last_name: last_name || '',
-        email: email || '',
-        phone: phone || '',
-        status: 'visitor',
-        notes: message || ''
-      });
-    } else if (person.status === 'inactive') {
-      await base44.asServiceRole.entities.Person.update(person.id, { status: 'visitor' });
+    if (!person && matchPhone) {
+      const existing = await base44.asServiceRole.entities.Person.filter({ phone: matchPhone });
+      person = existing[0];
+    }
+
+    if (person) {
+      // Update existing person with new data
+      const updateData = { ...personData };
+      delete updateData.status;
+      if (person.status === 'inactive') updateData.status = 'visitor';
+      if (Object.keys(customData).length > 0) {
+        updateData.custom_fields = { ...(person.custom_fields || {}), ...customData };
+      }
+      // Append notes rather than overwriting
+      if (personData.notes && person.notes && personData.notes !== person.notes) {
+        updateData.notes = person.notes + '\n\n--- New Submission (' + new Date().toLocaleDateString() + ') ---\n' + personData.notes;
+      }
+      await base44.asServiceRole.entities.Person.update(person.id, updateData);
+    } else {
+      if (Object.keys(customData).length > 0) {
+        personData.custom_fields = customData;
+      }
+      person = await base44.asServiceRole.entities.Person.create(personData);
+    }
+
+    // Apply tags configured on the card
+    if (card.tag_ids && card.tag_ids.length > 0) {
+      const existingTags = person.tag_ids || [];
+      const newTags = [...new Set([...existingTags, ...card.tag_ids])];
+      if (newTags.length !== existingTags.length) {
+        await base44.asServiceRole.entities.Person.update(person.id, { tag_ids: newTags });
+      }
     }
 
     // If card has a workflow, enroll and process immediate steps
     if (card.workflow_id) {
       const workflow = await base44.asServiceRole.entities.Workflow.get(card.workflow_id);
       if (workflow && workflow.is_active) {
-        // Avoid duplicate enrollment
         const existingEnrollments = await base44.asServiceRole.entities.WorkflowEnrollment.filter({
           workflow_id: card.workflow_id,
           person_id: person.id,
@@ -60,11 +112,9 @@ Deno.serve(async (req) => {
             status: 'active'
           });
 
-          // Get and sort steps
           const steps = await base44.asServiceRole.entities.WorkflowStep.filter({ workflow_id: card.workflow_id });
           steps.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-          // Process immediate steps (delay_days = 0)
           let nextStep = 0;
           for (let i = 0; i < steps.length; i++) {
             const step = steps[i];
@@ -76,7 +126,6 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Update enrollment
           if (nextStep >= steps.length) {
             await base44.asServiceRole.entities.WorkflowEnrollment.update(enrollment.id, {
               current_step: nextStep,
