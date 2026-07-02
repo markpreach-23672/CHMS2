@@ -183,7 +183,7 @@ export default function ConnectCards() {
               cards.map((card) => {
                 const wf = getCardWorkflow(card.workflow_id);
                 return (
-                  <div key={card.id} className="bg-white rounded-xl border border-slate-200 p-4">
+                  <div key={card.id} className="bg-white rounded-xl border border-slate-200 p-4 cursor-pointer hover:border-indigo-300 transition-colors" onClick={() => setEditingCard(card)}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function ConnectCards() {
                         )}
                       </div>
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100"><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
+                        <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setSubmitCard(card)}><Send size={14} className="mr-1.5" />Submit Entry</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setShareCard(card)}><QrCode size={14} className="mr-1.5" />Share / Embed</DropdownMenuItem>
@@ -331,6 +331,7 @@ export default function ConnectCards() {
                 const created = await base44.entities.ConnectCard.create(data);
                 setCards((prev) => [...prev, created]);
                 setShowCardForm(false);
+                setShareCard(created);
               }
             } catch (err) {
               alert('Failed to save card.');
