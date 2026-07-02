@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight } from 'lucide-react';
+import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import SubmitEntryDialog from '@/components/connectcards/SubmitEntryDialog';
 
 export default function ConnectCards() {
   const [cards, setCards] = useState([]);
@@ -18,6 +19,7 @@ export default function ConnectCards() {
   const [showCardForm, setShowCardForm] = useState(false);
   const [showWorkflowForm, setShowWorkflowForm] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+  const [submitCard, setSubmitCard] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -176,6 +178,7 @@ export default function ConnectCards() {
                       <DropdownMenu>
                         <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100"><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSubmitCard(card)}><Send size={14} className="mr-1.5" />Submit Entry</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCard(card)}>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -285,6 +288,14 @@ export default function ConnectCards() {
             }
           }}
           onClose={() => setShowCardForm(false)}
+        />
+      )}
+
+      {/* Submit Entry Dialog */}
+      {submitCard && (
+        <SubmitEntryDialog
+          card={submitCard}
+          onClose={() => setSubmitCard(null)}
         />
       )}
 

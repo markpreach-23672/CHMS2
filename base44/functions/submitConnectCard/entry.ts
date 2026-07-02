@@ -1,0 +1,113 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { connect_card_id, first_name, last_name, email, phone, message } = body;
+
+    if (!connect_card_id) {
+      return Response.json({ error: 'Connect card ID is required' }, { status: 400 });
+    }
+
+    const card = await base44.asServiceRole.entities.ConnectCard.get(connect_card_id);
+    if (!card || !card.is_active) {
+      return Response.json({ error: 'Connect card not found or inactive' }, { status: 404 });
+    }
+
+    // Create or find person by email
+    let person;
+    if (email) {
+      const existing = await base44.asServiceRole.entities.Person.filter({ email });
+      person = existing[0];
+    }
+    if (!person) {
+      person = await base44.asServiceRole.entities.Person.create({
+        first_name: first_name || 'Guest',
+        last_name: last_name || '',
+        email: email || '',
+        phone: phone || '',
+        status: 'visitor',
+        notes: message || ''
+      });
+    } else if (person.status === 'inactive') {
+      await base44.asServiceRole.entities.Person.update(person.id, { status: 'visitor' });
+    }
+
+    // If card has a workflow, enroll and process immediate steps
+    if (card.workflow_id) {
+      const workflow = await base44.asServiceRole.entities.Workflow.get(card.workflow_id);
+      if (workflow && workflow.is_active) {
+        // Avoid duplicate enrollment
+        const existingEnrollments = await base44.asServiceRole.entities.WorkflowEnrollment.filter({
+          workflow_id: card.workflow_id,
+          person_id: person.id,
+          status: 'active'
+        });
+
+        if (existingEnrollments.length === 0) {
+          const enrollment = await base44.asServiceRole.entities.WorkflowEnrollment.create({
+            workflow_id: card.workflow_id,
+            person_id: person.id,
+            current_step: 0,
+            enrolled_date: new Date().toISOString(),
+            status: 'active'
+          });
+
+          // Get and sort steps
+          const steps = await base44.asServiceRole.entities.WorkflowStep.filter({ workflow_id: card.workflow_id });
+          steps.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+          // Process immediate steps (delay_days = 0)
+          let nextStep = 0;
+          for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            if ((step.delay_days || 0) === 0) {
+              await processStep(base44, step, person);
+              nextStep = i + 1;
+            } else {
+              break;
+            }
+          }
+
+          // Update enrollment
+          if (nextStep >= steps.length) {
+            await base44.asServiceRole.entities.WorkflowEnrollment.update(enrollment.id, {
+              current_step: nextStep,
+              status: 'completed',
+              completed_date: new Date().toISOString()
+            });
+          } else {
+            await base44.asServiceRole.entities.WorkflowEnrollment.update(enrollment.id, {
+              current_step: nextStep
+            });
+          }
+        }
+      }
+    }
+
+    return Response.json({ success: true, person_id: person.id });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});
+
+async function processStep(base44, step, person) {
+  if (step.step_type === 'email' && person.email) {
+    let body = step.body || '';
+    body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
+    body = body.replace(/\{\{last_name\}\}/g, person.last_name || '');
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: person.email,
+        subject: step.subject || 'Welcome',
+        body
+      });
+    } catch (err) {
+      console.error(`Email send failed for ${person.email}: ${err.message}`);
+    }
+  }
+}
