@@ -41,6 +41,10 @@
       "type": "boolean",
       "title": "Recurring",
       "default": false
+    },
+    "google_event_id": {
+      "type": "string",
+      "title": "Google Calendar Event ID"
     }
   },
   "required": [
