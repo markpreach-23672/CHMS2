@@ -14,6 +14,9 @@ import Tags from '@/pages/Tags';
 import Giving from '@/pages/Giving';
 import CalendarPage from '@/pages/CalendarPage';
 import ConnectCards from '@/pages/ConnectCards';
+import SearchPage from '@/pages/Search';
+import Settings from '@/pages/Settings';
+import Families from '@/pages/Families';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +52,9 @@ const AuthenticatedApp = () => {
         <Route path="/giving" element={<Giving />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/connect-cards" element={<ConnectCards />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/families" element={<Families />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
