@@ -256,7 +256,7 @@ export default function ConnectCards() {
                                 <div className="flex-1 min-w-0 pb-1">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-slate-900">{stepLabel(step.step_type)}</span>
-                                    {step.delay_days > 0 && <span className="text-[10px] text-slate-400">after {step.delay_days} day{step.delay_days > 1 ? 's' : ''}</span>}
+                                    {step.delay_days > 0 && <span className="text-[10px] text-slate-400">after {step.delay_days} {(step.delay_unit || 'days') === 'hours' ? 'hour' : 'day'}{step.delay_days > 1 ? 's' : ''}</span>}
                                     <button onClick={() => handleDeleteStep(wf.id, step.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity">
                                       <Trash2 size={12} />
                                     </button>
@@ -341,9 +341,11 @@ function AddStepButton({ onAdd, users }) {
   const [taskDescription, setTaskDescription] = useState('');
   const [staffUserId, setStaffUserId] = useState('');
   const [notifyMethod, setNotifyMethod] = useState('email');
+  const [delayUnit, setDelayUnit] = useState('days');
+  const [infoScope, setInfoScope] = useState('contact_only');
 
   const handleAdd = () => {
-    const data = { step_type: type, delay_days: parseInt(delayDays) || 0 };
+    const data = { step_type: type, delay_days: parseInt(delayDays) || 0, delay_unit: delayUnit };
     if (type === 'email' || type === 'text') {
       data.subject = subject;
       data.body = body;
@@ -354,6 +356,7 @@ function AddStepButton({ onAdd, users }) {
     if (type === 'staff_notify' || type === 'no_response_alert') {
       data.assigned_to_user_id = staffUserId;
       data.notify_method = notifyMethod;
+      data.info_scope = infoScope;
       data.body = body;
     }
     onAdd(data);
@@ -365,6 +368,8 @@ function AddStepButton({ onAdd, users }) {
     setTaskDescription('');
     setStaffUserId('');
     setNotifyMethod('email');
+    setDelayUnit('days');
+    setInfoScope('contact_only');
   };
 
   if (!show) {
@@ -394,8 +399,17 @@ function AddStepButton({ onAdd, users }) {
           </Select>
         </div>
         <div>
-          <Label className="text-[10px] text-slate-500">Delay (days)</Label>
-          <Input type="number" value={delayDays} onChange={(e) => setDelayDays(e.target.value)} className="h-8 text-xs mt-0.5" />
+          <Label className="text-[10px] text-slate-500">Timing</Label>
+          <div className="flex gap-2 mt-0.5">
+            <Input type="number" value={delayDays} onChange={(e) => setDelayDays(e.target.value)} className="h-8 text-xs w-16" />
+            <Select value={delayUnit} onValueChange={setDelayUnit}>
+              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hours">Hours from visit</SelectItem>
+                <SelectItem value="days">Days from visit</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       {(type === 'email' || type === 'text') && (
@@ -441,6 +455,16 @@ function AddStepButton({ onAdd, users }) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label className="text-[10px] text-slate-500">Information to Include</Label>
+            <Select value={infoScope} onValueChange={setInfoScope}>
+              <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="contact_only">Contact info only (name, email, phone)</SelectItem>
+                <SelectItem value="all">All info on file (address, birthday, status, etc.)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label className="text-[10px] text-slate-500">{type === 'no_response_alert' ? 'Follow-up Instructions' : 'Instructions for Staff'}</Label>

@@ -44,8 +44,9 @@ Deno.serve(async (req) => {
         // Process all steps whose delay has elapsed
         while (currentStepIdx < steps.length) {
           const step = steps[currentStepIdx];
-          const delayDays = step.delay_days || 0;
-          const stepDueDate = new Date(enrolledDate.getTime() + delayDays * 24 * 60 * 60 * 1000);
+          const delayValue = step.delay_days || 0;
+          const delayMs = step.delay_unit === 'hours' ? delayValue * 60 * 60 * 1000 : delayValue * 24 * 60 * 60 * 1000;
+          const stepDueDate = new Date(enrolledDate.getTime() + delayMs);
 
           if (now >= stepDueDate) {
             await processStep(base44, step, person, fromEmail);
@@ -94,6 +95,12 @@ async function processStep(base44, step, person, fromEmail) {
       emailBody += `  Name: ${guestName}\n`;
       emailBody += `  Email: ${person.email || 'N/A'}\n`;
       emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
+      if (step.info_scope === 'all') {
+        if (person.mobile) emailBody += `  Mobile: ${person.mobile}\n`;
+        if (person.address) emailBody += `  Address: ${person.address}${person.city ? ', ' + person.city : ''}${person.state ? ', ' + person.state : ''}${person.zip ? ' ' + person.zip : ''}\n`;
+        if (person.birth_date) emailBody += `  Birth Date: ${person.birth_date}\n`;
+        emailBody += `  Status: ${person.status || 'N/A'}\n`;
+      }
       if (person.notes) emailBody += `  Message: ${person.notes}\n`;
       emailBody += `\nInstructions for contacting this guest:\n`;
       emailBody += step.body || '(No specific instructions provided)';
@@ -122,6 +129,12 @@ async function processStep(base44, step, person, fromEmail) {
       emailBody += `  Name: ${guestName}\n`;
       emailBody += `  Email: ${person.email || 'N/A'}\n`;
       emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
+      if (step.info_scope === 'all') {
+        if (person.mobile) emailBody += `  Mobile: ${person.mobile}\n`;
+        if (person.address) emailBody += `  Address: ${person.address}${person.city ? ', ' + person.city : ''}${person.state ? ', ' + person.state : ''}${person.zip ? ' ' + person.zip : ''}\n`;
+        if (person.birth_date) emailBody += `  Birth Date: ${person.birth_date}\n`;
+        emailBody += `  Status: ${person.status || 'N/A'}\n`;
+      }
       if (person.notes) emailBody += `  Original Message: ${person.notes}\n`;
       emailBody += `\nInstructions:\n`;
       emailBody += step.body || 'Please reach out personally (call or text) to connect with this guest and make sure they feel welcomed.';

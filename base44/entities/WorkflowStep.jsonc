@@ -24,8 +24,17 @@
     },
     "delay_days": {
       "type": "number",
-      "title": "Delay (Days)",
+      "title": "Delay Value",
       "default": 0
+    },
+    "delay_unit": {
+      "type": "string",
+      "enum": [
+        "hours",
+        "days"
+      ],
+      "title": "Delay Unit",
+      "default": "days"
     },
     "subject": {
       "type": "string",
@@ -55,6 +64,15 @@
       ],
       "title": "Notification Method",
       "default": "email"
+    },
+    "info_scope": {
+      "type": "string",
+      "enum": [
+        "contact_only",
+        "all"
+      ],
+      "title": "Info Scope",
+      "default": "contact_only"
     },
     "sort_order": {
       "type": "number",
