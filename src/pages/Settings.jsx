@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree, UserCog, MapPin } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import LocationsTab from '@/components/settings/LocationsTab';
+import AddFromMembersDialog from '@/components/settings/AddFromMembersDialog';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -289,17 +290,28 @@ function CustomFieldForm({ field, onSave, onClose }) {
 
 function StaffTab() {
   const [users, setUsers] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInvite, setShowInvite] = useState(false);
+  const [showAddFromMembers, setShowAddFromMembers] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('staff');
   const [inviting, setInviting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [updatingUserId, setUpdatingUserId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.User.list();
-      setUsers(data);
+      const [u, p, c] = await Promise.all([
+        base44.entities.User.list(),
+        base44.entities.Person.list(),
+        base44.entities.PermissionCategory.list(),
+      ]);
+      setUsers(u);
+      setPeople(p);
+      setCategories(c);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   }, []);
@@ -321,13 +333,66 @@ function StaffTab() {
     }
   };
 
+  const handleInviteFromMember = async (person, role) => {
+    if (!person.email) {
+      alert('This member does not have an email address on file.');
+      return;
+    }
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(person.email, role);
+      setShowAddFromMembers(false);
+      setSearchQuery('');
+      load();
+    } catch (err) {
+      alert('Failed to invite user. They may already have an account or lack an email.');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleUpdateRole = async (userId, newRole) => {
+    setUpdatingUserId(userId);
+    try {
+      await base44.entities.User.update(userId, { role: newRole });
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+    } catch (err) {
+      alert('Failed to update role. You may need admin permissions.');
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  const handleUpdateCategory = async (userId, categoryId) => {
+    setUpdatingUserId(userId);
+    try {
+      await base44.entities.User.update(userId, { permission_category_id: categoryId || undefined });
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, permission_category_id: categoryId || undefined } : u)));
+    } catch (err) {
+      alert('Failed to update permission category.');
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
   const roleLabel = { super_admin: 'Super Admin', church_admin: 'Church Admin', staff: 'Staff' };
+  const existingEmails = new Set(users.map((u) => u.email?.toLowerCase()).filter(Boolean));
+  const filteredPeople = people.filter((p) =>
+    p.email &&
+    !existingEmails.has(p.email.toLowerCase()) &&
+    (searchQuery === '' ||
+      `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div>
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end gap-2 mb-3">
+        <Button variant="outline" onClick={() => setShowAddFromMembers(true)}>
+          <Users size={15} className="mr-1.5" />Add from Members
+        </Button>
         <Button variant="outline" onClick={() => setShowInvite(true)}>
-          <Plus size={15} className="mr-1.5" />Invite Staff
+          <Plus size={15} className="mr-1.5" />Invite by Email
         </Button>
       </div>
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-50">
@@ -341,13 +406,41 @@ function StaffTab() {
               <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-medium text-slate-500">{user.full_name?.[0] || user.email?.[0]?.toUpperCase() || 'U'}</span>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900">{user.full_name || 'Unnamed'}</p>
-                <p className="text-xs text-slate-400">{user.email}</p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
               </div>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${user.role === 'super_admin' ? 'bg-purple-50 text-purple-600' : user.role === 'church_admin' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'}`}>
-                {roleLabel[user.role] || user.role}
-              </span>
+              {categories.length > 0 && (
+                <Select
+                  value={user.permission_category_id || 'none'}
+                  onValueChange={(v) => handleUpdateCategory(user.id, v === 'none' ? '' : v)}
+                  disabled={updatingUserId === user.id || user.role === 'super_admin'}
+                >
+                  <SelectTrigger className="h-7 w-36 text-xs">
+                    <SelectValue placeholder="Permissions..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No category</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select
+                value={user.role || 'staff'}
+                onValueChange={(v) => handleUpdateRole(user.id, v)}
+                disabled={updatingUserId === user.id || user.role === 'super_admin'}
+              >
+                <SelectTrigger className="h-7 w-32 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="church_admin">Church Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           ))
         )}
@@ -368,7 +461,7 @@ function StaffTab() {
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="admin">Church Admin</SelectItem>
+                    <SelectItem value="church_admin">Church Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -379,6 +472,17 @@ function StaffTab() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {showAddFromMembers && (
+        <AddFromMembersDialog
+          people={filteredPeople}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          inviting={inviting}
+          onInvite={handleInviteFromMember}
+          onClose={() => { setShowAddFromMembers(false); setSearchQuery(''); }}
+        />
       )}
     </div>
   );
