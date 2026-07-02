@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign, Clock } from 'lucide-react';
 import moment from 'moment';
 import {
   Select,
@@ -32,6 +32,8 @@ export default function PersonDetail() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [enrollments, setEnrollments] = useState([]);
 
   useEffect(() => {
     Promise.all([
@@ -55,6 +57,10 @@ export default function PersonDetail() {
 
         const dons = await base44.entities.Donation.filter({ person_id: p.id }).catch(() => []);
         setDonations(dons);
+        const ens = await base44.entities.WorkflowEnrollment.filter({ person_id: p.id }).catch(() => []);
+        setEnrollments(ens);
+        const me = await base44.auth.me().catch(() => null);
+        setCurrentUser(me);
       })
       .catch(() => {
         setPerson(null);
@@ -111,10 +117,20 @@ export default function PersonDetail() {
   const fullName = `${person.first_name} ${person.last_name}`;
   const totalGiving = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
 
+  const visibleCustomFields = customFields.filter(f => !f.is_private || currentUser?.role === 'admin');
+  const customFieldSections = {};
+  visibleCustomFields.forEach(f => {
+    const sec = f.section || 'Other';
+    if (!customFieldSections[sec]) customFieldSections[sec] = [];
+    customFieldSections[sec].push(f);
+  });
+
   const roleLabel = {
     head_of_household: 'Head of Household',
     spouse: 'Spouse',
+    adult: 'Adult',
     child: 'Child',
+    unassigned: 'Unassigned',
     other: 'Other',
   };
 
@@ -150,6 +166,12 @@ export default function PersonDetail() {
               </span>
               {person.family_role && (
                 <span className="text-xs text-slate-500">{roleLabel[person.family_role]}</span>
+              )}
+              {person.gender && (
+                <span className="text-xs text-slate-500 capitalize">{person.gender}</span>
+              )}
+              {person.marital_status && (
+                <span className="text-xs text-slate-500 capitalize">{person.marital_status}</span>
               )}
             </div>
             {/* Contact info */}
@@ -195,6 +217,33 @@ export default function PersonDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column - Tags & Custom Fields */}
         <div className="space-y-6">
+          {/* Milestones */}
+          {(person.first_visit_date || person.baptism_date || person.membership_date) && (
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Milestones</h3>
+              <div className="space-y-2">
+                {person.first_visit_date && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">First Visit</span>
+                    <span className="text-slate-900 font-medium">{moment(person.first_visit_date).format('MMM D, YYYY')}</span>
+                  </div>
+                )}
+                {person.baptism_date && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Baptism</span>
+                    <span className="text-slate-900 font-medium">{moment(person.baptism_date).format('MMM D, YYYY')}</span>
+                  </div>
+                )}
+                {person.membership_date && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Membership</span>
+                    <span className="text-slate-900 font-medium">{moment(person.membership_date).format('MMM D, YYYY')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Tags */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
@@ -229,22 +278,24 @@ export default function PersonDetail() {
             </div>
           </div>
 
-          {/* Custom Fields */}
-          {customFields.length > 0 && (
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Custom Fields</h3>
+          {/* Custom Fields by Section */}
+          {Object.entries(customFieldSections).map(([sectionName, fields]) => (
+            <div key={sectionName} className="bg-white rounded-xl border border-slate-200 p-5">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">{sectionName}</h3>
               <div className="space-y-2.5">
-                {customFields.map((field) => (
-                  <div key={field.id} className="flex justify-between text-sm">
-                    <span className="text-slate-500">{field.name}</span>
-                    <span className="text-slate-900 font-medium text-right">
-                      {person.custom_fields?.[field.name] || '—'}
-                    </span>
-                  </div>
-                ))}
+                {fields.map((field) => {
+                  const val = person.custom_fields?.[field.name];
+                  const display = Array.isArray(val) ? val.join(', ') : val;
+                  return (
+                    <div key={field.id} className="flex justify-between text-sm">
+                      <span className="text-slate-500">{field.name}{field.is_private && <span className="ml-1 text-rose-400">🔒</span>}</span>
+                      <span className="text-slate-900 font-medium text-right">{display || '—'}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
+          ))}
 
           {/* Notes */}
           {person.notes && (
@@ -300,6 +351,7 @@ export default function PersonDetail() {
           </div>
 
           {/* Giving */}
+          {currentUser?.role === 'admin' && (
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -327,6 +379,34 @@ export default function PersonDetail() {
             ) : (
               <p className="text-xs text-slate-400">No donations recorded.</p>
             )}
+          </div>
+          )}
+
+          {/* Activity Timeline */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-3">
+              <Clock size={15} className="text-slate-400" />
+              Activity Timeline
+            </h3>
+            <div className="space-y-1">
+              {(() => {
+                const events = [];
+                if (person.created_date) events.push({ date: person.created_date, label: 'Profile created', icon: '👤' });
+                enrollments.forEach(e => events.push({ date: e.enrolled_date, label: 'Enrolled in workflow', icon: '📋' }));
+                if (currentUser?.role === 'admin') {
+                  donations.forEach(d => events.push({ date: d.donation_date, label: `Gave $${(d.amount || 0).toFixed(2)}`, icon: '💰' }));
+                }
+                events.sort((a, b) => moment(b.date).diff(moment(a.date)));
+                if (events.length === 0) return <p className="text-xs text-slate-400">No activity recorded.</p>;
+                return events.slice(0, 15).map((e, i) => (
+                  <div key={i} className="flex items-center gap-3 py-1.5 border-b border-slate-50 last:border-0">
+                    <span className="text-sm">{e.icon}</span>
+                    <span className="text-sm text-slate-700 flex-1">{e.label}</span>
+                    <span className="text-xs text-slate-400">{moment(e.date).format('MMM D, YYYY')}</span>
+                  </div>
+                ));
+              })()}
+            </div>
           </div>
         </div>
       </div>

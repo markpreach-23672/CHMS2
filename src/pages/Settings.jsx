@@ -163,10 +163,10 @@ function CustomFieldsTab() {
             <div key={field.id} className="flex items-center justify-between px-5 py-3 hover:bg-slate-50/50">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{field.name}</p>
-                  <p className="text-xs text-slate-400 capitalize">{field.field_type} · applies to {field.applies_to}</p>
+                  <p className="text-sm font-medium text-slate-900">{field.name} {field.is_private && <span className="text-[10px] text-rose-500 ml-1">🔒 Private</span>}</p>
+                  <p className="text-xs text-slate-400 capitalize">{field.field_type} · applies to {field.applies_to}{field.section ? ` · ${field.section}` : ''}</p>
                 </div>
-                {field.field_type === 'dropdown' && field.options?.length > 0 && (
+                {(field.field_type === 'dropdown' || field.field_type === 'multi_select') && field.options?.length > 0 && (
                   <div className="flex gap-1">
                     {field.options.slice(0, 3).map((opt) => (
                       <span key={opt} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{opt}</span>
@@ -215,6 +215,8 @@ function CustomFieldForm({ field, onSave, onClose }) {
   const [fieldType, setFieldType] = useState(field?.field_type || 'text');
   const [appliesTo, setAppliesTo] = useState(field?.applies_to || 'person');
   const [options, setOptions] = useState(field?.options?.join(', ') || '');
+  const [section, setSection] = useState(field?.section || '');
+  const [isPrivate, setIsPrivate] = useState(field?.is_private || false);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -235,7 +237,10 @@ function CustomFieldForm({ field, onSave, onClose }) {
                   <SelectItem value="number">Number</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="dropdown">Dropdown</SelectItem>
+                  <SelectItem value="multi_select">Multi-Select</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -250,16 +255,29 @@ function CustomFieldForm({ field, onSave, onClose }) {
               </Select>
             </div>
           </div>
-          {fieldType === 'dropdown' && (
+          {(fieldType === 'dropdown' || fieldType === 'multi_select') && (
             <div>
               <Label className="text-xs font-medium text-slate-600">Options (comma-separated)</Label>
               <Input value={options} onChange={(e) => setOptions(e.target.value)} className="mt-1" placeholder="Yes, No, In Progress" />
             </div>
           )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Section</Label>
+              <Input value={section} onChange={(e) => setSection(e.target.value)} className="mt-1" placeholder="e.g. Spiritual Milestones" />
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Private (admin only)</Label>
+              <select value={isPrivate ? 'yes' : 'no'} onChange={(e) => setIsPrivate(e.target.value === 'yes')} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                <option value="no">No</option>
+                <option value="yes">Yes — hide from non-admins</option>
+              </select>
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ name, field_type: fieldType, applies_to: appliesTo, options: fieldType === 'dropdown' ? options.split(',').map((o) => o.trim()).filter(Boolean) : [] })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">{field ? 'Save' : 'Create'}</Button>
+          <Button onClick={() => onSave({ name, field_type: fieldType, applies_to: appliesTo, options: (fieldType === 'dropdown' || fieldType === 'multi_select') ? options.split(',').map((o) => o.trim()).filter(Boolean) : [], section: section || undefined, is_private: isPrivate })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">{field ? 'Save' : 'Create'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

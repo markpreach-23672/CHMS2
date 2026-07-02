@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload } from 'lucide-react';
+import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import PersonForm from '@/components/people/PersonForm';
 import ImportPeopleDialog from '@/components/people/ImportPeopleDialog';
+import DuplicateDetector from '@/components/people/DuplicateDetector';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -39,6 +40,7 @@ export default function People() {
   const [editPerson, setEditPerson] = useState(null);
   const [showBulkTag, setShowBulkTag] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   const loadPeople = useCallback(async () => {
     setLoading(true);
@@ -169,6 +171,10 @@ export default function People() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowDuplicates(true)}>
+            <Copy size={16} className="mr-1.5" />
+            Find Duplicates
+          </Button>
           <Button variant="outline" onClick={() => setShowImport(true)}>
             <Upload size={16} className="mr-1.5" />
             Import CSV
@@ -437,6 +443,17 @@ export default function People() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Duplicate Detector */}
+      {showDuplicates && (
+        <DuplicateDetector
+          people={people}
+          onClose={() => setShowDuplicates(false)}
+          onMerged={(primaryId, deletedId) => {
+            setPeople(prev => prev.filter(p => p.id !== deletedId));
+          }}
+        />
       )}
     </div>
   );

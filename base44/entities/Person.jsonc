@@ -59,7 +59,43 @@
         "visitor",
         "member"
       ],
-      "default": "active"
+      "default": "active",
+      "title": "Status"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "unspecified"
+      ],
+      "title": "Gender"
+    },
+    "marital_status": {
+      "type": "string",
+      "enum": [
+        "single",
+        "married",
+        "divorced",
+        "widowed",
+        "separated"
+      ],
+      "title": "Marital Status"
+    },
+    "first_visit_date": {
+      "type": "string",
+      "format": "date",
+      "title": "First Visit Date"
+    },
+    "baptism_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Baptism Date"
+    },
+    "membership_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Membership Date"
     },
     "family_id": {
       "type": "string",
@@ -70,7 +106,9 @@
       "enum": [
         "head_of_household",
         "spouse",
+        "adult",
         "child",
+        "unassigned",
         "other"
       ],
       "title": "Family Role"

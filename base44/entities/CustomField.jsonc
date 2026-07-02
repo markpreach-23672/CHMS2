@@ -17,7 +17,10 @@
         "number",
         "date",
         "dropdown",
+        "multi_select",
         "checkbox",
+        "phone",
+        "email",
         "file"
       ],
       "title": "Field Type"
@@ -38,6 +41,16 @@
       ],
       "title": "Applies To",
       "default": "person"
+    },
+    "section": {
+      "type": "string",
+      "title": "Section",
+      "default": ""
+    },
+    "is_private": {
+      "type": "boolean",
+      "title": "Private (Admin Only)",
+      "default": false
     },
     "sort_order": {
       "type": "number",

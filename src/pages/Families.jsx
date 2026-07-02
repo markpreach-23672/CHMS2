@@ -83,7 +83,7 @@ export default function Families() {
               <p className="px-5 py-8 text-center text-sm text-slate-400">No members linked to this family.</p>
             ) : (
               familyMembers.map((member) => {
-                const roleLabel = { head_of_household: 'Head of Household', spouse: 'Spouse', child: 'Child', other: 'Other' };
+                const roleLabel = { head_of_household: 'Head of Household', spouse: 'Spouse', adult: 'Adult', child: 'Child', unassigned: 'Unassigned', other: 'Other' };
                 return (
                   <Link key={member.id} to={`/people/${member.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/50">
                     <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">

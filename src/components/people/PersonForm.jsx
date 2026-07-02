@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Upload, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function PersonForm({ person, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -24,6 +25,11 @@ export default function PersonForm({ person, onSave, onClose }) {
     notes: '',
     photo_url: '',
     family_role: '',
+    gender: '',
+    marital_status: '',
+    first_visit_date: '',
+    baptism_date: '',
+    membership_date: '',
     ...person,
   });
   const [customFields, setCustomFields] = useState([]);
@@ -68,6 +74,9 @@ export default function PersonForm({ person, onSave, onClose }) {
       const data = { ...formData };
       if (!data.family_role) delete data.family_role;
       if (!data.birth_date) delete data.birth_date;
+      if (!data.first_visit_date) delete data.first_visit_date;
+      if (!data.baptism_date) delete data.baptism_date;
+      if (!data.membership_date) delete data.membership_date;
 
       if (isEdit) {
         saved = await base44.entities.Person.update(person.id, data);
@@ -159,6 +168,48 @@ export default function PersonForm({ person, onSave, onClose }) {
             </Select>
           </div>
 
+          {/* Profile Details */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Gender</Label>
+              <Select value={formData.gender || ''} onValueChange={(v) => handleChange('gender', v)}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="unspecified">Unspecified</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Marital Status</Label>
+              <Select value={formData.marital_status || ''} onValueChange={(v) => handleChange('marital_status', v)}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                  <SelectItem value="separated">Separated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Family Role</Label>
+              <Select value={formData.family_role || ''} onValueChange={(v) => handleChange('family_role', v)}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="head_of_household">Head of Household</SelectItem>
+                  <SelectItem value="spouse">Spouse</SelectItem>
+                  <SelectItem value="adult">Adult</SelectItem>
+                  <SelectItem value="child">Child</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Contact */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -236,38 +287,72 @@ export default function PersonForm({ person, onSave, onClose }) {
             </div>
           </div>
 
+          {/* Milestone Dates */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs font-medium text-slate-600">First Visit</Label>
+              <Input type="date" value={formData.first_visit_date || ''} onChange={(e) => handleChange('first_visit_date', e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Baptism Date</Label>
+              <Input type="date" value={formData.baptism_date || ''} onChange={(e) => handleChange('baptism_date', e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Membership Date</Label>
+              <Input type="date" value={formData.membership_date || ''} onChange={(e) => handleChange('membership_date', e.target.value)} className="mt-1" />
+            </div>
+          </div>
+
           {/* Custom Fields */}
           {customFields.length > 0 && (
             <div className="pt-2 border-t border-slate-100">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Custom Fields</p>
               <div className="grid grid-cols-2 gap-4">
-                {customFields.map((field) => (
-                  <div key={field.id}>
-                    <Label className="text-xs font-medium text-slate-600">{field.name}</Label>
-                    {field.field_type === 'dropdown' ? (
-                      <Select
-                        value={formData.custom_fields?.[field.name] || ''}
-                        onValueChange={(v) => handleCustomFieldChange(field.name, v)}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(field.options || []).map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'}
-                        value={formData.custom_fields?.[field.name] || ''}
-                        onChange={(e) => handleCustomFieldChange(field.name, e.target.value)}
-                        className="mt-1"
-                      />
-                    )}
-                  </div>
-                ))}
+                {customFields.map((field) => {
+                  const cfValue = formData.custom_fields?.[field.name];
+                  return (
+                    <div key={field.id}>
+                      <Label className="text-xs font-medium text-slate-600">
+                        {field.name}
+                        {field.is_private && <span className="ml-1 text-rose-400">🔒</span>}
+                      </Label>
+                      {field.field_type === 'dropdown' ? (
+                        <Select value={cfValue || ''} onValueChange={(v) => handleCustomFieldChange(field.name, v)}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            {(field.options || []).map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      ) : field.field_type === 'multi_select' ? (
+                        <div className="mt-1 space-y-1">
+                          {(field.options || []).map((opt) => {
+                            const arr = Array.isArray(cfValue) ? cfValue : [];
+                            return (
+                              <label key={opt} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                                <Checkbox checked={arr.includes(opt)} onCheckedChange={() => {
+                                  const newArr = arr.includes(opt) ? arr.filter((x) => x !== opt) : [...arr, opt];
+                                  handleCustomFieldChange(field.name, newArr);
+                                }} />
+                                {opt}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ) : field.field_type === 'checkbox' ? (
+                        <div className="mt-2">
+                          <Checkbox checked={cfValue === true || cfValue === 'true'} onCheckedChange={(v) => handleCustomFieldChange(field.name, v)} />
+                        </div>
+                      ) : (
+                        <Input
+                          type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
+                          value={cfValue || ''}
+                          onChange={(e) => handleCustomFieldChange(field.name, e.target.value)}
+                          className="mt-1"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
