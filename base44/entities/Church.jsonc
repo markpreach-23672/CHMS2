@@ -48,6 +48,10 @@
       "type": "string",
       "title": "Email"
     },
+    "resend_from_email": {
+      "type": "string",
+      "title": "Resend From Email"
+    },
     "subscription_status": {
       "type": "string",
       "enum": [

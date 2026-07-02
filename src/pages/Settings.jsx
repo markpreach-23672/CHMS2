@@ -94,6 +94,11 @@ function ProfileTab() {
           <div><Label className="text-xs font-medium text-slate-600">Phone</Label><Input value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="mt-1" /></div>
           <div><Label className="text-xs font-medium text-slate-600">Email</Label><Input value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="mt-1" /></div>
         </div>
+        <div>
+          <Label className="text-xs font-medium text-slate-600">Workflow From Email (Resend)</Label>
+          <Input value={formData.resend_from_email || ''} onChange={(e) => setFormData({ ...formData, resend_from_email: e.target.value })} className="mt-1" placeholder="Church <noreply@yourdomain.com>" />
+          <p className="text-xs text-slate-400 mt-1">Used for connect card workflow emails. Must be a verified Resend sender address.</p>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label className="text-xs font-medium text-slate-600">Timezone</Label>

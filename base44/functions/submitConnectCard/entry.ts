@@ -6,6 +6,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const churches = await base44.asServiceRole.entities.Church.list();
+    const fromEmail = churches[0]?.resend_from_email || 'Church <onboarding@resend.dev>';
+
     const body = await req.json();
     const { connect_card_id, first_name, last_name, email, phone, message } = body;
 
@@ -66,7 +69,7 @@ Deno.serve(async (req) => {
           for (let i = 0; i < steps.length; i++) {
             const step = steps[i];
             if ((step.delay_days || 0) === 0) {
-              await processStep(base44, step, person);
+              await processStep(base44, step, person, fromEmail);
               nextStep = i + 1;
             } else {
               break;
@@ -95,7 +98,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function processStep(base44, step, person) {
+async function processStep(base44, step, person, fromEmail) {
   if (step.step_type === 'email' && person.email) {
     let body = step.body || '';
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
@@ -106,7 +109,7 @@ async function processStep(base44, step, person) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Church <onboarding@resend.dev>',
+          from: fromEmail,
           to: person.email,
           subject: step.subject || 'Welcome',
           text: body

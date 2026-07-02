@@ -4,6 +4,9 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    const churches = await base44.asServiceRole.entities.Church.list();
+    const fromEmail = churches[0]?.resend_from_email || 'Church <onboarding@resend.dev>';
+
     // Get all active enrollments
     const enrollments = await base44.asServiceRole.entities.WorkflowEnrollment.filter({ status: 'active' });
     const now = new Date();
@@ -45,7 +48,7 @@ Deno.serve(async (req) => {
           const stepDueDate = new Date(enrolledDate.getTime() + delayDays * 24 * 60 * 60 * 1000);
 
           if (now >= stepDueDate) {
-            await processStep(base44, step, person);
+            await processStep(base44, step, person, fromEmail);
             currentStepIdx++;
             stepAdvanced = true;
           } else {
@@ -79,7 +82,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function processStep(base44, step, person) {
+async function processStep(base44, step, person, fromEmail) {
   if (step.step_type === 'email' && person.email) {
     let body = step.body || '';
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
@@ -90,7 +93,7 @@ async function processStep(base44, step, person) {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Church <onboarding@resend.dev>',
+          from: fromEmail,
           to: person.email,
           subject: step.subject || 'Update from our church',
           text: body
