@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, ChevronLeft, ChevronRight, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Trash2, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import moment from 'moment';
 
 export default function CalendarPage() {
@@ -201,6 +201,8 @@ export default function CalendarPage() {
         <EventForm
           calendars={calendars}
           selectedDate={selectedDate}
+          events={events}
+          getCalendar={getCalendar}
           onSave={async (data) => {
             try {
               const created = await base44.entities.CalendarEvent.create(data);
@@ -217,7 +219,7 @@ export default function CalendarPage() {
   );
 }
 
-function EventForm({ calendars, selectedDate, onSave, onClose }) {
+function EventForm({ calendars, selectedDate, events, getCalendar, onSave, onClose }) {
   const [title, setTitle] = useState('');
   const [calendarId, setCalendarId] = useState(calendars[0]?.id || '');
   const [startTime, setStartTime] = useState(selectedDate ? selectedDate.format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm'));
@@ -225,6 +227,22 @@ function EventForm({ calendars, selectedDate, onSave, onClose }) {
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [allDay, setAllDay] = useState(false);
+
+  const conflicts = useMemo(() => {
+    if (!location.trim()) return [];
+    const newStart = allDay ? moment(startTime).startOf('day') : moment(startTime);
+    const newEnd = allDay ? moment(startTime).endOf('day') : moment(endTime);
+    if (!newStart.isValid() || !newEnd.isValid()) return [];
+    return events.filter((e) => {
+      if (!e.location || e.location.trim().toLowerCase() !== location.trim().toLowerCase()) return false;
+      const eStart = moment(e.start_time);
+      const eEnd = e.end_time ? moment(e.end_time) : moment(e.start_time).add(1, 'hour');
+      if (e.all_day || allDay) {
+        return eStart.isSameOrBefore(newEnd, 'day') && eEnd.isSameOrAfter(newStart, 'day');
+      }
+      return newStart.isBefore(eEnd) && newEnd.isAfter(eStart);
+    });
+  }, [location, startTime, endTime, allDay, events]);
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -263,10 +281,36 @@ function EventForm({ calendars, selectedDate, onSave, onClose }) {
             <Label className="text-xs font-medium text-slate-600">Description</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" rows={2} />
           </div>
+
+          {conflicts.length > 0 && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-amber-800">
+                <AlertTriangle size={16} className="flex-shrink-0" />
+                <span className="text-sm font-semibold">Location Conflict Detected ({conflicts.length})</span>
+              </div>
+              <p className="text-xs text-amber-700">"{location}" is already booked during this time:</p>
+              <div className="space-y-1.5">
+                {conflicts.map((c) => {
+                  const cal = getCalendar(c.calendar_id);
+                  return (
+                    <div key={c.id} className="flex items-center gap-2 text-xs bg-white rounded-md p-2 border border-amber-200">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cal?.color || '#3b82f6' }} />
+                      <span className="font-medium text-slate-900 truncate">{c.title}</span>
+                      <span className="text-slate-500 whitespace-nowrap">
+                        {moment(c.start_time).format('MMM D, h:mm A')}{c.end_time ? ` – ${moment(c.end_time).format('h:mm A')}` : ''}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ title, calendar_id: calendarId, start_time: allDay ? moment(startTime).startOf('day').toISOString() : new Date(startTime).toISOString(), end_time: allDay ? moment(startTime).endOf('day').toISOString() : new Date(endTime).toISOString(), location: location || undefined, description: description || undefined, all_day: allDay })} disabled={!title.trim()} className="bg-indigo-600 hover:bg-indigo-700">Create Event</Button>
+          <Button onClick={() => onSave({ title, calendar_id: calendarId, start_time: allDay ? moment(startTime).startOf('day').toISOString() : new Date(startTime).toISOString(), end_time: allDay ? moment(startTime).endOf('day').toISOString() : new Date(endTime).toISOString(), location: location || undefined, description: description || undefined, all_day: allDay })} disabled={!title.trim()} className={conflicts.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}>
+            {conflicts.length > 0 ? 'Create Anyway' : 'Create Event'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
