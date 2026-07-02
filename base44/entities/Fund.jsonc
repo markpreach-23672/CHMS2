@@ -1,0 +1,31 @@
+{
+  "name": "Fund",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Fund Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    },
+    "is_tax_deductible": {
+      "type": "boolean",
+      "title": "Tax Deductible",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

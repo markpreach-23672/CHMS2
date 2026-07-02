@@ -1,0 +1,41 @@
+{
+  "name": "Family",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "family_name": {
+      "type": "string",
+      "title": "Family Name"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
+    "state": {
+      "type": "string",
+      "title": "State"
+    },
+    "zip": {
+      "type": "string",
+      "title": "ZIP"
+    },
+    "home_phone": {
+      "type": "string",
+      "title": "Home Phone"
+    },
+    "photo_url": {
+      "type": "string",
+      "title": "Photo URL"
+    }
+  },
+  "required": [
+    "family_name"
+  ]
+}

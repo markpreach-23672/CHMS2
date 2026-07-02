@@ -1,0 +1,100 @@
+{
+  "name": "Person",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "first_name": {
+      "type": "string",
+      "title": "First Name"
+    },
+    "last_name": {
+      "type": "string",
+      "title": "Last Name"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "mobile": {
+      "type": "string",
+      "title": "Mobile"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
+    "state": {
+      "type": "string",
+      "title": "State"
+    },
+    "zip": {
+      "type": "string",
+      "title": "ZIP"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Birth Date"
+    },
+    "photo_url": {
+      "type": "string",
+      "title": "Photo URL"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "visitor",
+        "member"
+      ],
+      "default": "active"
+    },
+    "family_id": {
+      "type": "string",
+      "title": "Family ID"
+    },
+    "family_role": {
+      "type": "string",
+      "enum": [
+        "head_of_household",
+        "spouse",
+        "child",
+        "other"
+      ],
+      "title": "Family Role"
+    },
+    "custom_fields": {
+      "type": "object",
+      "title": "Custom Fields",
+      "default": {}
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    },
+    "tag_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tag IDs",
+      "default": []
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name"
+  ]
+}

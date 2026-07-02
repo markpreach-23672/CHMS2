@@ -1,0 +1,27 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "super_admin",
+        "church_admin",
+        "staff"
+      ],
+      "default": "staff"
+    },
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "permission_category_id": {
+      "type": "string",
+      "title": "Permission Category ID"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    }
+  }
+}

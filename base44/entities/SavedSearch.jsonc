@@ -1,0 +1,22 @@
+{
+  "name": "SavedSearch",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Search Name"
+    },
+    "query_config": {
+      "type": "object",
+      "title": "Query Configuration",
+      "default": {}
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

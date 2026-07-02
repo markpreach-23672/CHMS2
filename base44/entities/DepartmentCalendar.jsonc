@@ -1,0 +1,36 @@
+{
+  "name": "DepartmentCalendar",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Calendar Name"
+    },
+    "color": {
+      "type": "string",
+      "title": "Color",
+      "default": "#3b82f6"
+    },
+    "google_calendar_id": {
+      "type": "string",
+      "title": "Google Calendar ID"
+    },
+    "is_public": {
+      "type": "boolean",
+      "title": "Public",
+      "default": false
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

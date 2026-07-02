@@ -1,0 +1,81 @@
+{
+  "name": "PermissionCategory",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Category Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "people_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "read",
+      "title": "People Access"
+    },
+    "giving_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "none",
+      "title": "Giving Access"
+    },
+    "calendar_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "none",
+      "title": "Calendar Access"
+    },
+    "connect_cards_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "none",
+      "title": "Connect Cards Access"
+    },
+    "tags_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "read",
+      "title": "Tags Access"
+    },
+    "reports_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "read",
+      "title": "Reports Access"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "name": "WorkflowStep",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "workflow_id": {
+      "type": "string",
+      "title": "Workflow ID"
+    },
+    "step_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "text",
+        "wait",
+        "task"
+      ],
+      "title": "Step Type"
+    },
+    "delay_days": {
+      "type": "number",
+      "title": "Delay (Days)",
+      "default": 0
+    },
+    "subject": {
+      "type": "string",
+      "title": "Email Subject"
+    },
+    "body": {
+      "type": "string",
+      "title": "Message Body"
+    },
+    "task_description": {
+      "type": "string",
+      "title": "Task Description"
+    },
+    "assigned_to_role": {
+      "type": "string",
+      "title": "Assigned To Role"
+    },
+    "sort_order": {
+      "type": "number",
+      "title": "Sort Order",
+      "default": 0
+    }
+  },
+  "required": [
+    "step_type",
+    "sort_order"
+  ]
+}

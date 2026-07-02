@@ -1,0 +1,50 @@
+{
+  "name": "CalendarEvent",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "calendar_id": {
+      "type": "string",
+      "title": "Calendar ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Event Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start Time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Time"
+    },
+    "location": {
+      "type": "string",
+      "title": "Location"
+    },
+    "all_day": {
+      "type": "boolean",
+      "title": "All Day",
+      "default": false
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "title": "Recurring",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "start_time"
+  ]
+}

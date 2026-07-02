@@ -1,0 +1,30 @@
+{
+  "name": "Tag",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Tag Name"
+    },
+    "folder_id": {
+      "type": "string",
+      "title": "Folder ID"
+    },
+    "color": {
+      "type": "string",
+      "title": "Color",
+      "default": "#6366f1"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

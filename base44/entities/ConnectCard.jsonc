@@ -1,0 +1,43 @@
+{
+  "name": "ConnectCard",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Card Name"
+    },
+    "title": {
+      "type": "string",
+      "title": "Display Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "fields": {
+      "type": "object",
+      "title": "Form Fields",
+      "default": {}
+    },
+    "workflow_id": {
+      "type": "string",
+      "title": "Workflow ID"
+    },
+    "keyword": {
+      "type": "string",
+      "title": "Text Keyword"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

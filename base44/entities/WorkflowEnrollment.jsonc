@@ -1,0 +1,47 @@
+{
+  "name": "WorkflowEnrollment",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "workflow_id": {
+      "type": "string",
+      "title": "Workflow ID"
+    },
+    "person_id": {
+      "type": "string",
+      "title": "Person ID"
+    },
+    "current_step": {
+      "type": "number",
+      "title": "Current Step",
+      "default": 0
+    },
+    "enrolled_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Enrolled Date"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Completed Date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "paused"
+      ],
+      "default": "active",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "person_id"
+  ]
+}

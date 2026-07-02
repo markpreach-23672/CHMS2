@@ -1,0 +1,65 @@
+{
+  "name": "Donation",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "person_id": {
+      "type": "string",
+      "title": "Person ID"
+    },
+    "fund_id": {
+      "type": "string",
+      "title": "Fund ID"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount"
+    },
+    "donation_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Donation Date"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "check",
+        "online",
+        "other"
+      ],
+      "title": "Method",
+      "default": "cash"
+    },
+    "check_number": {
+      "type": "string",
+      "title": "Check Number"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "title": "Recurring",
+      "default": false
+    },
+    "recurring_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "monthly",
+        "quarterly",
+        "yearly"
+      ],
+      "title": "Recurring Frequency"
+    }
+  },
+  "required": [
+    "amount",
+    "donation_date"
+  ]
+}

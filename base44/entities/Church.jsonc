@@ -1,0 +1,69 @@
+{
+  "name": "Church",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Church Name"
+    },
+    "subdomain": {
+      "type": "string",
+      "title": "Subdomain"
+    },
+    "logo_url": {
+      "type": "string",
+      "title": "Logo URL"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "default": "America/New_York"
+    },
+    "branding_color": {
+      "type": "string",
+      "title": "Branding Color",
+      "default": "#4f46e5"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
+    "state": {
+      "type": "string",
+      "title": "State"
+    },
+    "zip": {
+      "type": "string",
+      "title": "ZIP"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "subscription_status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trial",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "trial"
+    },
+    "subscription_started_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
