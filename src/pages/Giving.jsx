@@ -7,11 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, DollarSign, TrendingUp, Folder, Trash2, MoreHorizontal, Pencil } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, Folder, Trash2, MoreHorizontal, Pencil, Mail, Printer } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import GivingDashboard from '@/components/giving/GivingDashboard';
+import EmailStatementDialog from '@/components/giving/EmailStatementDialog';
+import PrintStatementDialog from '@/components/giving/PrintStatementDialog';
 import moment from 'moment';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Giving() {
   const [donations, setDonations] = useState([]);
@@ -22,6 +24,9 @@ export default function Giving() {
   const [showDonationForm, setShowDonationForm] = useState(false);
   const [showFundForm, setShowFundForm] = useState(false);
   const [editFund, setEditFund] = useState(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -85,10 +90,28 @@ export default function Giving() {
           <h1 className="text-2xl font-bold text-slate-900">Giving</h1>
           <p className="text-slate-500 text-sm mt-1">Track donations, manage funds, and monitor pledges.</p>
         </div>
-        <Button onClick={() => setShowDonationForm(true)} className="bg-indigo-600 hover:bg-indigo-700">
-          <Plus size={16} className="mr-1.5" />
-          Record Donation
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowEmailDialog(true)}>
+            <Mail size={16} className="mr-1.5" />
+            Email Statements
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Printer size={16} className="mr-1.5" />
+                Print
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowPrintDialog(true)}>Individual Statement</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/giving/statements/bulk')}>Print for Mailing (No Email)</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={() => setShowDonationForm(true)} className="bg-indigo-600 hover:bg-indigo-700">
+            <Plus size={16} className="mr-1.5" />
+            Record Donation
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="dashboard">
@@ -205,6 +228,16 @@ export default function Giving() {
           }}
           onClose={() => setShowDonationForm(false)}
         />
+      )}
+
+      {/* Email Statement Dialog */}
+      {showEmailDialog && (
+        <EmailStatementDialog people={people} onClose={() => setShowEmailDialog(false)} />
+      )}
+
+      {/* Print Statement Dialog */}
+      {showPrintDialog && (
+        <PrintStatementDialog people={people} onClose={() => setShowPrintDialog(false)} />
       )}
 
       {/* Fund Form */}

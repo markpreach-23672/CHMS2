@@ -33,17 +33,23 @@ export default function GivingDashboard({ donations, funds, people, pledges, loa
     };
   }, [donations]);
 
-  const monthlyData = useMemo(() => {
+  const fundColors = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+  const monthlyDataByFund = useMemo(() => {
     const months = [];
+    const fundNames = funds.map((f) => f.name);
     for (let i = 5; i >= 0; i--) {
       const m = moment().subtract(i, 'month');
-      const total = donations
-        .filter((d) => moment(d.donation_date).isSame(m, 'month'))
-        .reduce((s, d) => s + (d.amount || 0), 0);
-      months.push({ month: m.format('MMM'), amount: Math.round(total) });
+      const monthDonations = donations.filter((d) => moment(d.donation_date).isSame(m, 'month'));
+      const entry = { month: m.format('MMM') };
+      fundNames.forEach((fn) => {
+        const fid = funds.find((f) => f.name === fn)?.id;
+        entry[fn] = Math.round(monthDonations.filter((d) => d.fund_id === fid).reduce((s, d) => s + (d.amount || 0), 0));
+      });
+      months.push(entry);
     }
-    return months;
-  }, [donations]);
+    return { data: months, fundNames };
+  }, [donations, funds]);
 
   const fundProgress = useMemo(() => {
     return funds.map((fund) => {
@@ -108,24 +114,33 @@ export default function GivingDashboard({ donations, funds, people, pledges, loa
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900">Giving Trend</h3>
-              <p className="text-xs text-slate-400">Last 6 months</p>
+              <h3 className="text-sm font-semibold text-slate-900">Monthly Giving by Fund</h3>
+              <p className="text-xs text-slate-400">Last 6 months · stacked by fund</p>
             </div>
-            <TrendingUp size={16} className="text-slate-300" />
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={monthlyDataByFund.data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`} />
               <Tooltip
                 cursor={{ fill: '#f8fafc' }}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                formatter={(v) => [`$${v.toLocaleString()}`, 'Total']}
+                formatter={(v, name) => [`$${v.toLocaleString()}`, name]}
               />
-              <Bar dataKey="amount" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={50} />
+              {monthlyDataByFund.fundNames.map((fn, i) => (
+                <Bar key={fn} dataKey={fn} stackId="a" fill={fundColors[i % fundColors.length]} maxBarSize={50} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
+          <div className="flex flex-wrap gap-3 mt-3">
+            {monthlyDataByFund.fundNames.map((fn, i) => (
+              <div key={fn} className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: fundColors[i % fundColors.length] }} />
+                <span className="text-xs text-slate-500">{fn}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Recent transactions */}

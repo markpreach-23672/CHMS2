@@ -12,6 +12,8 @@ import People from '@/pages/People';
 import PersonDetail from '@/pages/PersonDetail';
 import Tags from '@/pages/Tags';
 import Giving from '@/pages/Giving';
+import GivingStatement from '@/pages/GivingStatement';
+import GivingStatementsBulk from '@/pages/GivingStatementsBulk';
 import CalendarPage from '@/pages/CalendarPage';
 import ConnectCards from '@/pages/ConnectCards';
 import SearchPage from '@/pages/Search';
@@ -56,6 +58,8 @@ const AuthenticatedApp = () => {
         <Route path="/families" element={<Families />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
+      <Route path="/giving/statement/:id" element={<GivingStatement />} />
+      <Route path="/giving/statements/bulk" element={<GivingStatementsBulk />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
