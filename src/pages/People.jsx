@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone } from 'lucide-react';
+import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import PersonForm from '@/components/people/PersonForm';
+import ImportPeopleDialog from '@/components/people/ImportPeopleDialog';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -37,6 +38,7 @@ export default function People() {
   const [showForm, setShowForm] = useState(false);
   const [editPerson, setEditPerson] = useState(null);
   const [showBulkTag, setShowBulkTag] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const loadPeople = useCallback(async () => {
     setLoading(true);
@@ -166,13 +168,19 @@ export default function People() {
             {people.length} {people.length === 1 ? 'person' : 'people'} in your database
           </p>
         </div>
-        <Button
-          onClick={() => { setEditPerson(null); setShowForm(true); }}
-          className="bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Plus size={16} className="mr-1.5" />
-          Add Person
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Upload size={16} className="mr-1.5" />
+            Import CSV
+          </Button>
+          <Button
+            onClick={() => { setEditPerson(null); setShowForm(true); }}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            <Plus size={16} className="mr-1.5" />
+            Add Person
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -360,6 +368,14 @@ export default function People() {
           person={editPerson}
           onSave={handleSaved}
           onClose={() => { setShowForm(false); setEditPerson(null); }}
+        />
+      )}
+
+      {/* Import Dialog */}
+      {showImport && (
+        <ImportPeopleDialog
+          onImported={loadPeople}
+          onClose={() => setShowImport(false)}
         />
       )}
 
