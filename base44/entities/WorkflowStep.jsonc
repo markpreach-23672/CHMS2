@@ -18,7 +18,9 @@
         "wait",
         "task",
         "staff_notify",
-        "no_response_alert"
+        "no_response_alert",
+        "apply_tag",
+        "remove_tag"
       ],
       "title": "Step Type"
     },
@@ -73,6 +75,10 @@
       ],
       "title": "Info Scope",
       "default": "contact_only"
+    },
+    "tag_id": {
+      "type": "string",
+      "title": "Tag ID (for apply_tag/remove_tag)"
     },
     "sort_order": {
       "type": "number",

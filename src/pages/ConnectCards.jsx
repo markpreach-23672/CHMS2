@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send, AlertCircle, QrCode, Pencil } from 'lucide-react';
+import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send, AlertCircle, QrCode, Pencil, LayoutTemplate, BarChart3, Users, Tag } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SubmitEntryDialog from '@/components/connectcards/SubmitEntryDialog';
 import CardForm from '@/components/connectcards/CardForm';
 import ShareCardDialog from '@/components/connectcards/ShareCardDialog';
+import WorkflowTemplatePicker from '@/components/workflows/WorkflowTemplatePicker';
+import WorkflowAnalytics from '@/components/workflows/WorkflowAnalytics';
+import BulkEnrollDialog from '@/components/workflows/BulkEnrollDialog';
 
 export default function ConnectCards() {
   const [cards, setCards] = useState([]);
@@ -26,6 +29,9 @@ export default function ConnectCards() {
   const [tags, setTags] = useState([]);
   const [shareCard, setShareCard] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [analyticsWorkflow, setAnalyticsWorkflow] = useState(null);
+  const [bulkEnrollWorkflow, setBulkEnrollWorkflow] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -118,6 +124,8 @@ export default function ConnectCards() {
       case 'task': return CheckSquare;
       case 'staff_notify': return Send;
       case 'no_response_alert': return AlertCircle;
+      case 'apply_tag': return Tag;
+      case 'remove_tag': return Tag;
       default: return Clock;
     }
   };
@@ -130,6 +138,8 @@ export default function ConnectCards() {
       case 'task': return 'Staff Task';
       case 'staff_notify': return 'Notify Staff';
       case 'no_response_alert': return 'No Response Alert';
+      case 'apply_tag': return 'Apply Tag';
+      case 'remove_tag': return 'Remove Tag';
       default: return type;
     }
   };
@@ -142,6 +152,10 @@ export default function ConnectCards() {
           <p className="text-slate-500 text-sm mt-1">Digital connect cards feed automated follow-up workflows.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowTemplatePicker(true)}>
+            <LayoutTemplate size={15} className="mr-1.5" />
+            New from Template
+          </Button>
           <Button variant="outline" onClick={() => setShowWorkflowForm(true)}>
             <Workflow size={15} className="mr-1.5" />
             New Workflow
@@ -244,6 +258,8 @@ export default function ConnectCards() {
                       <DropdownMenu>
                         <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAnalyticsWorkflow(wf); }}><BarChart3 size={14} className="mr-1.5" />Analytics</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setBulkEnrollWorkflow(wf); }}><Users size={14} className="mr-1.5" />Bulk Enroll</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteWorkflow(wf); }}>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -279,13 +295,16 @@ export default function ConnectCards() {
                                     </p>
                                   )}
                                   {(step.step_type === 'staff_notify' || step.step_type === 'no_response_alert') && step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
+                                  {(step.step_type === 'apply_tag' || step.step_type === 'remove_tag') && step.tag_id && (
+                                    <p className="text-xs text-slate-500">{step.step_type === 'apply_tag' ? 'Apply' : 'Remove'} tag: {tags.find((t) => t.id === step.tag_id)?.name || 'Unknown'}</p>
+                                  )}
                                 </div>
                               </div>
                             );
                           })}
                           {wfSteps.length === 0 && <p className="text-xs text-slate-400 py-2">No steps yet. Add one below.</p>}
                         </div>
-                        <AddStepButton onAdd={(data) => handleAddStep(wf.id, data)} users={users} />
+                        <AddStepButton onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
                       </div>
                     )}
                   </div>
@@ -334,6 +353,61 @@ export default function ConnectCards() {
         <ShareCardDialog card={shareCard} onClose={() => setShareCard(null)} />
       )}
 
+      {/* Workflow Template Picker */}
+      {showTemplatePicker && (
+        <WorkflowTemplatePicker
+          onCreate={async (template) => {
+            try {
+              const created = await base44.entities.Workflow.create({ name: template.name, description: template.description, is_active: true });
+              const stepsToCreate = template.steps.map((s) => ({
+                step_type: s.step_type,
+                delay_days: s.delay_days || 0,
+                delay_unit: s.delay_unit || 'days',
+                subject: s.subject,
+                body: s.body,
+                task_description: s.task_description,
+                notify_method: s.notify_method || 'email',
+                info_scope: s.info_scope || 'contact_only',
+                workflow_id: created.id,
+                sort_order: s.sort_order
+              }));
+              const createdSteps = await base44.entities.WorkflowStep.bulkCreate(stepsToCreate);
+              setWorkflows((prev) => [...prev, created]);
+              setSteps((prev) => ({ ...prev, [created.id]: createdSteps.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) }));
+              setShowTemplatePicker(false);
+            } catch (err) {
+              alert('Failed to create workflow from template.');
+            }
+          }}
+          onClose={() => setShowTemplatePicker(false)}
+        />
+      )}
+
+      {/* Workflow Analytics */}
+      {analyticsWorkflow && (
+        <WorkflowAnalytics
+          workflow={analyticsWorkflow}
+          steps={steps[analyticsWorkflow.id] || []}
+          enrollments={enrollments.filter((e) => e.workflow_id === analyticsWorkflow.id)}
+          onClose={() => setAnalyticsWorkflow(null)}
+        />
+      )}
+
+      {/* Bulk Enroll */}
+      {bulkEnrollWorkflow && (
+        <BulkEnrollDialog
+          workflow={bulkEnrollWorkflow}
+          tags={tags}
+          existingEnrollments={enrollments.filter((e) => e.workflow_id === bulkEnrollWorkflow.id)}
+          onEnrolled={(count) => {
+            loadData();
+            setBulkEnrollWorkflow(null);
+            alert(`Successfully enrolled ${count} ${count === 1 ? 'person' : 'people'} in "${bulkEnrollWorkflow.name}".`);
+          }}
+          onClose={() => setBulkEnrollWorkflow(null)}
+        />
+      )}
+
       {/* Workflow Form */}
       {showWorkflowForm && (
         <WorkflowForm
@@ -354,7 +428,7 @@ export default function ConnectCards() {
   );
 }
 
-function AddStepButton({ onAdd, users }) {
+function AddStepButton({ onAdd, users, tags }) {
   const [show, setShow] = useState(false);
   const [type, setType] = useState('email');
   const [delayDays, setDelayDays] = useState('0');
@@ -365,6 +439,7 @@ function AddStepButton({ onAdd, users }) {
   const [notifyMethod, setNotifyMethod] = useState('email');
   const [delayUnit, setDelayUnit] = useState('days');
   const [infoScope, setInfoScope] = useState('contact_only');
+  const [tagId, setTagId] = useState('');
 
   const handleAdd = () => {
     const data = { step_type: type, delay_days: parseInt(delayDays) || 0, delay_unit: delayUnit };
@@ -381,6 +456,9 @@ function AddStepButton({ onAdd, users }) {
       data.info_scope = infoScope;
       data.body = body;
     }
+    if (type === 'apply_tag' || type === 'remove_tag') {
+      data.tag_id = tagId;
+    }
     onAdd(data);
     setShow(false);
     setType('email');
@@ -392,6 +470,7 @@ function AddStepButton({ onAdd, users }) {
     setNotifyMethod('email');
     setDelayUnit('days');
     setInfoScope('contact_only');
+    setTagId('');
   };
 
   if (!show) {
@@ -417,7 +496,9 @@ function AddStepButton({ onAdd, users }) {
               <SelectItem value="task">Staff Task</SelectItem>
               <SelectItem value="staff_notify">Notify Staff</SelectItem>
               <SelectItem value="no_response_alert">No Response Alert</SelectItem>
-            </SelectContent>
+              <SelectItem value="apply_tag">Apply Tag</SelectItem>
+              <SelectItem value="remove_tag">Remove Tag</SelectItem>
+              </SelectContent>
           </Select>
         </div>
         <div>
@@ -443,6 +524,7 @@ function AddStepButton({ onAdd, users }) {
           <div>
             <Label className="text-[10px] text-slate-500">Body</Label>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} />
+            <p className="text-[10px] text-slate-400 mt-0.5">Merge fields: {'{{first_name}}'}, {'{{last_name}}'}, {'{{church_name}}'}, {'{{full_name}}'}</p>
           </div>
         </>
       )}
@@ -493,6 +575,15 @@ function AddStepButton({ onAdd, users }) {
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} placeholder={type === 'no_response_alert' ? "e.g., Guest hasn't replied to our email — call them personally to check in and invite them to Sunday service." : "e.g., Call within 48 hours. Mention the Sunday service. Invite to coffee."} />
           </div>
         </>
+      )}
+      {(type === 'apply_tag' || type === 'remove_tag') && (
+        <div>
+          <Label className="text-[10px] text-slate-500">{type === 'apply_tag' ? 'Tag to Apply' : 'Tag to Remove'}</Label>
+          <select value={tagId} onChange={(e) => setTagId(e.target.value)} className="mt-0.5 w-full h-8 px-2 rounded-md border border-input bg-transparent text-xs">
+            <option value="">Select a tag...</option>
+            {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
       )}
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="outline" onClick={() => setShow(false)}>Cancel</Button>

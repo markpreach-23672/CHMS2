@@ -6,27 +6,18 @@ Deno.serve(async (req) => {
 
     const churches = await base44.asServiceRole.entities.Church.list();
     const fromEmail = churches[0]?.resend_from_email || 'Church <onboarding@resend.dev>';
+    const churchName = churches[0]?.name || 'our church';
 
-    // Get all active enrollments
     const enrollments = await base44.asServiceRole.entities.WorkflowEnrollment.filter({ status: 'active' });
     const now = new Date();
     let processedCount = 0;
 
     for (const enrollment of enrollments) {
       try {
-        // Get workflow steps
         const steps = await base44.asServiceRole.entities.WorkflowStep.filter({ workflow_id: enrollment.workflow_id });
         steps.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-        if (steps.length === 0) {
-          await base44.asServiceRole.entities.WorkflowEnrollment.update(enrollment.id, {
-            status: 'completed',
-            completed_date: now.toISOString()
-          });
-          continue;
-        }
-
-        if (enrollment.current_step >= steps.length) {
+        if (steps.length === 0 || enrollment.current_step >= steps.length) {
           await base44.asServiceRole.entities.WorkflowEnrollment.update(enrollment.id, {
             status: 'completed',
             completed_date: now.toISOString()
@@ -41,7 +32,6 @@ Deno.serve(async (req) => {
         let currentStepIdx = enrollment.current_step;
         let stepAdvanced = false;
 
-        // Process all steps whose delay has elapsed
         while (currentStepIdx < steps.length) {
           const step = steps[currentStepIdx];
           const delayValue = step.delay_days || 0;
@@ -49,7 +39,7 @@ Deno.serve(async (req) => {
           const stepDueDate = new Date(enrolledDate.getTime() + delayMs);
 
           if (now >= stepDueDate) {
-            await processStep(base44, step, person, fromEmail);
+            await processStep(base44, step, person, fromEmail, churchName);
             currentStepIdx++;
             stepAdvanced = true;
           } else {
@@ -72,7 +62,6 @@ Deno.serve(async (req) => {
           processedCount++;
         }
       } catch (err) {
-        // Skip this enrollment on error, continue processing others
         console.error(`Error processing enrollment ${enrollment.id}:`, err.message);
       }
     }
@@ -83,7 +72,49 @@ Deno.serve(async (req) => {
   }
 });
 
-async function processStep(base44, step, person, fromEmail) {
+function applyMergeFields(body, person, churchName) {
+  let result = body || '';
+  result = result.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
+  result = result.replace(/\{\{last_name\}\}/g, person.last_name || '');
+  result = result.replace(/\{\{full_name\}\}/g, `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Friend');
+  result = result.replace(/\{\{email\}\}/g, person.email || '');
+  result = result.replace(/\{\{phone\}\}/g, person.phone || person.mobile || '');
+  result = result.replace(/\{\{church_name\}\}/g, churchName || 'our church');
+  return result;
+}
+
+async function processStep(base44, step, person, fromEmail, churchName) {
+  // Apply tag
+  if (step.step_type === 'apply_tag' && step.tag_id) {
+    try {
+      const existingTags = person.tag_ids || [];
+      if (!existingTags.includes(step.tag_id)) {
+        await base44.asServiceRole.entities.Person.update(person.id, {
+          tag_ids: [...existingTags, step.tag_id]
+        });
+      }
+    } catch (err) {
+      console.error(`Apply tag failed: ${err.message}`);
+    }
+    return;
+  }
+
+  // Remove tag
+  if (step.step_type === 'remove_tag' && step.tag_id) {
+    try {
+      const existingTags = person.tag_ids || [];
+      if (existingTags.includes(step.tag_id)) {
+        await base44.asServiceRole.entities.Person.update(person.id, {
+          tag_ids: existingTags.filter((id) => id !== step.tag_id)
+        });
+      }
+    } catch (err) {
+      console.error(`Remove tag failed: ${err.message}`);
+    }
+    return;
+  }
+
+  // Staff notification
   if (step.step_type === 'staff_notify' && step.assigned_to_user_id) {
     try {
       const staffUser = await base44.asServiceRole.entities.User.get(step.assigned_to_user_id);
@@ -117,7 +148,10 @@ async function processStep(base44, step, person, fromEmail) {
     } catch (err) {
       console.error(`Staff notification failed: ${err.message}`);
     }
+    return;
   }
+
+  // No response alert
   if (step.step_type === 'no_response_alert' && step.assigned_to_user_id) {
     try {
       const staffUser = await base44.asServiceRole.entities.User.get(step.assigned_to_user_id);
@@ -151,11 +185,13 @@ async function processStep(base44, step, person, fromEmail) {
     } catch (err) {
       console.error(`No-response alert failed: ${err.message}`);
     }
+    return;
   }
+
+  // Email
   if (step.step_type === 'email' && person.email) {
-    let body = step.body || '';
-    body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
-    body = body.replace(/\{\{last_name\}\}/g, person.last_name || '');
+    const body = applyMergeFields(step.body, person, churchName);
+    const subject = applyMergeFields(step.subject || 'Update from our church', person, churchName);
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       const res = await fetch('https://api.resend.com/emails', {
@@ -164,7 +200,7 @@ async function processStep(base44, step, person, fromEmail) {
         body: JSON.stringify({
           from: fromEmail,
           to: person.email,
-          subject: step.subject || 'Update from our church',
+          subject,
           text: body
         })
       });
