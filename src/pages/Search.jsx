@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -7,22 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search as SearchIcon, Plus, Trash2, Save, Bookmark, X, Tag as TagIcon, Download } from 'lucide-react';
+import { Search as SearchIcon, Plus, Trash2, Save, Bookmark, X, Tag as TagIcon, Download, ArrowUpDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
-const BUILT_IN_FIELDS = [
-  { name: 'first_name', label: 'First Name', type: 'text' },
-  { name: 'last_name', label: 'Last Name', type: 'text' },
-  { name: 'email', label: 'Email', type: 'text' },
-  { name: 'phone', label: 'Phone', type: 'text' },
-  { name: 'status', label: 'Status', type: 'select', options: ['active', 'member', 'visitor', 'inactive'] },
-  { name: 'city', label: 'City', type: 'text' },
-  { name: 'state', label: 'State', type: 'text' },
-  { name: 'zip', label: 'ZIP', type: 'text' },
-];
+import moment from 'moment';
+import FilterRow from '@/components/search/FilterRow';
+import { BUILT_IN_FIELDS, OPERATORS_BY_TYPE, SORT_FIELDS, compareValue, compareNumber } from '@/components/search/searchUtils';
 
 export default function Search() {
   const [filters, setFilters] = useState([{ field: 'first_name', operator: 'contains', value: '' }]);
+  const [logic, setLogic] = useState('and');
+  const [funds, setFunds] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [sortField, setSortField] = useState('last_name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const searchTimer = useRef(null);
   const [customFields, setCustomFields] = useState([]);
   const [tags, setTags] = useState([]);
   const [results, setResults] = useState(null);
@@ -36,16 +34,20 @@ export default function Search() {
 
   const loadData = useCallback(async () => {
     try {
-      const [cf, t, p, ss] = await Promise.all([
+      const [cf, t, p, ss, f, d] = await Promise.all([
         base44.entities.CustomField.list(),
         base44.entities.Tag.list(),
         base44.entities.Person.list(),
         base44.entities.SavedSearch.list(),
+        base44.entities.Fund.list().catch(() => []),
+        base44.entities.Donation.list().catch(() => []),
       ]);
       setCustomFields(cf);
       setTags(t);
       setAllPeople(p);
       setSavedSearches(ss);
+      setFunds(f);
+      setDonations(d);
     } catch (err) {
       console.error('Failed to load search data:', err);
     } finally {
@@ -57,16 +59,33 @@ export default function Search() {
     loadData();
   }, [loadData]);
 
-  const allFields = [
+  const allFields = useMemo(() => [
     ...BUILT_IN_FIELDS,
     ...customFields.map((f) => ({
       name: `custom.${f.name}`,
       label: f.name,
-      type: f.field_type === 'dropdown' ? 'select' : 'text',
+      type: f.field_type === 'dropdown' ? 'select'
+        : f.field_type === 'multi_select' ? 'multiselect'
+        : f.field_type === 'checkbox' ? 'boolean'
+        : f.field_type === 'number' ? 'number'
+        : f.field_type === 'date' ? 'date'
+        : 'text',
       options: f.options || [],
     })),
-    { name: 'tag', label: 'Has Tag', type: 'tag', options: tags.map((t) => ({ id: t.id, name: t.name })) },
-  ];
+  ], [customFields]);
+
+  const givingTotals = useMemo(() => {
+    const totals = {};
+    const fundGivers = {};
+    donations.forEach(d => {
+      totals[d.person_id] = (totals[d.person_id] || 0) + (d.amount || 0);
+      if (d.fund_id) {
+        if (!fundGivers[d.fund_id]) fundGivers[d.fund_id] = new Set();
+        fundGivers[d.fund_id].add(d.person_id);
+      }
+    });
+    return { totals, fundGivers };
+  }, [donations]);
 
   const getField = (name) => allFields.find((f) => f.name === name);
 
@@ -78,53 +97,89 @@ export default function Search() {
     setFilters(filters.filter((_, i) => i !== idx));
   };
 
-  const updateFilter = (idx, key, value) => {
-    setFilters(filters.map((f, i) => (i === idx ? { ...f, [key]: value } : f)));
+  const updateFilter = (idx, keyOrPatch, value) => {
+    setFilters(filters.map((f, i) => {
+      if (i !== idx) return f;
+      if (typeof keyOrPatch === 'string') return { ...f, [keyOrPatch]: value };
+      return { ...f, ...keyOrPatch };
+    }));
   };
 
-  const runSearch = () => {
+  const runSearch = useCallback(() => {
+    if (!allPeople.length) { setResults([]); return; }
+    const getField = (name) => allFields.find((f) => f.name === name);
     const matched = allPeople.filter((person) => {
-      return filters.every((filter) => {
+      const checkFilter = (filter) => {
         if (!filter.value && filter.operator !== 'is_empty') return true;
         const field = getField(filter.field);
         if (!field) return true;
 
-        let personValue;
         if (filter.field === 'tag') {
-          personValue = (person.tag_ids || []).includes(filter.value);
-          return personValue;
+          return (person.tag_ids || []).includes(filter.value);
         }
-        if (filter.field.startsWith('custom.')) {
-          const customName = filter.field.replace('custom.', '');
-          personValue = person.custom_fields?.[customName] || '';
-        } else {
-          personValue = person[filter.field] || '';
+        if (filter.field === 'giving_total') {
+          const total = givingTotals.totals[person.id] || 0;
+          return compareNumber(total, filter.operator, parseFloat(filter.value) || 0);
+        }
+        if (filter.field === 'giving_fund') {
+          return givingTotals.fundGivers[filter.value]?.has(person.id) || false;
+        }
+        if (filter.field === 'has_given') {
+          const count = donations.filter(d => d.person_id === person.id).length;
+          return filter.value === 'true' ? count > 0 : count === 0;
         }
 
-        switch (filter.operator) {
-          case 'contains':
-            return String(personValue).toLowerCase().includes(String(filter.value).toLowerCase());
-          case 'equals':
-            return String(personValue).toLowerCase() === String(filter.value).toLowerCase();
-          case 'starts_with':
-            return String(personValue).toLowerCase().startsWith(String(filter.value).toLowerCase());
-          case 'is_empty':
-            return !personValue;
-          default:
-            return true;
+        let personValue;
+        if (filter.field.startsWith('custom.')) {
+          const customName = filter.field.replace('custom.', '');
+          personValue = person.custom_fields?.[customName];
+          if (field.type === 'multiselect') {
+            const arr = Array.isArray(personValue) ? personValue : [];
+            return arr.includes(filter.value);
+          }
+          if (field.type === 'boolean') {
+            return (personValue === true || personValue === 'true') === (filter.value === 'true');
+          }
+        } else {
+          personValue = person[filter.field];
         }
-      });
+
+        if (field.type === 'number') {
+          return compareNumber(Number(personValue) || 0, filter.operator, parseFloat(filter.value) || 0);
+        }
+
+        return compareValue(personValue, filter.operator, filter.value);
+      };
+
+      return logic === 'and' ? filters.every(checkFilter) : filters.some(checkFilter);
     });
+
+    matched.sort((a, b) => {
+      let av = a[sortField] || '';
+      let bv = b[sortField] || '';
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      if (av < bv) return sortDirection === 'asc' ? -1 : 1;
+      if (av > bv) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
     setResults(matched);
     setSelected(new Set());
-  };
+  }, [allPeople, filters, logic, donations, givingTotals, sortField, sortDirection, allFields]);
+
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => runSearch(), 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [runSearch]);
 
   const handleSaveSearch = async () => {
     if (!searchName.trim()) return;
     try {
       const created = await base44.entities.SavedSearch.create({
         name: searchName,
-        query_config: { filters },
+        query_config: { filters, logic },
       });
       setSavedSearches([created, ...savedSearches]);
       setShowSaveDialog(false);
@@ -136,7 +191,7 @@ export default function Search() {
 
   const loadSavedSearch = (saved) => {
     setFilters(saved.query_config?.filters || [{ field: 'first_name', operator: 'contains', value: '' }]);
-    setTimeout(runSearch, 100);
+    setLogic(saved.query_config?.logic || 'and');
   };
 
   const handleDeleteSaved = async (saved) => {
@@ -191,8 +246,8 @@ export default function Search() {
 
   const exportCSV = () => {
     if (!results || results.length === 0) return;
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'City', 'State', 'ZIP'];
-    const rows = results.map((p) => [p.first_name, p.last_name, p.email, p.phone, p.status, p.city, p.state, p.zip]);
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Mobile', 'Status', 'Gender', 'Marital Status', 'City', 'State', 'ZIP', 'Birth Date', 'First Visit', 'Baptism', 'Membership'];
+    const rows = results.map((p) => [p.first_name, p.last_name, p.email, p.phone, p.mobile, p.status, p.gender, p.marital_status, p.city, p.state, p.zip, p.birth_date, p.first_visit_date, p.baptism_date, p.membership_date]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c || ''}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -239,57 +294,34 @@ export default function Search() {
             <div className="flex items-center gap-2 mb-4">
               <SearchIcon size={18} className="text-slate-400" />
               <h2 className="text-sm font-semibold text-slate-900">Query Builder</h2>
+              <div className="flex-1" />
+              {filters.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">Match</span>
+                  <Select value={logic} onValueChange={setLogic}>
+                    <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="and">All (AND)</SelectItem>
+                      <SelectItem value="or">Any (OR)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2.5">
-              {filters.map((filter, idx) => {
-                const field = getField(filter.field);
-                return (
-                  <div key={idx} className="flex items-center gap-2 flex-wrap">
-                    {idx > 0 && <span className="text-xs font-semibold text-indigo-600 px-1">AND</span>}
-                    <Select value={filter.field} onValueChange={(v) => updateFilter(idx, 'field', v)}>
-                      <SelectTrigger className="w-40 h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {allFields.map((f) => (
-                          <SelectItem key={f.name} value={f.name}>{f.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {filter.field !== 'tag' && (
-                      <Select value={filter.operator} onValueChange={(v) => updateFilter(idx, 'operator', v)}>
-                        <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="contains">Contains</SelectItem>
-                          <SelectItem value="equals">Equals</SelectItem>
-                          <SelectItem value="starts_with">Starts with</SelectItem>
-                          <SelectItem value="is_empty">Is empty</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {filter.operator !== 'is_empty' && filter.field !== 'tag' && (
-                      <Input
-                        value={filter.value}
-                        onChange={(e) => updateFilter(idx, 'value', e.target.value)}
-                        placeholder="Value..."
-                        className="flex-1 min-w-[120px] h-8 text-xs"
-                      />
-                    )}
-                    {filter.field === 'tag' && (
-                      <Select value={filter.value} onValueChange={(v) => updateFilter(idx, 'value', v)}>
-                        <SelectTrigger className="flex-1 h-8 text-xs"><SelectValue placeholder="Select tag..." /></SelectTrigger>
-                        <SelectContent>
-                          {tags.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    <button onClick={() => removeFilter(idx)} className="p-1 text-slate-400 hover:text-red-500">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                );
-              })}
+              {filters.map((filter, idx) => (
+                <FilterRow
+                  key={idx}
+                  filter={filter}
+                  idx={idx}
+                  allFields={allFields}
+                  tags={tags}
+                  funds={funds}
+                  onUpdate={updateFilter}
+                  onRemove={removeFilter}
+                />
+              ))}
             </div>
 
             <div className="flex items-center gap-2 mt-4">
@@ -317,7 +349,19 @@ export default function Search() {
                   <span className="font-semibold text-slate-900">{results.length}</span> {results.length === 1 ? 'result' : 'results'}
                   {selected.size > 0 && <span className="ml-3 text-indigo-600 font-medium">{selected.size} selected</span>}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <div className="flex items-center gap-1.5">
+                    <ArrowUpDown size={14} className="text-slate-400" />
+                    <Select value={sortField} onValueChange={setSortField}>
+                      <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SORT_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="sm" onClick={() => setSortDirection(d => d === 'asc' ? 'desc' : 'asc')} className="h-7 px-2 text-xs">
+                      {sortDirection === 'asc' ? '↑ Asc' : '↓ Desc'}
+                    </Button>
+                  </div>
                   {selected.size > 0 && (
                     <Button variant="outline" size="sm" onClick={() => setShowBulkTag(true)}>
                       <TagIcon size={14} className="mr-1" />
