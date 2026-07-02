@@ -111,6 +111,34 @@ async function processStep(base44, step, person, fromEmail) {
       console.error(`Staff notification failed: ${err.message}`);
     }
   }
+  if (step.step_type === 'no_response_alert' && step.assigned_to_user_id) {
+    try {
+      const staffUser = await base44.asServiceRole.entities.User.get(step.assigned_to_user_id);
+      if (!staffUser || !staffUser.email) return;
+      const guestName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Guest';
+      const subject = `Follow-up needed: ${guestName} hasn't responded`;
+      let emailBody = `${guestName} submitted a connect card and hasn't responded to our follow-up outreach. They may be falling through the cracks.\n\n`;
+      emailBody += `Guest Contact Information:\n`;
+      emailBody += `  Name: ${guestName}\n`;
+      emailBody += `  Email: ${person.email || 'N/A'}\n`;
+      emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
+      if (person.notes) emailBody += `  Original Message: ${person.notes}\n`;
+      emailBody += `\nInstructions:\n`;
+      emailBody += step.body || 'Please reach out personally (call or text) to connect with this guest and make sure they feel welcomed.';
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: fromEmail, to: staffUser.email, subject, text: emailBody })
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(`Resend API error (${res.status}): ${errText}`);
+      }
+    } catch (err) {
+      console.error(`No-response alert failed: ${err.message}`);
+    }
+  }
   if (step.step_type === 'email' && person.email) {
     let body = step.body || '';
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');

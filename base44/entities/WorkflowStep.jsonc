@@ -17,7 +17,8 @@
         "text",
         "wait",
         "task",
-        "staff_notify"
+        "staff_notify",
+        "no_response_alert"
       ],
       "title": "Step Type"
     },

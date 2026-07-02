@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send } from 'lucide-react';
+import { Plus, CreditCard, Workflow, Mail, MessageSquare, Clock, CheckSquare, Trash2, MoreHorizontal, ArrowRight, Send, AlertCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SubmitEntryDialog from '@/components/connectcards/SubmitEntryDialog';
 
@@ -110,6 +110,7 @@ export default function ConnectCards() {
       case 'wait': return Clock;
       case 'task': return CheckSquare;
       case 'staff_notify': return Send;
+      case 'no_response_alert': return AlertCircle;
       default: return Clock;
     }
   };
@@ -121,6 +122,7 @@ export default function ConnectCards() {
       case 'wait': return 'Wait';
       case 'task': return 'Staff Task';
       case 'staff_notify': return 'Notify Staff';
+      case 'no_response_alert': return 'No Response Alert';
       default: return type;
     }
   };
@@ -262,12 +264,12 @@ export default function ConnectCards() {
                                   {step.subject && <p className="text-xs text-slate-500 truncate">Subject: {step.subject}</p>}
                                   {step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
                                   {step.task_description && <p className="text-xs text-slate-500">{step.task_description}</p>}
-                                  {step.step_type === 'staff_notify' && (
+                                  {(step.step_type === 'staff_notify' || step.step_type === 'no_response_alert') && (
                                     <p className="text-xs text-slate-500">
-                                      Notify {users.find((u) => u.id === step.assigned_to_user_id)?.full_name || users.find((u) => u.id === step.assigned_to_user_id)?.email || 'staff'} via {step.notify_method || 'email'}
+                                      {step.step_type === 'no_response_alert' ? 'Alert' : 'Notify'} {users.find((u) => u.id === step.assigned_to_user_id)?.full_name || users.find((u) => u.id === step.assigned_to_user_id)?.email || 'staff'} via {step.notify_method || 'email'}
                                     </p>
                                   )}
-                                  {step.step_type === 'staff_notify' && step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
+                                  {(step.step_type === 'staff_notify' || step.step_type === 'no_response_alert') && step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
                                 </div>
                               </div>
                             );
@@ -349,7 +351,7 @@ function AddStepButton({ onAdd, users }) {
     if (type === 'task') {
       data.task_description = taskDescription;
     }
-    if (type === 'staff_notify') {
+    if (type === 'staff_notify' || type === 'no_response_alert') {
       data.assigned_to_user_id = staffUserId;
       data.notify_method = notifyMethod;
       data.body = body;
@@ -387,6 +389,7 @@ function AddStepButton({ onAdd, users }) {
               <SelectItem value="wait">Wait</SelectItem>
               <SelectItem value="task">Staff Task</SelectItem>
               <SelectItem value="staff_notify">Notify Staff</SelectItem>
+              <SelectItem value="no_response_alert">No Response Alert</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -413,8 +416,13 @@ function AddStepButton({ onAdd, users }) {
           <Input value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} className="h-8 text-xs mt-0.5" placeholder="e.g., Call this guest to say hi" />
         </div>
       )}
-      {type === 'staff_notify' && (
+      {(type === 'staff_notify' || type === 'no_response_alert') && (
         <>
+          {type === 'no_response_alert' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-2 text-[10px] text-amber-700">
+              This alert fires after the delay below — set it to fire a few days after your email step so staff can follow up with guests who haven't replied.
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-[10px] text-slate-500">Staff Member</Label>
@@ -435,8 +443,8 @@ function AddStepButton({ onAdd, users }) {
             </div>
           </div>
           <div>
-            <Label className="text-[10px] text-slate-500">Instructions for Staff</Label>
-            <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} placeholder="e.g., Call within 48 hours. Mention the Sunday service. Invite to coffee." />
+            <Label className="text-[10px] text-slate-500">{type === 'no_response_alert' ? 'Follow-up Instructions' : 'Instructions for Staff'}</Label>
+            <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} placeholder={type === 'no_response_alert' ? "e.g., Guest hasn't replied to our email — call them personally to check in and invite them to Sunday service." : "e.g., Call within 48 hours. Mention the Sunday service. Invite to coffee."} />
           </div>
         </>
       )}
