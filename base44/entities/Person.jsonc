@@ -129,6 +129,14 @@
       },
       "title": "Tag IDs",
       "default": []
+    },
+    "volunteer_role_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Volunteer Role IDs",
+      "default": []
     }
   },
   "required": [

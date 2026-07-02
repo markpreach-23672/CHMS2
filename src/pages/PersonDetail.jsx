@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign, Clock } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign, Clock, Heart } from 'lucide-react';
 import moment from 'moment';
 import {
   Select,
@@ -36,6 +36,7 @@ export default function PersonDetail() {
   const [currentUser, setCurrentUser] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [folders, setFolders] = useState([]);
+  const [volunteerRoles, setVolunteerRoles] = useState([]);
 
   useEffect(() => {
     Promise.all([
@@ -43,12 +44,14 @@ export default function PersonDetail() {
       base44.entities.Tag.list(),
       base44.entities.CustomField.list(),
       base44.entities.TagFolder.list(),
+      base44.entities.VolunteerRole.list(),
     ])
-      .then(async ([p, t, cf, fldrs]) => {
+      .then(async ([p, t, cf, fldrs, vroles]) => {
         setPerson(p);
         setTags(t);
         setCustomFields(cf);
         setFolders(fldrs);
+        setVolunteerRoles(vroles);
 
         if (p.family_id) {
           const [fam, members] = await Promise.all([
@@ -118,6 +121,7 @@ export default function PersonDetail() {
   }
 
   const personTags = (person.tag_ids || []).map((tid) => tags.find((t) => t.id === tid)).filter(Boolean);
+  const personVolunteerRoles = (person.volunteer_role_ids || []).map((rid) => volunteerRoles.find((r) => r.id === rid)).filter(Boolean);
   const fullName = `${person.first_name} ${person.last_name}`;
   const totalGiving = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
 
@@ -247,6 +251,33 @@ export default function PersonDetail() {
               </div>
             </div>
           )}
+
+          {/* Volunteer Roles */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Heart size={15} className="text-rose-400" />
+                Volunteer Roles
+              </h3>
+              <button onClick={() => setShowEdit(true)} className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Edit</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {personVolunteerRoles.length === 0 ? (
+                <p className="text-xs text-slate-400">No volunteer roles assigned.</p>
+              ) : (
+                personVolunteerRoles.map((role) => (
+                  <Link
+                    key={role.id}
+                    to="/volunteers"
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                  >
+                    <Heart size={11} />
+                    {role.name}
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
 
           {/* Tags */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">

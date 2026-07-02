@@ -33,12 +33,14 @@ export default function PersonForm({ person, onSave, onClose }) {
     ...person,
   });
   const [customFields, setCustomFields] = useState([]);
+  const [volunteerRoles, setVolunteerRoles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const isEdit = !!person?.id;
 
   useEffect(() => {
     base44.entities.CustomField.list().then(setCustomFields).catch(() => {});
+    base44.entities.VolunteerRole.list().then(setVolunteerRoles).catch(() => {});
   }, []);
 
   const handleChange = (field, value) => {
@@ -351,6 +353,32 @@ export default function PersonForm({ person, onSave, onClose }) {
                         />
                       )}
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Volunteer Roles */}
+          {volunteerRoles.length > 0 && (
+            <div className="pt-2 border-t border-slate-100">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Volunteer Roles</p>
+              <div className="grid grid-cols-2 gap-2">
+                {volunteerRoles.sort((a, b) => (a.area || 'General').localeCompare(b.area || 'General') || a.name.localeCompare(b.name)).map((role) => {
+                  const arr = Array.isArray(formData.volunteer_role_ids) ? formData.volunteer_role_ids : [];
+                  const checked = arr.includes(role.id);
+                  return (
+                    <label key={role.id} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => {
+                          const newArr = checked ? arr.filter((x) => x !== role.id) : [...arr, role.id];
+                          handleChange('volunteer_role_ids', newArr);
+                        }}
+                      />
+                      {role.name}
+                      <span className="text-slate-400">· {role.area || 'General'}</span>
+                    </label>
                   );
                 })}
               </div>
