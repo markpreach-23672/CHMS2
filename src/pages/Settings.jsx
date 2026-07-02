@@ -7,8 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree, UserCog } from 'lucide-react';
+import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree, UserCog, MapPin } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import LocationsTab from '@/components/settings/LocationsTab';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -26,12 +27,14 @@ export default function Settings() {
           <TabsTrigger value="fields"><ListTree size={14} className="mr-1.5" />Custom Fields</TabsTrigger>
           <TabsTrigger value="staff"><Users size={14} className="mr-1.5" />Staff</TabsTrigger>
           <TabsTrigger value="permissions"><Shield size={14} className="mr-1.5" />Permissions</TabsTrigger>
+          <TabsTrigger value="locations"><MapPin size={14} className="mr-1.5" />Locations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile"><ProfileTab /></TabsContent>
         <TabsContent value="fields"><CustomFieldsTab /></TabsContent>
         <TabsContent value="staff"><StaffTab /></TabsContent>
         <TabsContent value="permissions"><PermissionsTab /></TabsContent>
+        <TabsContent value="locations"><LocationsTab /></TabsContent>
       </Tabs>
     </div>
   );

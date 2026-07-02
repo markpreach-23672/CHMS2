@@ -11,6 +11,7 @@ import moment from 'moment';
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [calendars, setCalendars] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(moment());
   const [showEventForm, setShowEventForm] = useState(false);
@@ -20,12 +21,14 @@ export default function CalendarPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [e, c] = await Promise.all([
+      const [e, c, locs] = await Promise.all([
         base44.entities.CalendarEvent.list(),
         base44.entities.DepartmentCalendar.list(),
+        base44.entities.Location.list(),
       ]);
       setEvents(e);
       setCalendars(c);
+      setLocations(locs);
       setVisibleCalendars(new Set(c.map((cal) => cal.id)));
     } catch (err) {
       console.error('Failed to load calendar:', err);
@@ -203,6 +206,7 @@ export default function CalendarPage() {
           selectedDate={selectedDate}
           events={events}
           getCalendar={getCalendar}
+          locations={locations}
           onSave={async (data) => {
             try {
               const created = await base44.entities.CalendarEvent.create(data);
@@ -219,7 +223,7 @@ export default function CalendarPage() {
   );
 }
 
-function EventForm({ calendars, selectedDate, events, getCalendar, onSave, onClose }) {
+function EventForm({ calendars, selectedDate, events, getCalendar, locations, onSave, onClose }) {
   const [title, setTitle] = useState('');
   const [calendarId, setCalendarId] = useState(calendars[0]?.id || '');
   const [startTime, setStartTime] = useState(selectedDate ? selectedDate.format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm'));
@@ -275,7 +279,28 @@ function EventForm({ calendars, selectedDate, events, getCalendar, onSave, onClo
           </label>
           <div>
             <Label className="text-xs font-medium text-slate-600">Location</Label>
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1" />
+            {locations.length > 0 ? (
+              <select value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                <option value="">Select a location...</option>
+                {locations.filter((l) => l.type === 'site').map((site) => (
+                  <optgroup key={site.id} label={site.name}>
+                    <option value={site.name}>{site.name} (whole site)</option>
+                    {locations.filter((r) => r.type === 'room' && r.parent_id === site.id).map((room) => (
+                      <option key={room.id} value={room.name}>{room.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+                {locations.filter((r) => r.type === 'room' && (!r.parent_id || !locations.find((s) => s.id === r.parent_id && s.type === 'site'))).length > 0 && (
+                  <optgroup label="Other Rooms">
+                    {locations.filter((r) => r.type === 'room' && (!r.parent_id || !locations.find((s) => s.id === r.parent_id && s.type === 'site'))).map((room) => (
+                      <option key={room.id} value={room.name}>{room.name}</option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            ) : (
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1" placeholder="Type a location or set up locations in Settings" />
+            )}
           </div>
           <div>
             <Label className="text-xs font-medium text-slate-600">Description</Label>
