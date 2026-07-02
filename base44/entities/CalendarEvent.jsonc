@@ -37,6 +37,14 @@
       "title": "All Day",
       "default": false
     },
+    "tag_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tag IDs",
+      "default": []
+    },
     "is_recurring": {
       "type": "boolean",
       "title": "Recurring",
@@ -61,6 +69,14 @@
         "type": "number"
       },
       "title": "Recurrence Days (0-6)"
+    },
+    "recurrence_week": {
+      "type": "number",
+      "title": "Recurrence Week (1-4 or -1 for last)"
+    },
+    "recurrence_weekday": {
+      "type": "number",
+      "title": "Recurrence Weekday (0-6)"
     },
     "recurrence_end_date": {
       "type": "string",
