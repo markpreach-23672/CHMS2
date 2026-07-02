@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import PersonForm from '@/components/people/PersonForm';
+import TagPicker from '@/components/people/TagPicker';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -34,17 +35,20 @@ export default function PersonDetail() {
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
+  const [folders, setFolders] = useState([]);
 
   useEffect(() => {
     Promise.all([
       base44.entities.Person.get(id),
       base44.entities.Tag.list(),
       base44.entities.CustomField.list(),
+      base44.entities.TagFolder.list(),
     ])
-      .then(async ([p, t, cf]) => {
+      .then(async ([p, t, cf, fldrs]) => {
         setPerson(p);
         setTags(t);
         setCustomFields(cf);
+        setFolders(fldrs);
 
         if (p.family_id) {
           const [fam, members] = await Promise.all([
@@ -425,40 +429,15 @@ export default function PersonDetail() {
 
       {/* Tag Picker */}
       {showTagPicker && (
-        <Dialog open onOpenChange={() => setShowTagPicker(false)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Manage Tags</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-1.5 max-h-60 overflow-y-auto">
-              {tags.map((tag) => {
-                const has = (person.tag_ids || []).includes(tag.id);
-                return (
-                  <button
-                    key={tag.id}
-                    onClick={() => toggleTag(tag.id)}
-                    className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition-colors text-left"
-                  >
-                    <span
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="text-sm font-medium text-slate-700 flex-1">{tag.name}</span>
-                    {has && (
-                      <span className="text-xs text-emerald-600 font-medium">Assigned</span>
-                    )}
-                  </button>
-                );
-              })}
-              {tags.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-4">No tags created yet.</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowTagPicker(false)}>Done</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <TagPicker
+          person={person}
+          tags={tags}
+          folders={folders}
+          onToggleTag={toggleTag}
+          onTagCreated={(tag) => setTags(prev => [...prev, tag])}
+          onFolderCreated={(folder) => setFolders(prev => [...prev, folder])}
+          onClose={() => setShowTagPicker(false)}
+        />
       )}
     </div>
   );
