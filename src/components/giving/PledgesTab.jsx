@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, MoreHorizontal, Pencil, Trash2, TrendingUp, Target } from 'lucide-react';
+import { Plus, MoreHorizontal, Pencil, Trash2, TrendingUp, Target, FileBarChart } from 'lucide-react';
+import PledgeSummaryReport from '@/components/giving/PledgeSummaryReport';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -13,6 +14,7 @@ import moment from 'moment';
 export default function PledgesTab({ pledges, donations, people, funds, loading, setPledges }) {
   const [showForm, setShowForm] = useState(false);
   const [editPledge, setEditPledge] = useState(null);
+  const [showReport, setShowReport] = useState(false);
 
   const getPersonName = (pid) => {
     const p = people.find((x) => x.id === pid);
@@ -90,7 +92,11 @@ export default function PledgesTab({ pledges, donations, people, funds, loading,
         </div>
       </div>
 
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end gap-2 mb-3">
+        <Button variant="outline" onClick={() => setShowReport(true)}>
+          <FileBarChart size={15} className="mr-1.5" />
+          Summary Report
+        </Button>
         <Button variant="outline" onClick={() => { setEditPledge(null); setShowForm(true); }}>
           <Plus size={15} className="mr-1.5" />
           New Pledge
@@ -161,6 +167,16 @@ export default function PledgesTab({ pledges, donations, people, funds, loading,
           funds={funds}
           onSave={handleSave}
           onClose={() => { setShowForm(false); setEditPledge(null); }}
+        />
+      )}
+
+      {showReport && (
+        <PledgeSummaryReport
+          pledges={pledges}
+          donations={donations}
+          people={people}
+          funds={funds}
+          onClose={() => setShowReport(false)}
         />
       )}
     </div>
