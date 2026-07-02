@@ -7,10 +7,11 @@ import { Printer } from 'lucide-react';
 
 export default function PrintStatementDialog({ people, onClose }) {
   const [personId, setPersonId] = useState('');
+  const [combineFamily, setCombineFamily] = useState(false);
   const navigate = useNavigate();
 
   const handlePrint = () => {
-    navigate(`/giving/statement/${personId}`);
+    navigate(`/giving/statement/${personId}${combineFamily ? '?mode=family' : ''}`);
     onClose();
   };
 
@@ -36,6 +37,10 @@ export default function PrintStatementDialog({ people, onClose }) {
                 <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
               ))}
             </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={combineFamily} onChange={e => setCombineFamily(e.target.checked)} id="combineFamily" className="rounded" />
+            <label htmlFor="combineFamily" className="text-xs text-slate-600">Combine family giving (one statement for all family members)</label>
           </div>
           <p className="text-xs text-slate-400">
             Opens a printable giving statement with the person's name and mailing address, ready for printing and mailing.
