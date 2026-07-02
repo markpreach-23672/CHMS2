@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, DollarSign, TrendingUp, Folder, Trash2, MoreHorizontal, Pencil } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import GivingDashboard from '@/components/giving/GivingDashboard';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 
@@ -16,6 +17,7 @@ export default function Giving() {
   const [donations, setDonations] = useState([]);
   const [funds, setFunds] = useState([]);
   const [people, setPeople] = useState([]);
+  const [pledges, setPledges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDonationForm, setShowDonationForm] = useState(false);
   const [showFundForm, setShowFundForm] = useState(false);
@@ -24,14 +26,16 @@ export default function Giving() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [d, f, p] = await Promise.all([
+      const [d, f, p, pl] = await Promise.all([
         base44.entities.Donation.list('-donation_date', 200),
         base44.entities.Fund.list(),
         base44.entities.Person.list(),
+        base44.entities.Pledge.list(),
       ]);
       setDonations(d);
       setFunds(f);
       setPeople(p);
+      setPledges(pl);
     } catch (err) {
       console.error('Failed to load giving data:', err);
     } finally {
@@ -87,42 +91,16 @@ export default function Giving() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <DollarSign size={20} />
-            </div>
-            <span className="text-sm text-slate-500">This Month</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-900">${totalThisMonth.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <TrendingUp size={20} />
-            </div>
-            <span className="text-sm text-slate-500">All-Time Total</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-900">${totalAllTime.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Folder size={20} />
-            </div>
-            <span className="text-sm text-slate-500">Active Funds</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-900">{funds.length}</p>
-        </div>
-      </div>
-
-      <Tabs defaultValue="donations">
+      <Tabs defaultValue="dashboard">
         <TabsList className="mb-4">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="donations">Donations</TabsTrigger>
           <TabsTrigger value="funds">Funds</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard">
+          <GivingDashboard donations={donations} funds={funds} people={people} pledges={pledges} loading={loading} />
+        </TabsContent>
 
         <TabsContent value="donations">
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
