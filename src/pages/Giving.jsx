@@ -7,12 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, DollarSign, TrendingUp, Folder, Trash2, MoreHorizontal, Pencil, Mail, Printer } from 'lucide-react';
+import { Plus, DollarSign, TrendingUp, Folder, Trash2, MoreHorizontal, Pencil, Mail, Printer, Download } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import GivingDashboard from '@/components/giving/GivingDashboard';
 import EmailStatementDialog from '@/components/giving/EmailStatementDialog';
 import PrintStatementDialog from '@/components/giving/PrintStatementDialog';
 import PledgesTab from '@/components/giving/PledgesTab';
+import ExportReportDialog from '@/components/giving/ExportReportDialog';
 import moment from 'moment';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -27,6 +28,7 @@ export default function Giving() {
   const [editFund, setEditFund] = useState(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
@@ -92,6 +94,10 @@ export default function Giving() {
           <p className="text-slate-500 text-sm mt-1">Track donations, manage funds, and monitor pledges.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+            <Download size={16} className="mr-1.5" />
+            Export
+          </Button>
           <Button variant="outline" onClick={() => setShowEmailDialog(true)}>
             <Mail size={16} className="mr-1.5" />
             Email Statements
@@ -239,6 +245,17 @@ export default function Giving() {
       {/* Email Statement Dialog */}
       {showEmailDialog && (
         <EmailStatementDialog people={people} onClose={() => setShowEmailDialog(false)} />
+      )}
+
+      {/* Export Dialog */}
+      {showExportDialog && (
+        <ExportReportDialog
+          donations={donations}
+          pledges={pledges}
+          people={people}
+          funds={funds}
+          onClose={() => setShowExportDialog(false)}
+        />
       )}
 
       {/* Print Statement Dialog */}
