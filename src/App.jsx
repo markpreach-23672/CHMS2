@@ -24,6 +24,7 @@ import Volunteers from '@/pages/Volunteers';
 import PublicConnectCard from '@/pages/PublicConnectCard';
 import Forms from '@/pages/Forms';
 import PublicForm from '@/pages/PublicForm';
+import PublicCalendar from '@/pages/PublicCalendar';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -80,6 +81,13 @@ function AppShell() {
     return (
       <Routes>
         <Route path="/card/:cardId" element={<PublicConnectCard />} />
+      </Routes>
+    );
+  }
+  if (pathname.startsWith('/calendar/public/')) {
+    return (
+      <Routes>
+        <Route path="/calendar/public/:calendarId" element={<PublicCalendar />} />
       </Routes>
     );
   }

@@ -13,27 +13,37 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing event type or entity ID' }, { status: 400 });
     }
 
-    // Fetch full data if not provided (payload_too_large case)
+    // For delete events from automation, data is null — skip (frontend handles delete separately)
+    // For delete events from frontend, data is provided directly
     if (!data && eventType !== 'delete') {
-      data = await base44.asServiceRole.entities.CalendarEvent.get(entityId);
+      try {
+        data = await base44.asServiceRole.entities.CalendarEvent.get(entityId);
+      } catch {
+        return Response.json({ status: 'skipped', reason: 'entity_not_found' });
+      }
     }
     if (!data) {
       return Response.json({ status: 'skipped', reason: 'no_data' });
     }
 
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
-    const authHeader = { Authorization: `Bearer ${accessToken}` };
-
     // Resolve target Google Calendar from the linked DepartmentCalendar
-    let googleCalendarId = 'primary';
+    let googleCalendarId = null;
     if (data.calendar_id) {
       try {
         const deptCal = await base44.asServiceRole.entities.DepartmentCalendar.get(data.calendar_id);
         if (deptCal?.google_calendar_id) {
           googleCalendarId = deptCal.google_calendar_id;
         }
-      } catch { /* use primary */ }
+      } catch { /* calendar not found */ }
     }
+
+    // Skip if this calendar doesn't have Google sync enabled
+    if (!googleCalendarId) {
+      return Response.json({ status: 'skipped', reason: 'no_google_calendar_id' });
+    }
+
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
+    const authHeader = { Authorization: `Bearer ${accessToken}` };
 
     // Resolve timezone from Church record
     let timezone = 'America/New_York';
@@ -44,18 +54,18 @@ Deno.serve(async (req) => {
       }
     } catch { /* use default */ }
 
-    const googleEventId = data.google_event_id;
+    const externalEventId = data.external_event_id;
 
     // --- DELETE ---
     if (eventType === 'delete') {
-      if (googleEventId) {
+      if (externalEventId) {
         await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}/events/${encodeURIComponent(googleEventId)}`,
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}/events/${encodeURIComponent(externalEventId)}`,
           { method: 'DELETE', headers: authHeader }
         );
-        return Response.json({ status: 'deleted_from_google', googleEventId });
+        return Response.json({ status: 'deleted_from_google', externalEventId });
       }
-      return Response.json({ status: 'skipped', reason: 'no_google_event_id' });
+      return Response.json({ status: 'skipped', reason: 'no_external_event_id' });
     }
 
     // --- Build Google Calendar event payload ---
@@ -67,19 +77,17 @@ Deno.serve(async (req) => {
 
     if (data.all_day) {
       const startDate = (data.start_time || '').split('T')[0];
-      const baseDate = data.end_time ? data.end_time : data.end_time || data.start_time;
-      const endObj = new Date(baseDate);
+      const endObj = new Date(data.end_time || data.start_time);
       endObj.setDate(endObj.getDate() + 1);
-      const endDate = endObj.toISOString().split('T')[0];
       googleEvent.start = { date: startDate };
-      googleEvent.end = { date: endDate };
+      googleEvent.end = { date: endObj.toISOString().split('T')[0] };
     } else {
       googleEvent.start = { dateTime: data.start_time, timeZone: timezone };
       googleEvent.end = { dateTime: data.end_time || data.start_time, timeZone: timezone };
     }
 
     // --- CREATE ---
-    if (eventType === 'create' || !googleEventId) {
+    if (eventType === 'create' || !externalEventId) {
       const res = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}/events`,
         {
@@ -90,15 +98,18 @@ Deno.serve(async (req) => {
       );
       const created = await res.json();
       if (created.id) {
-        await base44.asServiceRole.entities.CalendarEvent.update(entityId, { google_event_id: created.id });
+        await base44.asServiceRole.entities.CalendarEvent.update(entityId, {
+          external_event_id: created.id,
+          sync_provider: 'google'
+        });
       }
-      return Response.json({ status: 'created_in_google', googleEventId: created.id, calendar: googleCalendarId });
+      return Response.json({ status: 'created_in_google', externalEventId: created.id, calendar: googleCalendarId });
     }
 
     // --- UPDATE ---
-    if (eventType === 'update' && googleEventId) {
+    if (eventType === 'update' && externalEventId) {
       const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}/events/${encodeURIComponent(googleEventId)}`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalendarId)}/events/${encodeURIComponent(externalEventId)}`,
         {
           method: 'PUT',
           headers: { ...authHeader, 'Content-Type': 'application/json' },
@@ -106,7 +117,7 @@ Deno.serve(async (req) => {
         }
       );
       const updated = await res.json();
-      return Response.json({ status: 'updated_in_google', googleEventId: updated.id, calendar: googleCalendarId });
+      return Response.json({ status: 'updated_in_google', externalEventId: updated.id, calendar: googleCalendarId });
     }
 
     return Response.json({ status: 'no_action' });

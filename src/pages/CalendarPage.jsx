@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, RefreshCw, Share2 } from 'lucide-react';
 import moment from 'moment';
 import MonthView from '@/components/calendar/MonthView';
 import WeekView from '@/components/calendar/WeekView';
 import DayView from '@/components/calendar/DayView';
 import AgendaView from '@/components/calendar/AgendaView';
 import EventForm from '@/components/calendar/EventForm';
+import GoogleSyncDialog from '@/components/calendar/GoogleSyncDialog';
+import ShareCalendarDialog from '@/components/calendar/ShareCalendarDialog';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -20,6 +22,8 @@ export default function CalendarPage() {
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [visibleCalendars, setVisibleCalendars] = useState(new Set());
+  const [syncCalendar, setSyncCalendar] = useState(null);
+  const [shareCalendar, setShareCalendar] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -95,6 +99,9 @@ export default function CalendarPage() {
 
   const handleDeleteEvent = async (event) => {
     try {
+      if (event.external_event_id) {
+        try { await base44.functions.invoke('syncCalendarEventToGoogle', { event: { type: 'delete', entity_id: event.id }, data: event }); } catch (err) { console.error('Google sync delete failed:', err); }
+      }
       await base44.entities.CalendarEvent.delete(event.id);
       setEvents((prev) => prev.filter((e) => e.id !== event.id));
     } catch (err) {
@@ -191,13 +198,31 @@ export default function CalendarPage() {
               <label key={cal.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
                 <input type="checkbox" checked={visibleCalendars.has(cal.id)} onChange={() => toggleCalendar(cal.id)} className="rounded" />
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cal.color }} />
-                <span className="text-sm text-slate-700">{cal.name}</span>
+                <span className="text-sm text-slate-700 flex-1">{cal.name}</span>
+                {cal.google_calendar_id && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" title="Google sync enabled" />}
+                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSyncCalendar(cal); }} className="text-slate-400 hover:text-indigo-600 p-0.5" title="Google Calendar sync"><RefreshCw size={12} /></button>
+                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShareCalendar(cal); }} className="text-slate-400 hover:text-indigo-600 p-0.5" title="Share calendar"><Share2 size={12} /></button>
               </label>
             ))}
             {calendars.length === 0 && !loading && <p className="text-xs text-slate-400">No calendars yet.</p>}
           </div>
         </div>
       </div>
+
+      {syncCalendar && (
+        <GoogleSyncDialog
+          calendar={syncCalendar}
+          onSyncComplete={() => loadData()}
+          onClose={() => setSyncCalendar(null)}
+        />
+      )}
+
+      {shareCalendar && (
+        <ShareCalendarDialog
+          calendar={shareCalendar}
+          onClose={() => setShareCalendar(null)}
+        />
+      )}
 
       {showEventForm && (
         <EventForm
