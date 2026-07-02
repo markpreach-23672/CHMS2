@@ -70,11 +70,34 @@ export default function CalendarPage() {
     weeks.push(week);
   }
 
+  const isRecurringOnDate = (event, date) => {
+    if (!event.is_recurring || !event.recurrence_frequency) return false;
+    const start = moment(event.start_time);
+    const checkDate = moment(date);
+    if (checkDate.isBefore(start, 'day')) return false;
+    if (event.recurrence_end_date && checkDate.isAfter(moment(event.recurrence_end_date), 'day')) return false;
+    const interval = event.recurrence_interval || 1;
+    if (event.recurrence_frequency === 'weekly') {
+      const days = event.recurrence_days || [];
+      if (!days.includes(checkDate.day())) return false;
+      const startWeek = moment(start).startOf('week');
+      const checkWeek = moment(checkDate).startOf('week');
+      const weekDiff = checkWeek.diff(startWeek, 'weeks');
+      return weekDiff >= 0 && weekDiff % interval === 0;
+    }
+    if (event.recurrence_frequency === 'monthly') {
+      if (checkDate.date() !== start.date()) return false;
+      const monthDiff = (checkDate.year() - start.year()) * 12 + (checkDate.month() - start.month());
+      return monthDiff >= 0 && monthDiff % interval === 0;
+    }
+    return false;
+  };
+
   const getEventsForDay = (date) => {
     return filteredEvents.filter((e) => {
       if (!e.start_time) return false;
-      const eventDate = moment(e.start_time);
-      return eventDate.isSame(date, 'day');
+      if (e.is_recurring && e.recurrence_frequency) return isRecurringOnDate(e, date);
+      return moment(e.start_time).isSame(date, 'day');
     });
   };
 
@@ -161,10 +184,10 @@ export default function CalendarPage() {
                             key={event.id}
                             className="text-[10px] px-1.5 py-0.5 rounded truncate font-medium text-white"
                             style={{ backgroundColor: cal?.color || '#3b82f6' }}
-                            onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${event.title}"?`)) handleDeleteEvent(event); }}
-                            title={`${event.title} - ${moment(event.start_time).format('h:mm A')}`}
+                            onClick={(e) => { e.stopPropagation(); if (confirm(event.is_recurring ? `Delete "${event.title}"? This will delete the entire recurring series.` : `Delete "${event.title}"?`)) handleDeleteEvent(event); }}
+                            title={`${event.title} - ${moment(event.start_time).format('h:mm A')}${event.is_recurring ? ' (recurring)' : ''}`}
                           >
-                            {moment(event.start_time).format('h:mm')} {event.title}
+                            {moment(event.start_time).format('h:mm')} {event.title}{event.is_recurring ? ' ↻' : ''}
                           </div>
                         );
                       })}
@@ -231,6 +254,14 @@ function EventForm({ calendars, selectedDate, events, getCalendar, locations, on
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [allDay, setAllDay] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recFreq, setRecFreq] = useState('weekly');
+  const [recInterval, setRecInterval] = useState(1);
+  const [recEndDate, setRecEndDate] = useState('');
+  const [recDays, setRecDays] = useState(() => {
+    const dow = selectedDate ? selectedDate.day() : moment().day();
+    return [dow];
+  });
 
   const conflicts = useMemo(() => {
     if (!location.trim()) return [];
@@ -277,6 +308,51 @@ function EventForm({ calendars, selectedDate, events, getCalendar, locations, on
             <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="rounded" />
             All Day
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="rounded" />
+            Recurring event
+          </label>
+          {isRecurring && (
+            <div className="bg-slate-50 rounded-lg p-3 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-medium text-slate-600">Repeats</Label>
+                  <select value={recFreq} onChange={(e) => setRecFreq(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs font-medium text-slate-600">Every</Label>
+                  <select value={recInterval} onChange={(e) => setRecInterval(parseInt(e.target.value))} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                    {recFreq === 'weekly'
+                      ? [1,2,3,4].map(n => <option key={n} value={n}>{n} week{n > 1 ? 's' : ''}</option>)
+                      : [1,2,3,4,6].map(n => <option key={n} value={n}>{n} month{n > 1 ? 's' : ''}</option>)}
+                  </select>
+                </div>
+              </div>
+              {recFreq === 'weekly' && (
+                <div>
+                  <Label className="text-xs font-medium text-slate-600 mb-1.5 block">On these days</Label>
+                  <div className="flex gap-1.5">
+                    {['S','M','T','W','T','F','S'].map((d, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setRecDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])}
+                        className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${recDays.includes(i) ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 border border-input hover:bg-slate-50'}`}
+                      >{d}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label className="text-xs font-medium text-slate-600">Ends (optional)</Label>
+                <Input type="date" value={recEndDate} onChange={(e) => setRecEndDate(e.target.value)} className="mt-1" />
+                <p className="text-xs text-slate-400 mt-1">Leave blank to repeat indefinitely.</p>
+              </div>
+            </div>
+          )}
           <div>
             <Label className="text-xs font-medium text-slate-600">Location</Label>
             {locations.length > 0 ? (
@@ -333,7 +409,7 @@ function EventForm({ calendars, selectedDate, events, getCalendar, locations, on
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ title, calendar_id: calendarId, start_time: allDay ? moment(startTime).startOf('day').toISOString() : new Date(startTime).toISOString(), end_time: allDay ? moment(startTime).endOf('day').toISOString() : new Date(endTime).toISOString(), location: location || undefined, description: description || undefined, all_day: allDay })} disabled={!title.trim()} className={conflicts.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}>
+          <Button onClick={() => onSave({ title, calendar_id: calendarId, start_time: allDay ? moment(startTime).startOf('day').toISOString() : new Date(startTime).toISOString(), end_time: allDay ? moment(startTime).endOf('day').toISOString() : new Date(endTime).toISOString(), location: location || undefined, description: description || undefined, all_day: allDay, is_recurring: isRecurring, recurrence_frequency: isRecurring ? recFreq : undefined, recurrence_interval: isRecurring ? recInterval : undefined, recurrence_days: isRecurring && recFreq === 'weekly' ? recDays : undefined, recurrence_end_date: isRecurring && recEndDate ? recEndDate : undefined })} disabled={!title.trim() || (isRecurring && recFreq === 'weekly' && recDays.length === 0)} className={conflicts.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}>
             {conflicts.length > 0 ? 'Create Anyway' : 'Create Event'}
           </Button>
         </DialogFooter>

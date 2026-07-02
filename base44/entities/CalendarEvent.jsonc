@@ -42,6 +42,31 @@
       "title": "Recurring",
       "default": false
     },
+    "recurrence_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "monthly"
+      ],
+      "title": "Recurrence Frequency"
+    },
+    "recurrence_interval": {
+      "type": "number",
+      "title": "Recurrence Interval",
+      "default": 1
+    },
+    "recurrence_days": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "title": "Recurrence Days (0-6)"
+    },
+    "recurrence_end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Recurrence End Date"
+    },
     "external_event_id": {
       "type": "string",
       "title": "External Calendar Event ID"
