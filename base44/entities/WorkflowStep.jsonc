@@ -16,7 +16,8 @@
         "email",
         "text",
         "wait",
-        "task"
+        "task",
+        "staff_notify"
       ],
       "title": "Step Type"
     },
@@ -40,6 +41,19 @@
     "assigned_to_role": {
       "type": "string",
       "title": "Assigned To Role"
+    },
+    "assigned_to_user_id": {
+      "type": "string",
+      "title": "Assigned To User ID"
+    },
+    "notify_method": {
+      "type": "string",
+      "enum": [
+        "email",
+        "text"
+      ],
+      "title": "Notification Method",
+      "default": "email"
     },
     "sort_order": {
       "type": "number",

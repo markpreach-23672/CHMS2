@@ -20,18 +20,21 @@ export default function ConnectCards() {
   const [showWorkflowForm, setShowWorkflowForm] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [submitCard, setSubmitCard] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [c, w, e] = await Promise.all([
+      const [c, w, e, u] = await Promise.all([
         base44.entities.ConnectCard.list(),
         base44.entities.Workflow.list(),
         base44.entities.WorkflowEnrollment.list(),
+        base44.entities.User.list(),
       ]);
       setCards(c);
       setWorkflows(w);
       setEnrollments(e);
+      setUsers(u);
 
       const stepsMap = {};
       await Promise.all(w.map(async (wf) => {
@@ -106,6 +109,7 @@ export default function ConnectCards() {
       case 'text': return MessageSquare;
       case 'wait': return Clock;
       case 'task': return CheckSquare;
+      case 'staff_notify': return Send;
       default: return Clock;
     }
   };
@@ -116,6 +120,7 @@ export default function ConnectCards() {
       case 'text': return 'Send Text';
       case 'wait': return 'Wait';
       case 'task': return 'Staff Task';
+      case 'staff_notify': return 'Notify Staff';
       default: return type;
     }
   };
@@ -257,13 +262,19 @@ export default function ConnectCards() {
                                   {step.subject && <p className="text-xs text-slate-500 truncate">Subject: {step.subject}</p>}
                                   {step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
                                   {step.task_description && <p className="text-xs text-slate-500">{step.task_description}</p>}
+                                  {step.step_type === 'staff_notify' && (
+                                    <p className="text-xs text-slate-500">
+                                      Notify {users.find((u) => u.id === step.assigned_to_user_id)?.full_name || users.find((u) => u.id === step.assigned_to_user_id)?.email || 'staff'} via {step.notify_method || 'email'}
+                                    </p>
+                                  )}
+                                  {step.step_type === 'staff_notify' && step.body && <p className="text-xs text-slate-400 truncate mt-0.5">{step.body}</p>}
                                 </div>
                               </div>
                             );
                           })}
                           {wfSteps.length === 0 && <p className="text-xs text-slate-400 py-2">No steps yet. Add one below.</p>}
                         </div>
-                        <AddStepButton onAdd={(data) => handleAddStep(wf.id, data)} />
+                        <AddStepButton onAdd={(data) => handleAddStep(wf.id, data)} users={users} />
                       </div>
                     )}
                   </div>
@@ -319,13 +330,15 @@ export default function ConnectCards() {
   );
 }
 
-function AddStepButton({ onAdd }) {
+function AddStepButton({ onAdd, users }) {
   const [show, setShow] = useState(false);
   const [type, setType] = useState('email');
   const [delayDays, setDelayDays] = useState('0');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [staffUserId, setStaffUserId] = useState('');
+  const [notifyMethod, setNotifyMethod] = useState('email');
 
   const handleAdd = () => {
     const data = { step_type: type, delay_days: parseInt(delayDays) || 0 };
@@ -336,6 +349,11 @@ function AddStepButton({ onAdd }) {
     if (type === 'task') {
       data.task_description = taskDescription;
     }
+    if (type === 'staff_notify') {
+      data.assigned_to_user_id = staffUserId;
+      data.notify_method = notifyMethod;
+      data.body = body;
+    }
     onAdd(data);
     setShow(false);
     setType('email');
@@ -343,6 +361,8 @@ function AddStepButton({ onAdd }) {
     setSubject('');
     setBody('');
     setTaskDescription('');
+    setStaffUserId('');
+    setNotifyMethod('email');
   };
 
   if (!show) {
@@ -366,6 +386,7 @@ function AddStepButton({ onAdd }) {
               <SelectItem value="text">Send Text</SelectItem>
               <SelectItem value="wait">Wait</SelectItem>
               <SelectItem value="task">Staff Task</SelectItem>
+              <SelectItem value="staff_notify">Notify Staff</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -391,6 +412,33 @@ function AddStepButton({ onAdd }) {
           <Label className="text-[10px] text-slate-500">Task Description</Label>
           <Input value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} className="h-8 text-xs mt-0.5" placeholder="e.g., Call this guest to say hi" />
         </div>
+      )}
+      {type === 'staff_notify' && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-[10px] text-slate-500">Staff Member</Label>
+              <select value={staffUserId} onChange={(e) => setStaffUserId(e.target.value)} className="mt-0.5 w-full h-8 px-2 rounded-md border border-input bg-transparent text-xs">
+                <option value="">Select...</option>
+                {users.map((u) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label className="text-[10px] text-slate-500">Method</Label>
+              <Select value={notifyMethod} onValueChange={setNotifyMethod}>
+                <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="text">Text</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px] text-slate-500">Instructions for Staff</Label>
+            <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} placeholder="e.g., Call within 48 hours. Mention the Sunday service. Invite to coffee." />
+          </div>
+        </>
       )}
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="outline" onClick={() => setShow(false)}>Cancel</Button>

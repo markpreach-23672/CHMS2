@@ -99,6 +99,34 @@ Deno.serve(async (req) => {
 });
 
 async function processStep(base44, step, person, fromEmail) {
+  if (step.step_type === 'staff_notify' && step.assigned_to_user_id) {
+    try {
+      const staffUser = await base44.asServiceRole.entities.User.get(step.assigned_to_user_id);
+      if (!staffUser || !staffUser.email) return;
+      const guestName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Guest';
+      const subject = step.subject || `New guest follow-up: ${guestName}`;
+      let emailBody = `A new guest has submitted a connect card and needs follow-up.\n\n`;
+      emailBody += `Guest Information:\n`;
+      emailBody += `  Name: ${guestName}\n`;
+      emailBody += `  Email: ${person.email || 'N/A'}\n`;
+      emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
+      if (person.notes) emailBody += `  Message: ${person.notes}\n`;
+      emailBody += `\nInstructions for contacting this guest:\n`;
+      emailBody += step.body || '(No specific instructions provided)';
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: fromEmail, to: staffUser.email, subject, text: emailBody })
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(`Resend API error (${res.status}): ${errText}`);
+      }
+    } catch (err) {
+      console.error(`Staff notification failed: ${err.message}`);
+    }
+  }
   if (step.step_type === 'email' && person.email) {
     let body = step.body || '';
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
