@@ -42,7 +42,8 @@
               "date",
               "section",
               "payment",
-              "file"
+              "file",
+              "family_members"
             ],
             "title": "Field Type"
           },
@@ -155,6 +156,7 @@
       "enum": [
         "general",
         "registration",
+        "family",
         "blank"
       ],
       "title": "Template Type",

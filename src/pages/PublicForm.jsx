@@ -17,7 +17,28 @@ export default function PublicForm() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (form) {
+      const initial = {};
+      for (const field of form.fields || []) {
+        if (field.type === 'family_members' && !values[field.id]) {
+          initial[field.id] = [{ first_name: '', last_name: '', email: '', phone: '', role: 'adult' }];
+        }
+      }
+      if (Object.keys(initial).length > 0) {
+        setValues((prev) => ({ ...prev, ...initial }));
+      }
+    }
+  }, [form]);
+
+  useEffect(() => {
     const loadForm = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('payment') === 'success') {
+        setConfirmationMessage('Your payment has been processed successfully! Thank you.');
+        setSubmitted(true);
+        setLoading(false);
+        return;
+      }
       try {
         const res = await base44.functions.invoke('getPublicForm', { form_id: formId });
         if (res.data?.error) {
@@ -48,6 +69,7 @@ export default function PublicForm() {
           else isEmpty = Object.values(val).every((v) => !v);
         }
         else if (Array.isArray(val) && val.length === 0) isEmpty = true;
+        else if (field.type === 'family_members' && Array.isArray(val)) isEmpty = val.every((m) => !m.first_name && !m.last_name && !m.email);
         if (isEmpty) errs[field.id] = 'This field is required';
       }
     }
@@ -63,6 +85,24 @@ export default function PublicForm() {
       const res = await base44.functions.invoke('submitForm', { form_id: formId, data: values });
       if (res.data?.error) {
         setError(res.data.error);
+      } else if (res.data.payment_required && res.data.payment_amount > 0) {
+        if (window.self !== window.top) {
+          setConfirmationMessage('Your form was submitted! To complete payment, please open this form directly (not embedded) in a new tab.');
+          setSubmitted(true);
+        } else {
+          try {
+            const checkoutRes = await base44.functions.invoke('createStripeCheckout', { entry_id: res.data.entry_id, origin: window.location.origin });
+            if (checkoutRes.data?.url) {
+              window.location.href = checkoutRes.data.url;
+              return;
+            }
+            setConfirmationMessage(res.data.confirmation_message || 'Thank you!');
+            setSubmitted(true);
+          } catch (e) {
+            setConfirmationMessage('Your form was submitted, but payment could not be initialized. Please contact us.');
+            setSubmitted(true);
+          }
+        }
       } else {
         setConfirmationMessage(res.data.confirmation_message || 'Thank you!');
         setSubmitted(true);

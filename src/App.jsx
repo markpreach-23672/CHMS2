@@ -25,6 +25,8 @@ import PublicConnectCard from '@/pages/PublicConnectCard';
 import Forms from '@/pages/Forms';
 import PublicForm from '@/pages/PublicForm';
 import PublicCalendar from '@/pages/PublicCalendar';
+import Elections from '@/pages/Elections';
+import PublicElection from '@/pages/PublicElection';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -65,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         <Route path="/volunteers" element={<Volunteers />} />
         <Route path="/forms" element={<Forms />} />
+        <Route path="/elections" element={<Elections />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/giving/statement/:id" element={<GivingStatement />} />
@@ -88,6 +91,13 @@ function AppShell() {
     return (
       <Routes>
         <Route path="/calendar/public/:calendarId" element={<PublicCalendar />} />
+      </Routes>
+    );
+  }
+  if (pathname.startsWith('/election/')) {
+    return (
+      <Routes>
+        <Route path="/election/:electionId" element={<PublicElection />} />
       </Routes>
     );
   }

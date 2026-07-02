@@ -73,6 +73,47 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle family members field — create Family + Person records
+    for (const field of form.fields || []) {
+      if (field.type === 'family_members' && data[field.id] && Array.isArray(data[field.id])) {
+        const members = data[field.id].filter((m) => m.first_name || m.last_name || m.email);
+        if (members.length > 0) {
+          const familyName = members[0].last_name || person?.last_name || 'Family';
+          const family = await base44.asServiceRole.entities.Family.create({
+            family_name: familyName,
+            address: profileData.address || undefined,
+            city: profileData.city || undefined,
+            state: profileData.state || undefined,
+            zip: profileData.zip || undefined,
+          });
+          if (person) {
+            await base44.asServiceRole.entities.Person.update(person.id, { family_id: family.id, family_role: 'head_of_household' });
+          }
+          for (const member of members) {
+            let memberPerson = null;
+            if (member.email) {
+              const matches = await base44.asServiceRole.entities.Person.filter({ email: member.email });
+              if (matches.length > 0) memberPerson = matches[0];
+            }
+            if (!memberPerson) {
+              await base44.asServiceRole.entities.Person.create({
+                first_name: member.first_name || '',
+                last_name: member.last_name || '',
+                email: member.email || '',
+                phone: member.phone || '',
+                status: 'visitor',
+                family_id: family.id,
+                family_role: member.role || 'adult',
+                tag_ids: form.tag_ids || []
+              });
+            } else {
+              await base44.asServiceRole.entities.Person.update(memberPerson.id, { family_id: family.id, family_role: member.role || 'adult' });
+            }
+          }
+        }
+      }
+    }
+
     // Determine payment info
     const hasPaymentField = (form.fields || []).some((f) => f.type === 'payment');
     let paymentAmount = 0;

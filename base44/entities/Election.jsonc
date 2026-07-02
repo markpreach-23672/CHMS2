@@ -1,0 +1,60 @@
+{
+  "name": "Election",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Election Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Candidates",
+      "default": []
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "open",
+        "closed"
+      ],
+      "default": "draft",
+      "title": "Status"
+    },
+    "open_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Open Date"
+    },
+    "close_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Close Date"
+    },
+    "max_votes_per_person": {
+      "type": "number",
+      "default": 1,
+      "title": "Max Votes Per Person"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "title": "Public"
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ]
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Users, Tag, Search, DollarSign, Calendar as CalendarIcon, CreditCard, Settings, LayoutDashboard, LogOut, ChevronRight, Home, BarChart3, Heart, FileText } from 'lucide-react';
+import { Users, Tag, Search, DollarSign, Calendar as CalendarIcon, CreditCard, Settings, LayoutDashboard, LogOut, ChevronRight, Home, BarChart3, Heart, FileText, Vote } from 'lucide-react';
 
 export default function Layout() {
   const [user, setUser] = useState(null);
@@ -33,6 +33,7 @@ export default function Layout() {
     { label: 'Volunteers', path: '/volunteers', icon: Heart },
     { label: 'Connect Cards', path: '/connect-cards', icon: CreditCard },
     { label: 'Forms', path: '/forms', icon: FileText },
+    { label: 'Elections', path: '/elections', icon: Vote },
     { label: 'Settings', path: '/settings', icon: Settings },
   ];
 

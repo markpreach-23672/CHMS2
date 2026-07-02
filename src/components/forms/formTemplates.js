@@ -38,6 +38,22 @@ export const FORM_TEMPLATES = [
     confirmation_message: 'Your registration has been received! We look forward to seeing you at the event.'
   },
   {
+    id: 'family',
+    name: 'Family Registration',
+    emoji: '👨‍👩‍👧',
+    description: 'Register an entire family with contact info and household members.',
+    template_type: 'family',
+    fields: [
+      { id: 'f_name', type: 'name', label: 'Your Name', required: true, maps_to: 'name' },
+      { id: 'f_email', type: 'email', label: 'Your Email', required: true, maps_to: 'email' },
+      { id: 'f_phone', type: 'phone', label: 'Your Phone', maps_to: 'phone' },
+      { id: 'f_address', type: 'address', label: 'Home Address', maps_to: 'address' },
+      { id: 'f_family', type: 'family_members', label: 'Family Members', description: 'Add each family member in your household' },
+    ],
+    submit_button_text: 'Register Family',
+    confirmation_message: 'Your family has been registered! We look forward to connecting with you.'
+  },
+  {
     id: 'blank',
     name: 'Blank Form',
     emoji: '📄',
@@ -62,6 +78,7 @@ export const FIELD_TYPE_META = [
   { type: 'date', label: 'Date', icon: 'Calendar', color: 'text-pink-500', defaultLabel: 'Date' },
   { type: 'payment', label: 'Payment', icon: 'DollarSign', color: 'text-emerald-500', defaultLabel: 'Payment' },
   { type: 'file', label: 'File Upload', icon: 'FileText', color: 'text-indigo-500', defaultLabel: 'File Upload' },
+  { type: 'family_members', label: 'Family Members', icon: 'Users', color: 'text-violet-500', defaultLabel: 'Family Members' },
   { type: 'section', label: 'Section Title', icon: 'Heading', color: 'text-slate-400', defaultLabel: 'Section Title' }
 ];
 

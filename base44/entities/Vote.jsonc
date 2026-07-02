@@ -1,0 +1,40 @@
+{
+  "name": "Vote",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "election_id": {
+      "type": "string",
+      "title": "Election ID"
+    },
+    "person_id": {
+      "type": "string",
+      "title": "Person ID"
+    },
+    "voter_email": {
+      "type": "string",
+      "title": "Voter Email"
+    },
+    "voter_name": {
+      "type": "string",
+      "title": "Voter Name"
+    },
+    "candidate": {
+      "type": "string",
+      "title": "Candidate"
+    },
+    "voted_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Voted At"
+    }
+  },
+  "required": [
+    "election_id",
+    "candidate",
+    "voter_email"
+  ]
+}

@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronUp, ChevronDown, Trash2, Plus, X, GripVertical, Eye } from 'lucide-react';
+import { ChevronDown, Trash2, Plus, X, GripVertical, Eye } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import FormRenderer from './FormRenderer';
 import { FIELD_TYPE_META, getDefaultLabel, getAutoMapsTo } from './formTemplates';
 
@@ -47,11 +48,11 @@ export default function FormBuilder({ form, tags, workflows, onSave, onClose }) 
     setFields(fields.filter((f) => f.id !== id));
   };
 
-  const moveField = (index, dir) => {
-    const target = index + dir;
-    if (target < 0 || target >= fields.length) return;
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
     const arr = [...fields];
-    [arr[index], arr[target]] = [arr[target], arr[index]];
+    const [moved] = arr.splice(result.source.index, 1);
+    arr.splice(result.destination.index, 0, moved);
     setFields(arr);
   };
 
@@ -134,78 +135,89 @@ export default function FormBuilder({ form, tags, workflows, onSave, onClose }) 
             {/* Fields */}
             <Section title={`Fields (${fields.length})`}>
               {fields.length === 0 && <p className="text-xs text-slate-400 py-4 text-center">No fields yet. Add some below.</p>}
-              <div className="space-y-2">
-                {fields.map((field, index) => {
-                  const meta = FIELD_TYPE_META.find((m) => m.type === field.type);
-                  const isExpanded = expandedId === field.id;
-                  return (
-                    <div key={field.id} className="border border-slate-200 rounded-lg">
-                      <div className="flex items-center gap-2 p-2.5">
-                        <GripVertical size={14} className="text-slate-300" />
-                        <button onClick={() => setExpandedId(isExpanded ? null : field.id)} className="flex-1 flex items-center gap-2 text-left">
-                          <span className={`text-xs font-medium ${meta?.color || 'text-slate-500'}`}>{meta?.label || field.type}</span>
-                          <span className="text-sm text-slate-700 truncate">{field.label}</span>
-                          {field.required && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">Required</span>}
-                          {field.maps_to && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">→ {field.maps_to}</span>}
-                        </button>
-                        <button onClick={() => moveField(index, -1)} disabled={index === 0} className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ChevronUp size={14} /></button>
-                        <button onClick={() => moveField(index, 1)} disabled={index === fields.length - 1} className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"><ChevronDown size={14} /></button>
-                        <button onClick={() => deleteField(field.id)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
-                      </div>
-                      {isExpanded && (
-                        <div className="p-3 pt-0 space-y-3 border-t border-slate-100">
-                          <div>
-                            <Label className="text-xs text-slate-500">Label</Label>
-                            <Input value={field.label} onChange={(e) => updateField(field.id, { label: e.target.value })} className="mt-0.5 h-8 text-sm" />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-slate-500">Description (optional)</Label>
-                            <Input value={field.description || ''} onChange={(e) => updateField(field.id, { description: e.target.value })} className="mt-0.5 h-8 text-sm" placeholder="Help text shown below the label" />
-                          </div>
-                          {field.type !== 'section' && (
-                            <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                              <input type="checkbox" checked={field.required || false} onChange={(e) => updateField(field.id, { required: e.target.checked })} className="rounded" />
-                              Required field
-                            </label>
-                          )}
-                          {(field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') && (
-                            <div>
-                              <Label className="text-xs text-slate-500">Options</Label>
-                              <div className="space-y-1 mt-1">
-                                {(field.options || []).map((opt, i) => (
-                                  <div key={i} className="flex gap-1.5">
-                                    <Input value={opt} onChange={(e) => updateField(field.id, { options: field.options.map((o, j) => j === i ? e.target.value : o) })} className="h-7 text-xs" />
-                                    <button onClick={() => updateField(field.id, { options: field.options.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500 px-1"><X size={12} /></button>
+              <DragDropContext onDragEnd={onDragEnd}>
+                <Droppable droppableId="fields">
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2">
+                      {fields.map((field, index) => {
+                        const meta = FIELD_TYPE_META.find((m) => m.type === field.type);
+                        const isExpanded = expandedId === field.id;
+                        return (
+                          <Draggable key={field.id} draggableId={field.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div ref={provided.innerRef} {...provided.draggableProps} className={`border border-slate-200 rounded-lg ${snapshot.isDragging ? 'shadow-lg ring-2 ring-indigo-300' : ''}`}>
+                                <div className="flex items-center gap-2 p-2.5">
+                                  <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                                    <GripVertical size={14} className="text-slate-400" />
                                   </div>
-                                ))}
-                                <button onClick={() => updateField(field.id, { options: [...(field.options || []), 'New Option'] })} className="text-xs text-indigo-600 hover:underline flex items-center gap-0.5"><Plus size={12} /> Add Option</button>
-                              </div>
-                            </div>
-                          )}
-                          {field.type === 'payment' && (
-                            <div>
-                              <Label className="text-xs text-slate-500">Payment Options</Label>
-                              <div className="space-y-1 mt-1">
-                                {(field.payment_options || []).map((opt, i) => (
-                                  <div key={i} className="flex gap-1.5">
-                                    <Input placeholder="Label" value={opt.label} onChange={(e) => updateField(field.id, { payment_options: field.payment_options.map((p, j) => j === i ? { ...p, label: e.target.value } : p) })} className="h-7 text-xs flex-1" />
-                                    <div className="relative w-24">
-                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
-                                      <Input type="number" value={opt.amount} onChange={(e) => updateField(field.id, { payment_options: field.payment_options.map((p, j) => j === i ? { ...p, amount: parseFloat(e.target.value) || 0 } : p) })} className="h-7 text-xs pl-5" />
+                                  <button onClick={() => setExpandedId(isExpanded ? null : field.id)} className="flex-1 flex items-center gap-2 text-left">
+                                    <span className={`text-xs font-medium ${meta?.color || 'text-slate-500'}`}>{meta?.label || field.type}</span>
+                                    <span className="text-sm text-slate-700 truncate">{field.label}</span>
+                                    {field.required && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">Required</span>}
+                                    {field.maps_to && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">→ {field.maps_to}</span>}
+                                  </button>
+                                  <button onClick={() => deleteField(field.id)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+                                </div>
+                                {isExpanded && (
+                                  <div className="p-3 pt-0 space-y-3 border-t border-slate-100">
+                                    <div>
+                                      <Label className="text-xs text-slate-500">Label</Label>
+                                      <Input value={field.label} onChange={(e) => updateField(field.id, { label: e.target.value })} className="mt-0.5 h-8 text-sm" />
                                     </div>
-                                    <button onClick={() => updateField(field.id, { payment_options: field.payment_options.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500 px-1"><X size={12} /></button>
+                                    <div>
+                                      <Label className="text-xs text-slate-500">Description (optional)</Label>
+                                      <Input value={field.description || ''} onChange={(e) => updateField(field.id, { description: e.target.value })} className="mt-0.5 h-8 text-sm" placeholder="Help text shown below the label" />
+                                    </div>
+                                    {field.type !== 'section' && (
+                                      <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                        <input type="checkbox" checked={field.required || false} onChange={(e) => updateField(field.id, { required: e.target.checked })} className="rounded" />
+                                        Required field
+                                      </label>
+                                    )}
+                                    {(field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') && (
+                                      <div>
+                                        <Label className="text-xs text-slate-500">Options</Label>
+                                        <div className="space-y-1 mt-1">
+                                          {(field.options || []).map((opt, i) => (
+                                            <div key={i} className="flex gap-1.5">
+                                              <Input value={opt} onChange={(e) => updateField(field.id, { options: field.options.map((o, j) => j === i ? e.target.value : o) })} className="h-7 text-xs" />
+                                              <button onClick={() => updateField(field.id, { options: field.options.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500 px-1"><X size={12} /></button>
+                                            </div>
+                                          ))}
+                                          <button onClick={() => updateField(field.id, { options: [...(field.options || []), 'New Option'] })} className="text-xs text-indigo-600 hover:underline flex items-center gap-0.5"><Plus size={12} /> Add Option</button>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {field.type === 'payment' && (
+                                      <div>
+                                        <Label className="text-xs text-slate-500">Payment Options</Label>
+                                        <div className="space-y-1 mt-1">
+                                          {(field.payment_options || []).map((opt, i) => (
+                                            <div key={i} className="flex gap-1.5">
+                                              <Input placeholder="Label" value={opt.label} onChange={(e) => updateField(field.id, { payment_options: field.payment_options.map((p, j) => j === i ? { ...p, label: e.target.value } : p) })} className="h-7 text-xs flex-1" />
+                                              <div className="relative w-24">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                                                <Input type="number" value={opt.amount} onChange={(e) => updateField(field.id, { payment_options: field.payment_options.map((p, j) => j === i ? { ...p, amount: parseFloat(e.target.value) || 0 } : p) })} className="h-7 text-xs pl-5" />
+                                              </div>
+                                              <button onClick={() => updateField(field.id, { payment_options: field.payment_options.filter((_, j) => j !== i) })} className="text-slate-400 hover:text-red-500 px-1"><X size={12} /></button>
+                                            </div>
+                                          ))}
+                                          <button onClick={() => updateField(field.id, { payment_options: [...(field.payment_options || []), { label: 'New Option', amount: 0 }] })} className="text-xs text-indigo-600 hover:underline flex items-center gap-0.5"><Plus size={12} /> Add Tier</button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                ))}
-                                <button onClick={() => updateField(field.id, { payment_options: [...(field.payment_options || []), { label: 'New Option', amount: 0 }] })} className="text-xs text-indigo-600 hover:underline flex items-center gap-0.5"><Plus size={12} /> Add Tier</button>
+                                )}
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
                     </div>
-                  );
-                })}
-              </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </Section>
 
             {/* Add Field */}
@@ -281,7 +293,7 @@ export default function FormBuilder({ form, tags, workflows, onSave, onClose }) 
                   <h2 className="text-xl font-bold text-slate-900">{title || 'Untitled Form'}</h2>
                   {description && <p className="text-sm text-slate-500 mt-1 mb-3">{description}</p>}
                   <div className="mt-3">
-                    <FormRenderer fields={fields} values={previewValues} onChange={setPreviewValues} disabled={false} />
+                    <FormRenderer fields={fields} values={previewValues} onChange={setPreviewValues} disabled={false} preview />
                   </div>
                   <Button disabled className="w-full mt-5 bg-indigo-600">{submitButtonText || 'Submit'}</Button>
                 </div>
