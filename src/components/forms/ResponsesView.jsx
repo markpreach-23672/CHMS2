@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Download, Trash2, ExternalLink, Loader2 } from 'lucide-react';
+import { Download, Trash2, ExternalLink, Loader2, FileText } from 'lucide-react';
 import moment from 'moment';
+import EntryDetailDialog from './EntryDetailDialog';
 
 export default function ResponsesView({ form, entries, people, onClose }) {
   const [deleting, setDeleting] = useState(null);
+  const [detailEntry, setDetailEntry] = useState(null);
 
   const fields = form.fields || [];
   const dataFields = fields.filter((f) => f.type !== 'section');
@@ -22,6 +24,8 @@ export default function ResponsesView({ form, entries, people, onClose }) {
     if (field.type === 'address') return [value.street, value.city, value.state, value.zip].filter(Boolean).join(', ');
     if (field.type === 'payment') return `${value.label} ($${Number(value.amount).toFixed(2)})`;
     if (field.type === 'checkbox') return Array.isArray(value) ? value.join(', ') : value;
+    if (field.type === 'file') return value ? value.split('/').pop() || 'File' : '—';
+    if (field.type === 'family_members') return Array.isArray(value) ? `${value.length} member(s)` : '—';
     return String(value);
   };
 
@@ -98,7 +102,7 @@ export default function ResponsesView({ form, entries, people, onClose }) {
               </thead>
               <tbody>
                 {entries.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).map((entry) => (
-                  <tr key={entry.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <tr key={entry.id} className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" onClick={() => setDetailEntry(entry)}>
                     {dataFields.slice(0, 4).map((f) => (
                       <td key={f.id} className="py-2 px-3 text-slate-700 max-w-[180px] truncate">{formatValue(f, entry.data?.[f.id])}</td>
                     ))}
@@ -128,6 +132,10 @@ export default function ResponsesView({ form, entries, people, onClose }) {
               </tbody>
             </table>
           </div>
+        )}
+
+        {detailEntry && (
+          <EntryDetailDialog entry={detailEntry} form={form} people={people} onClose={() => setDetailEntry(null)} />
         )}
 
         <DialogFooter>
