@@ -368,28 +368,52 @@ export default function People() {
         <Dialog open onOpenChange={() => setShowBulkTag(false)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Tag {selected.size} People</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <TagIcon size={18} className="text-indigo-600" />
+                Manage Tags — {selected.size} {selected.size === 1 ? 'Person' : 'People'}
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {tags.map((tag) => (
-                <div key={tag.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                  <span
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="text-sm font-medium text-slate-700 flex-1">{tag.name}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkTag(tag.id, 'add')}
-                    className="h-7 text-xs"
-                  >
-                    Add
-                  </Button>
-                </div>
-              ))}
+            <div className="space-y-1.5 max-h-80 overflow-y-auto">
+              {tags.map((tag) => {
+                const countWithTag = Array.from(selected).filter((pid) => {
+                  const person = people.find((p) => p.id === pid);
+                  return (person?.tag_ids || []).includes(tag.id);
+                }).length;
+                return (
+                  <div key={tag.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100">
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-slate-700">{tag.name}</span>
+                      {countWithTag > 0 && (
+                        <span className="text-xs text-slate-400 ml-1.5">· {countWithTag} of {selected.size} have this</span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkTag(tag.id, 'add')}
+                      className="h-7 text-xs"
+                      disabled={countWithTag === selected.size}
+                    >
+                      <Plus size={12} className="mr-1" />Add
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkTag(tag.id, 'remove')}
+                      className="h-7 text-xs text-red-600 hover:text-red-700 border-red-200"
+                      disabled={countWithTag === 0}
+                    >
+                      <Trash2 size={12} className="mr-1" />Remove
+                    </Button>
+                  </div>
+                );
+              })}
               {tags.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-4">No tags created yet.</p>
+                <div className="text-center py-8">
+                  <TagIcon size={28} className="mx-auto text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-400">No tags created yet. Create tags on the Tags page first.</p>
+                </div>
               )}
             </div>
             <DialogFooter>
