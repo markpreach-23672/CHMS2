@@ -29,7 +29,7 @@ import Elections from '@/pages/Elections';
 import PublicElection from '@/pages/PublicElection';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated, authChecked } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -49,6 +49,12 @@ const AuthenticatedApp = () => {
       navigateToLogin();
       return null;
     }
+  }
+
+  // Redirect to login if not authenticated (e.g. visiting the published site without a session)
+  if (authChecked && !isAuthenticated) {
+    navigateToLogin();
+    return null;
   }
 
   // Render the main app
