@@ -36,13 +36,14 @@ export default function ConnectCards() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [c, w, e, u, t] = await Promise.all([
+      const results = await Promise.allSettled([
         base44.entities.ConnectCard.list(),
         base44.entities.Workflow.list(),
         base44.entities.WorkflowEnrollment.list(),
         base44.entities.User.list(),
         base44.entities.Tag.list(),
       ]);
+      const [c, w, e, u, t] = results.map((r) => (r.status === "fulfilled" ? r.value : []));
       setCards(c);
       setWorkflows(w);
       setEnrollments(e);
