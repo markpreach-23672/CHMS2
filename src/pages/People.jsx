@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy, Edit3 } from 'lucide-react';
+import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy, Edit3, GitBranch } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,7 @@ import PersonForm from '@/components/people/PersonForm';
 import ImportPeopleDialog from '@/components/people/ImportPeopleDialog';
 import DuplicateDetector from '@/components/people/DuplicateDetector';
 import BulkUpdateFieldsDialog from '@/components/people/BulkUpdateFieldsDialog';
+import BulkWorkflowDialog from '@/components/people/BulkWorkflowDialog';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -41,6 +42,7 @@ export default function People() {
   const [editPerson, setEditPerson] = useState(null);
   const [showBulkTag, setShowBulkTag] = useState(false);
   const [showBulkUpdate, setShowBulkUpdate] = useState(false);
+  const [showBulkWorkflow, setShowBulkWorkflow] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
 
@@ -228,6 +230,10 @@ export default function People() {
           <Button variant="outline" size="sm" onClick={() => setShowBulkUpdate(true)}>
             <Edit3 size={14} className="mr-1.5" />
             Update Fields
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowBulkWorkflow(true)}>
+            <GitBranch size={14} className="mr-1.5" />
+            Trigger Workflow
           </Button>
           <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 border-red-200" onClick={handleBulkDelete}>
             <Trash2 size={14} className="mr-1.5" />
@@ -463,6 +469,18 @@ export default function People() {
             setSelected(new Set());
           }}
           onClose={() => setShowBulkUpdate(false)}
+        />
+      )}
+
+      {/* Bulk Workflow Modal */}
+      {showBulkWorkflow && (
+        <BulkWorkflowDialog
+          selectedIds={Array.from(selected)}
+          onDone={() => {
+            setShowBulkWorkflow(false);
+            setSelected(new Set());
+          }}
+          onClose={() => setShowBulkWorkflow(false)}
         />
       )}
 
