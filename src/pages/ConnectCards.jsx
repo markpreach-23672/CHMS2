@@ -36,27 +36,15 @@ export default function ConnectCards() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const results = await Promise.allSettled([
-        base44.entities.ConnectCard.list(),
-        base44.entities.Workflow.list(),
-        base44.entities.WorkflowEnrollment.list(),
-        base44.entities.User.list(),
-        base44.entities.Tag.list(),
-      ]);
-      const [c, w, e, u, t] = results.map((r) => (r.status === "fulfilled" ? r.value : []));
-      setCards(c);
-      setWorkflows(w);
-      setEnrollments(e);
-      setUsers(u);
-      setTags(t);
-
-      const stepsMap = {};
-      await Promise.all(w.map(async (wf) => {
-        const ws = await base44.entities.WorkflowStep.filter({ workflow_id: wf.id });
-        ws.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-        stepsMap[wf.id] = ws;
-      }));
-      setSteps(stepsMap);
+      const res = await base44.functions.invoke('getConnectCardData', {});
+      const data = res.data;
+      if (data?.error) throw new Error(data.error);
+      setCards(data.cards || []);
+      setWorkflows(data.workflows || []);
+      setEnrollments(data.enrollments || []);
+      setUsers(data.users || []);
+      setTags(data.tags || []);
+      setSteps(data.steps || {});
     } catch (err) {
       console.error('Failed to load connect cards:', err);
     } finally {
