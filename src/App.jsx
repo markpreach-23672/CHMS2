@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -30,43 +29,27 @@ import Elections from '@/pages/Elections';
 import PublicElection from '@/pages/PublicElection';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated, authChecked } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
-  // Redirect to login once when auth is confirmed missing — via useEffect to avoid
-  // repeated redirects during render (which causes URL accumulation / redirect loops).
-  useEffect(() => {
-    const shouldRedirect = authChecked && !isAuthenticated && (!authError || authError.type === 'auth_required');
-    if (shouldRedirect) {
-      navigateToLogin();
-    }
-  }, [authChecked, isAuthenticated, authError, navigateToLogin]);
-
-  const Spinner = () => (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-    </div>
-  );
+  // This app is Public (no login required) at the platform level, so we never
+  // force a login redirect here — doing so causes a redirect loop for visitors.
+  // The platform enforces login itself if the visibility setting is changed.
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
-    return <Spinner />;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    }
-    // auth_required — redirect in progress via effect; show spinner meanwhile
-    return <Spinner />;
+  // Surface a clear error page if the visitor's account isn't registered for the app
+  if (authError && authError.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
   }
 
-  // Not authenticated — redirect in progress via effect; show spinner meanwhile
-  if (authChecked && !isAuthenticated) {
-    return <Spinner />;
-  }
-
-  // Render the main app
+  // Render the main app for everyone (auth state still tracked via useAuth for pages that need it)
   return (
     <Routes>
       <Route element={<Layout />}>
