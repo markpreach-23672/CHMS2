@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy } from 'lucide-react';
+import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy, Edit3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ import {
 import PersonForm from '@/components/people/PersonForm';
 import ImportPeopleDialog from '@/components/people/ImportPeopleDialog';
 import DuplicateDetector from '@/components/people/DuplicateDetector';
+import BulkUpdateFieldsDialog from '@/components/people/BulkUpdateFieldsDialog';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -39,6 +40,7 @@ export default function People() {
   const [showForm, setShowForm] = useState(false);
   const [editPerson, setEditPerson] = useState(null);
   const [showBulkTag, setShowBulkTag] = useState(false);
+  const [showBulkUpdate, setShowBulkUpdate] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
 
@@ -222,6 +224,10 @@ export default function People() {
           <Button variant="outline" size="sm" onClick={() => setShowBulkTag(true)}>
             <TagIcon size={14} className="mr-1.5" />
             Tag
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowBulkUpdate(true)}>
+            <Edit3 size={14} className="mr-1.5" />
+            Update Fields
           </Button>
           <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 border-red-200" onClick={handleBulkDelete}>
             <Trash2 size={14} className="mr-1.5" />
@@ -443,6 +449,21 @@ export default function People() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Bulk Update Fields Modal */}
+      {showBulkUpdate && (
+        <BulkUpdateFieldsDialog
+          selectedIds={Array.from(selected)}
+          onUpdated={(fieldKey, newValue) => {
+            setPeople((prev) =>
+              prev.map((p) => (selected.has(p.id) ? { ...p, [fieldKey]: newValue } : p))
+            );
+            setShowBulkUpdate(false);
+            setSelected(new Set());
+          }}
+          onClose={() => setShowBulkUpdate(false)}
+        />
       )}
 
       {/* Duplicate Detector */}
