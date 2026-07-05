@@ -128,8 +128,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    // Use origin + pathname only (no query string) so the return URL doesn't
+    // accumulate encoded params on repeated redirects (which causes loop growth).
+    const cleanUrl = window.location.origin + window.location.pathname;
+    base44.auth.redirectToLogin(cleanUrl);
   };
 
   return (
