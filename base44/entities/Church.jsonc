@@ -10,6 +10,11 @@
       "type": "string",
       "title": "Subdomain"
     },
+    "site_url": {
+      "type": "string",
+      "title": "Public Site URL",
+      "description": "The full public URL of your church app (e.g. https://easy-church-flow.base44.app)"
+    },
     "logo_url": {
       "type": "string",
       "title": "Logo URL"

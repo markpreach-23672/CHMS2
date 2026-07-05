@@ -83,6 +83,45 @@ function applyMergeFields(body, person, churchName) {
   return result;
 }
 
+async function sendTwilioSMS(to, message) {
+  try {
+    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    if (!accountSid || !authToken) {
+      console.error('Twilio credentials not set');
+      return false;
+    }
+    const auth = btoa(`${accountSid}:${authToken}`);
+
+    // Look up the first phone number on the account
+    const numbersRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json`, {
+      headers: { 'Authorization': `Basic ${auth}` }
+    });
+    const numbersData = await numbersRes.json();
+    const fromNumber = numbersData.incoming_phone_numbers?.[0]?.phone_number;
+    if (!fromNumber) {
+      console.error('No Twilio phone number found on account');
+      return false;
+    }
+
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ From: fromNumber, To: to, Body: message })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Twilio SMS error (${res.status}): ${errText}`);
+      return false;
+    }
+    console.log(`SMS sent to ${to}`);
+    return true;
+  } catch (err) {
+    console.error(`Twilio SMS failed: ${err.message}`);
+    return false;
+  }
+}
+
 async function processStep(base44, step, person, fromEmail, churchName) {
   // Apply tag
   if (step.step_type === 'apply_tag' && step.tag_id) {
@@ -185,6 +224,18 @@ async function processStep(base44, step, person, fromEmail, churchName) {
     } catch (err) {
       console.error(`No-response alert failed: ${err.message}`);
     }
+    return;
+  }
+
+  // Text message
+  if (step.step_type === 'text') {
+    const phone = person.phone || person.mobile;
+    if (!phone) {
+      console.error(`No phone number for person ${person.id}, skipping text step`);
+      return;
+    }
+    const msg = applyMergeFields(step.body, person, churchName);
+    await sendTwilioSMS(phone, msg);
     return;
   }
 
