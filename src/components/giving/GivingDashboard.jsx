@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DollarSign, TrendingUp, TrendingDown, Users, ArrowUpRight, ArrowDownRight, Target } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import moment from 'moment';
+import MonthlyTrendsChart from '@/components/giving/MonthlyTrendsChart';
 
 export default function GivingDashboard({ donations, funds, people, pledges, loading }) {
   const getPersonName = (pid) => {
@@ -108,6 +109,9 @@ export default function GivingDashboard({ donations, funds, people, pledges, loa
           subtext="Unique contributors"
         />
       </div>
+
+      {/* Monthly trends with MoM comparison */}
+      <MonthlyTrendsChart donations={donations} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Giving trend chart */}
