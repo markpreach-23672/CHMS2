@@ -5,7 +5,8 @@ import ReportBuilder from '@/components/reports/ReportBuilder';
 import PrebuiltReports from '@/components/reports/PrebuiltReports';
 import MailingLabels from '@/components/reports/MailingLabels';
 import ChurchDirectory from '@/components/reports/ChurchDirectory';
-import { FileText, BarChart3, Mail, BookOpen } from 'lucide-react';
+import WeeklyReportSettings from '@/components/reports/WeeklyReportSettings';
+import { FileText, BarChart3, Mail, BookOpen, Clock } from 'lucide-react';
 
 export default function Reports() {
   const [data, setData] = useState(null);
@@ -47,6 +48,7 @@ export default function Reports() {
           <TabsTrigger value="prebuilt"><BarChart3 size={14} className="mr-1.5" />Prebuilt Reports</TabsTrigger>
           <TabsTrigger value="labels"><Mail size={14} className="mr-1.5" />Mailing Labels</TabsTrigger>
           <TabsTrigger value="directory"><BookOpen size={14} className="mr-1.5" />Church Directory</TabsTrigger>
+          <TabsTrigger value="automated"><Clock size={14} className="mr-1.5" />Automated</TabsTrigger>
         </TabsList>
         <TabsContent value="builder" className="mt-4">
           <ReportBuilder {...data} savedReports={savedReports} onReportsChanged={setSavedReports} />
@@ -59,6 +61,9 @@ export default function Reports() {
         </TabsContent>
         <TabsContent value="directory" className="mt-4">
           <ChurchDirectory {...data} />
+        </TabsContent>
+        <TabsContent value="automated" className="mt-4">
+          <WeeklyReportSettings tags={data.tags} people={data.people} church={data.church} />
         </TabsContent>
       </Tabs>
     </div>

@@ -70,6 +70,10 @@
     "subscription_started_date": {
       "type": "string",
       "format": "date"
+    },
+    "guest_report_tag_id": {
+      "type": "string",
+      "title": "Weekly Guest Report Tag ID"
     }
   },
   "required": [

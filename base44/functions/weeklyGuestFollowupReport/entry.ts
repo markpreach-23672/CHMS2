@@ -104,17 +104,21 @@ Deno.serve(async (req) => {
       <p style="font-size:11px;color:#94a3b8;margin-top:24px;">This report was generated automatically each week. It shows each guest's current position in the follow-up workflow so staff can see who still needs attention.</p>
     </div>`;
 
-    // Send to all staff (app users with an email)
-    const users = await base44.asServiceRole.entities.User.list();
-    const staffEmails = users.filter((u) => u.email).map((u) => u.email);
-    if (staffEmails.length === 0) {
-      return Response.json({ error: 'No staff emails found to send the report' }, { status: 400 });
+    // Send to people tagged with the configured team tag
+    const reportTagId = church.guest_report_tag_id;
+    if (!reportTagId) {
+      return Response.json({ success: false, skipped: 'no_tag_configured', message: 'No team tag configured for the weekly report.' });
+    }
+    const taggedPeople = people.filter((p) => (p.tag_ids || []).includes(reportTagId));
+    const recipientEmails = [...new Set(taggedPeople.filter((p) => p.email).map((p) => p.email))];
+    if (recipientEmails.length === 0) {
+      return Response.json({ success: false, skipped: 'no_recipients', message: 'No people with the selected tag have an email address.' });
     }
 
     const subject = `Weekly Guest Follow-up Report — ${church.name}`;
     let sent = 0;
     let failed = 0;
-    for (const to of staffEmails) {
+    for (const to of recipientEmails) {
       try {
         await base44.asServiceRole.integrations.Core.SendEmail({
           to, subject, body: html, from_name: church.name,
@@ -126,7 +130,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return Response.json({ success: true, sent, failed, totalGuests, recipients: staffEmails });
+    return Response.json({ success: true, sent, failed, totalGuests, recipients: recipientEmails });
   } catch (error) {
     console.error('weeklyGuestFollowupReport error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
