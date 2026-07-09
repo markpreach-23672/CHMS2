@@ -1,0 +1,53 @@
+{
+  "name": "MessageTemplate",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "name": {
+      "type": "string",
+      "title": "Template Name"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "email"
+      ],
+      "title": "Type"
+    },
+    "subject": {
+      "type": "string",
+      "title": "Subject"
+    },
+    "body": {
+      "type": "string",
+      "title": "Body"
+    }
+  },
+  "required": [
+    "name",
+    "type",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

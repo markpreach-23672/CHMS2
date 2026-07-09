@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Mail, Send, Loader2 } from 'lucide-react';
+import MessageTemplateBar from '@/components/people/MessageTemplateBar';
 
 export default function EmailMessageDialog({ recipients, onClose }) {
   // recipients: array of { name, email }
@@ -88,6 +89,7 @@ export default function EmailMessageDialog({ recipients, onClose }) {
                 )}
               </div>
             </div>
+            <MessageTemplateBar type="email" value={{ subject, body }} onApply={(tpl) => { setSubject(tpl.subject || ''); setBody(tpl.body || ''); }} />
             <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}

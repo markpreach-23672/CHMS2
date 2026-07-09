@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import MessageTemplateBar from '@/components/people/MessageTemplateBar';
 
 export default function TextMessageDialog({ recipients, onClose }) {
   // recipients: array of { name, phone }
@@ -88,6 +89,7 @@ export default function TextMessageDialog({ recipients, onClose }) {
                 )}
               </div>
             </div>
+            <MessageTemplateBar type="text" value={{ body: message }} onApply={(tpl) => setMessage(tpl.body || '')} />
             <div>
               <Textarea
                 value={message}
