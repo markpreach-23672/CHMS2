@@ -27,6 +27,11 @@ import PublicForm from '@/pages/PublicForm';
 import PublicCalendar from '@/pages/PublicCalendar';
 import Elections from '@/pages/Elections';
 import PublicElection from '@/pages/PublicElection';
+import Landing from '@/pages/Landing';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
@@ -52,8 +57,13 @@ const AuthenticatedApp = () => {
   // Render the main app for everyone (auth state still tracked via useAuth for pages that need it)
   return (
     <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/" element={<Landing />} />
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/people" element={<People />} />
         <Route path="/people/:id" element={<PersonDetail />} />
         <Route path="/tags" element={<Tags />} />
