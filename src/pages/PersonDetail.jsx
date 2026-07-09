@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign, Clock, Heart } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Pencil, Trash2, Tag as TagIcon, Plus, X, Users, DollarSign, Clock, Heart, MessageSquare } from 'lucide-react';
 import moment from 'moment';
 import {
   Select,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import PersonForm from '@/components/people/PersonForm';
 import TagPicker from '@/components/people/TagPicker';
+import TextMessageDialog from '@/components/people/TextMessageDialog';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -33,6 +34,7 @@ export default function PersonDetail() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [showTagPicker, setShowTagPicker] = useState(false);
+  const [textRecipient, setTextRecipient] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -194,6 +196,32 @@ export default function PersonDetail() {
                 <span className="text-sm text-slate-600 flex items-center gap-1.5">
                   <Phone size={14} className="text-slate-400" />
                   {person.phone}
+                  <a href={`tel:${person.phone}`} className="ml-0.5 inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors" title={`Call ${person.phone}`}>
+                    <Phone size={12} />
+                  </a>
+                  <button
+                    onClick={() => setTextRecipient({ name: fullName, phone: person.phone })}
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                    title={`Text ${person.phone}`}
+                  >
+                    <MessageSquare size={12} />
+                  </button>
+                </span>
+              )}
+              {person.mobile && (
+                <span className="text-sm text-slate-600 flex items-center gap-1.5">
+                  <Phone size={14} className="text-slate-400" />
+                  {person.mobile}
+                  <a href={`tel:${person.mobile}`} className="ml-0.5 inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors" title={`Call ${person.mobile}`}>
+                    <Phone size={12} />
+                  </a>
+                  <button
+                    onClick={() => setTextRecipient({ name: fullName, phone: person.mobile })}
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                    title={`Text ${person.mobile}`}
+                  >
+                    <MessageSquare size={12} />
+                  </button>
                 </span>
               )}
               {person.birth_date && (
@@ -468,6 +496,13 @@ export default function PersonDetail() {
           onTagCreated={(tag) => setTags(prev => [...prev, tag])}
           onFolderCreated={(folder) => setFolders(prev => [...prev, folder])}
           onClose={() => setShowTagPicker(false)}
+        />
+      )}
+
+      {textRecipient && (
+        <TextMessageDialog
+          recipients={[textRecipient]}
+          onClose={() => setTextRecipient(null)}
         />
       )}
     </div>

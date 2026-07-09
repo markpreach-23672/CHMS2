@@ -31,6 +31,7 @@ import DuplicateDetector from '@/components/people/DuplicateDetector';
 import BulkUpdateFieldsDialog from '@/components/people/BulkUpdateFieldsDialog';
 import BulkWorkflowDialog from '@/components/people/BulkWorkflowDialog';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
+import TagGroupMessenger from '@/components/people/TagGroupMessenger';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -228,6 +229,8 @@ export default function People() {
           </SelectContent>
         </Select>
       </div>
+
+      <TagGroupMessenger people={people} tags={tags} />
 
       {/* Bulk Actions Bar */}
       {selected.size > 0 && (
