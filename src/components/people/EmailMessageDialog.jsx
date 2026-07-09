@@ -32,7 +32,8 @@ export default function EmailMessageDialog({ recipients, onClose }) {
       });
       setResult(res.data);
     } catch (err) {
-      setResult({ error: err.message, sent: 0, failed: withEmail.length, total: withEmail.length });
+      const backendError = err.response?.data?.error;
+      setResult({ error: backendError || err.message, sent: 0, failed: withEmail.length, total: withEmail.length });
     } finally {
       setSending(false);
     }

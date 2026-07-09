@@ -32,7 +32,8 @@ export default function TextMessageDialog({ recipients, onClose }) {
       });
       setResult(res.data);
     } catch (err) {
-      setResult({ error: err.message, sent: 0, failed: withPhone.length, total: withPhone.length });
+      const backendError = err.response?.data?.error;
+      setResult({ error: backendError || err.message, sent: 0, failed: withPhone.length, total: withPhone.length });
     } finally {
       setSending(false);
     }
