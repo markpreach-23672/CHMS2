@@ -83,6 +83,26 @@ function applyMergeFields(body, person, churchName) {
   return result;
 }
 
+function effectiveMode(step, isStaff) {
+  if (step.guest_info_mode) return step.guest_info_mode;
+  if (isStaff) return step.info_scope === 'all' ? 'full_info' : 'contact_only';
+  return 'none';
+}
+
+function guestInfoBlock(person, full, indent = '') {
+  const guestName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Guest';
+  let block = `${indent}Name: ${guestName}\n`;
+  block += `${indent}Email: ${person.email || 'N/A'}\n`;
+  block += `${indent}Phone: ${person.phone || person.mobile || 'N/A'}\n`;
+  if (full) {
+    if (person.mobile) block += `${indent}Mobile: ${person.mobile}\n`;
+    if (person.address) block += `${indent}Address: ${person.address}${person.city ? ', ' + person.city : ''}${person.state ? ', ' + person.state : ''}${person.zip ? ' ' + person.zip : ''}\n`;
+    if (person.birth_date) block += `${indent}Birth Date: ${person.birth_date}\n`;
+    block += `${indent}Status: ${person.status || 'N/A'}\n`;
+  }
+  return block;
+}
+
 async function sendTwilioSMS(to, message) {
   try {
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -160,16 +180,14 @@ async function processStep(base44, step, person, fromEmail, churchName) {
       if (!staffUser || !staffUser.email) return;
       const guestName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Guest';
       const subject = step.subject || `New guest follow-up: ${guestName}`;
+      const mode = effectiveMode(step, true);
       let emailBody = `A new guest has submitted a connect card and needs follow-up.\n\n`;
-      emailBody += `Guest Information:\n`;
-      emailBody += `  Name: ${guestName}\n`;
-      emailBody += `  Email: ${person.email || 'N/A'}\n`;
-      emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
-      if (step.info_scope === 'all') {
-        if (person.mobile) emailBody += `  Mobile: ${person.mobile}\n`;
-        if (person.address) emailBody += `  Address: ${person.address}${person.city ? ', ' + person.city : ''}${person.state ? ', ' + person.state : ''}${person.zip ? ' ' + person.zip : ''}\n`;
-        if (person.birth_date) emailBody += `  Birth Date: ${person.birth_date}\n`;
-        emailBody += `  Status: ${person.status || 'N/A'}\n`;
+      if (mode === 'full_info') {
+        emailBody += `Guest Information:\n` + guestInfoBlock(person, true, '  ');
+      } else if (mode === 'contact_only') {
+        emailBody += `Guest Information:\n` + guestInfoBlock(person, false, '  ');
+      } else if (mode === 'name_greeting') {
+        emailBody += `Guest: ${guestName}\n`;
       }
       if (person.notes) emailBody += `  Message: ${person.notes}\n`;
       emailBody += `\nInstructions for contacting this guest:\n`;
@@ -197,16 +215,14 @@ async function processStep(base44, step, person, fromEmail, churchName) {
       if (!staffUser || !staffUser.email) return;
       const guestName = `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Guest';
       const subject = `Follow-up needed: ${guestName} hasn't responded`;
+      const mode = effectiveMode(step, true);
       let emailBody = `${guestName} submitted a connect card and hasn't responded to our follow-up outreach. They may be falling through the cracks.\n\n`;
-      emailBody += `Guest Contact Information:\n`;
-      emailBody += `  Name: ${guestName}\n`;
-      emailBody += `  Email: ${person.email || 'N/A'}\n`;
-      emailBody += `  Phone: ${person.phone || person.mobile || 'N/A'}\n`;
-      if (step.info_scope === 'all') {
-        if (person.mobile) emailBody += `  Mobile: ${person.mobile}\n`;
-        if (person.address) emailBody += `  Address: ${person.address}${person.city ? ', ' + person.city : ''}${person.state ? ', ' + person.state : ''}${person.zip ? ' ' + person.zip : ''}\n`;
-        if (person.birth_date) emailBody += `  Birth Date: ${person.birth_date}\n`;
-        emailBody += `  Status: ${person.status || 'N/A'}\n`;
+      if (mode === 'full_info') {
+        emailBody += `Guest Contact Information:\n` + guestInfoBlock(person, true, '  ');
+      } else if (mode === 'contact_only') {
+        emailBody += `Guest Contact Information:\n` + guestInfoBlock(person, false, '  ');
+      } else if (mode === 'name_greeting') {
+        emailBody += `Guest: ${guestName}\n`;
       }
       if (person.notes) emailBody += `  Original Message: ${person.notes}\n`;
       emailBody += `\nInstructions:\n`;
@@ -234,14 +250,26 @@ async function processStep(base44, step, person, fromEmail, churchName) {
       console.error(`No phone number for person ${person.id}, skipping text step`);
       return;
     }
-    const msg = applyMergeFields(step.body, person, churchName);
+    let msg = applyMergeFields(step.body, person, churchName);
+    const mode = effectiveMode(step, false);
+    if (mode === 'name_greeting') {
+      msg = `Hi ${person.first_name || 'there'}, ` + msg;
+    } else if (mode === 'contact_only' || mode === 'full_info') {
+      msg = msg + '\n--- Guest Information ---\n' + guestInfoBlock(person, mode === 'full_info');
+    }
     await sendTwilioSMS(phone, msg);
     return;
   }
 
   // Email
   if (step.step_type === 'email' && person.email) {
-    const body = applyMergeFields(step.body, person, churchName);
+    let body = applyMergeFields(step.body, person, churchName);
+    const mode = effectiveMode(step, false);
+    if (mode === 'name_greeting') {
+      body = `Hi ${person.first_name || 'there'},\n\n` + body;
+    } else if (mode === 'contact_only' || mode === 'full_info') {
+      body = body + '\n\n--- Guest Information ---\n' + guestInfoBlock(person, mode === 'full_info');
+    }
     const subject = applyMergeFields(step.subject || 'Update from our church', person, churchName);
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");

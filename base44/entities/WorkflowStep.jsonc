@@ -76,6 +76,17 @@
       "title": "Info Scope",
       "default": "contact_only"
     },
+    "guest_info_mode": {
+      "type": "string",
+      "enum": [
+        "none",
+        "name_greeting",
+        "contact_only",
+        "full_info"
+      ],
+      "title": "Guest Info Mode",
+      "default": "none"
+    },
     "tag_id": {
       "type": "string",
       "title": "Tag ID (for apply_tag/remove_tag)"

@@ -360,7 +360,7 @@ export default function ConnectCards() {
                 body: s.body,
                 task_description: s.task_description,
                 notify_method: s.notify_method || 'email',
-                info_scope: s.info_scope || 'contact_only',
+                guest_info_mode: s.guest_info_mode || (s.info_scope === 'all' ? 'full_info' : s.info_scope === 'contact_only' ? 'contact_only' : 'none'),
                 workflow_id: created.id,
                 sort_order: s.sort_order
               }));
@@ -431,7 +431,7 @@ function AddStepButton({ onAdd, users, tags }) {
   const [staffUserId, setStaffUserId] = useState('');
   const [notifyMethod, setNotifyMethod] = useState('email');
   const [delayUnit, setDelayUnit] = useState('days');
-  const [infoScope, setInfoScope] = useState('contact_only');
+  const [guestInfoMode, setGuestInfoMode] = useState('none');
   const [tagId, setTagId] = useState('');
 
   const handleAdd = () => {
@@ -439,6 +439,7 @@ function AddStepButton({ onAdd, users, tags }) {
     if (type === 'email' || type === 'text') {
       data.subject = subject;
       data.body = body;
+      data.guest_info_mode = guestInfoMode;
     }
     if (type === 'task') {
       data.task_description = taskDescription;
@@ -446,7 +447,7 @@ function AddStepButton({ onAdd, users, tags }) {
     if (type === 'staff_notify' || type === 'no_response_alert') {
       data.assigned_to_user_id = staffUserId;
       data.notify_method = notifyMethod;
-      data.info_scope = infoScope;
+      data.guest_info_mode = guestInfoMode;
       data.body = body;
     }
     if (type === 'apply_tag' || type === 'remove_tag') {
@@ -462,9 +463,24 @@ function AddStepButton({ onAdd, users, tags }) {
     setStaffUserId('');
     setNotifyMethod('email');
     setDelayUnit('days');
-    setInfoScope('contact_only');
+    setGuestInfoMode('none');
     setTagId('');
   };
+
+  const guestInfoSelect = (
+    <div>
+      <Label className="text-[10px] text-slate-500">Guest info to include</Label>
+      <Select value={guestInfoMode} onValueChange={setGuestInfoMode}>
+        <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">None — no guest info</SelectItem>
+          <SelectItem value="name_greeting">Name greeting — personalize with guest's name</SelectItem>
+          <SelectItem value="contact_only">Contact info — name, email, phone</SelectItem>
+          <SelectItem value="full_info">Full details — all guest info on file</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   if (!show) {
     return (
@@ -480,7 +496,7 @@ function AddStepButton({ onAdd, users, tags }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-[10px] text-slate-500">Step Type</Label>
-          <Select value={type} onValueChange={setType}>
+          <Select value={type} onValueChange={(v) => { setType(v); setGuestInfoMode((v === 'staff_notify' || v === 'no_response_alert') ? 'contact_only' : 'none'); }}>
             <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="email">Send Email</SelectItem>
@@ -519,6 +535,7 @@ function AddStepButton({ onAdd, users, tags }) {
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} />
             <p className="text-[10px] text-slate-400 mt-0.5">Merge fields: {'{{first_name}}'}, {'{{last_name}}'}, {'{{church_name}}'}, {'{{full_name}}'}</p>
           </div>
+          {guestInfoSelect}
         </>
       )}
       {type === 'task' && (
@@ -553,16 +570,7 @@ function AddStepButton({ onAdd, users, tags }) {
               </Select>
             </div>
           </div>
-          <div>
-            <Label className="text-[10px] text-slate-500">Information to Include</Label>
-            <Select value={infoScope} onValueChange={setInfoScope}>
-              <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="contact_only">Contact info only (name, email, phone)</SelectItem>
-                <SelectItem value="all">All info on file (address, birthday, status, etc.)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {guestInfoSelect}
           <div>
             <Label className="text-[10px] text-slate-500">{type === 'no_response_alert' ? 'Follow-up Instructions' : 'Instructions for Staff'}</Label>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} placeholder={type === 'no_response_alert' ? "e.g., Guest hasn't replied to our email — call them personally to check in and invite them to Sunday service." : "e.g., Call within 48 hours. Mention the Sunday service. Invite to coffee."} />
