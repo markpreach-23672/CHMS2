@@ -7,9 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageSquare, Mail, Users } from 'lucide-react';
+import { MessageSquare, Mail, Users, Download } from 'lucide-react';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import EmailMessageDialog from '@/components/people/EmailMessageDialog';
+import { downloadPeopleCsv } from '@/utils/csvExport';
 
 export default function TagGroupMessenger({ people, tags }) {
   const [selectedTagId, setSelectedTagId] = useState('');
@@ -73,6 +74,19 @@ export default function TagGroupMessenger({ people, tags }) {
         >
           <Mail size={14} className="mr-1.5" />
           Email
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => {
+            const selectedTag = tags.find((t) => t.id === selectedTagId);
+            const safeName = (selectedTag?.name || 'tag').replace(/\s+/g, '-').toLowerCase();
+            downloadPeopleCsv(taggedPeople, `tag-${safeName}.csv`);
+          }}
+        >
+          <Download size={14} className="mr-1.5" />
+          Download
         </Button>
       </div>
 

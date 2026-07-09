@@ -283,9 +283,17 @@ function TagChip({ tag, count, onEdit, onDelete, onText, onEmail, onDownload }) 
         {tag.name}
       </Link>
       <span className="text-xs opacity-60">{count}</span>
+      <button
+        onClick={onDownload}
+        disabled={count === 0}
+        className="p-0.5 rounded hover:opacity-70 transition-opacity disabled:opacity-30"
+        title="Download tagged people as CSV"
+      >
+        <Download size={13} />
+      </button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-0.5 rounded hover:opacity-70 transition-opacity" title="Actions">
+          <button className="p-0.5 rounded hover:opacity-70 transition-opacity" title="More actions">
             <MoreHorizontal size={13} />
           </button>
         </DropdownMenuTrigger>
