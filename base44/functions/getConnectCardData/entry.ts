@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     // Load users — only admins can list users
     let users = [];
-    if (user.role === 'admin') {
+    if (['super_admin', 'church_admin'].includes(user.role)) {
       try {
         users = await base44.asServiceRole.entities.User.list();
       } catch (e) {

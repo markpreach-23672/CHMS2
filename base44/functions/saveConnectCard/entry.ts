@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       user = null;
     }
     if (!user) return Response.json({ error: 'Please log in as an admin to save connect cards.' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Only admins can create or edit connect cards.' }, { status: 403 });
+    if (!['super_admin', 'church_admin'].includes(user.role)) return Response.json({ error: 'Only admins can create or edit connect cards.' }, { status: 403 });
 
     const body = await req.json();
     const { id, ...data } = body;
