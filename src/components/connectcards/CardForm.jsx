@@ -42,7 +42,7 @@ export default function CardForm({ workflows, tags, editingCard, onSave, onClose
   const [workflowId, setWorkflowId] = useState(editingCard?.workflow_id || '');
   const [buttonText, setButtonText] = useState(editingCard?.button_text || 'Submit');
   const [confirmationMsg, setConfirmationMsg] = useState(editingCard?.confirmation_message || '');
-  const [fields, setFields] = useState(editingCard?.fields || []);
+  const [fields, setFields] = useState(Array.isArray(editingCard?.fields) ? editingCard.fields : []);
   const [selectedTagIds, setSelectedTagIds] = useState(editingCard?.tag_ids || []);
   const [showTemplatePicker, setShowTemplatePicker] = useState(!editingCard);
 
@@ -53,7 +53,7 @@ export default function CardForm({ workflows, tags, editingCard, onSave, onClose
     setKeyword(tpl.keyword);
     setButtonText(tpl.button_text);
     setConfirmationMsg(tpl.confirmation_message);
-    setFields(tpl.fields.map(f => ({ ...f })));
+    setFields(Array.isArray(tpl.fields) ? tpl.fields.map(f => ({ ...f })) : []);
     setShowTemplatePicker(false);
   };
 
