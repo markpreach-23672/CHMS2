@@ -11,13 +11,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Folder, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Pencil } from 'lucide-react';
+import { Folder, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Pencil, MessageSquare, Mail, Download } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import TextMessageDialog from '@/components/people/TextMessageDialog';
+import EmailMessageDialog from '@/components/people/EmailMessageDialog';
+import { downloadPeopleCsv } from '@/utils/csvExport';
 
 const TAG_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6'];
 
@@ -29,6 +32,8 @@ export default function Tags() {
   const [showTagForm, setShowTagForm] = useState(false);
   const [showFolderForm, setShowFolderForm] = useState(false);
   const [editTag, setEditTag] = useState(null);
+  const [textTag, setTextTag] = useState(null);
+  const [emailTag, setEmailTag] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -53,6 +58,14 @@ export default function Tags() {
   }, [loadData]);
 
   const getTagCount = (tagId) => people.filter((p) => (p.tag_ids || []).includes(tagId)).length;
+
+  const getTaggedPeople = (tagId) => people.filter((p) => (p.tag_ids || []).includes(tagId));
+
+  const handleDownloadTag = (tag) => {
+    const tagged = getTaggedPeople(tag.id);
+    const safeName = tag.name.replace(/\s+/g, '-').toLowerCase();
+    downloadPeopleCsv(tagged, `tag-${safeName}.csv`);
+  };
 
   const unfiledTags = tags.filter((t) => !t.folder_id);
   const folderTags = (folderId) => tags.filter((t) => t.folder_id === folderId);
@@ -148,6 +161,9 @@ export default function Tags() {
                       count={getTagCount(tag.id)}
                       onEdit={() => { setEditTag(tag); setShowTagForm(true); }}
                       onDelete={() => handleDeleteTag(tag)}
+                      onText={() => setTextTag(tag)}
+                      onEmail={() => setEmailTag(tag)}
+                      onDownload={() => handleDownloadTag(tag)}
                     />
                   ))
                 )}
@@ -171,6 +187,9 @@ export default function Tags() {
                     count={getTagCount(tag.id)}
                     onEdit={() => { setEditTag(tag); setShowTagForm(true); }}
                     onDelete={() => handleDeleteTag(tag)}
+                    onText={() => setTextTag(tag)}
+                    onEmail={() => setEmailTag(tag)}
+                    onDownload={() => handleDownloadTag(tag)}
                   />
                 ))}
               </div>
@@ -229,32 +248,65 @@ export default function Tags() {
           onClose={() => setShowFolderForm(false)}
         />
       )}
+
+      {textTag && (
+        <TextMessageDialog
+          recipients={getTaggedPeople(textTag.id).map((p) => ({
+            name: `${p.first_name} ${p.last_name}`,
+            phone: p.phone,
+          }))}
+          onClose={() => setTextTag(null)}
+        />
+      )}
+
+      {emailTag && (
+        <EmailMessageDialog
+          recipients={getTaggedPeople(emailTag.id).map((p) => ({
+            name: `${p.first_name} ${p.last_name}`,
+            email: p.email,
+          }))}
+          onClose={() => setEmailTag(null)}
+        />
+      )}
     </div>
   );
 }
 
-function TagChip({ tag, count, onEdit, onDelete }) {
+function TagChip({ tag, count, onEdit, onDelete, onText, onEmail, onDownload }) {
   return (
     <div
       className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
       style={{ backgroundColor: `${tag.color}12`, color: tag.color, border: `1px solid ${tag.color}25` }}
     >
       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
-      <Link
-        to={`/people?tag=${tag.id}`}
-        className="hover:underline"
-      >
+      <Link to={`/people?tag=${tag.id}`} className="hover:underline">
         {tag.name}
       </Link>
       <span className="text-xs opacity-60">{count}</span>
-      <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
-        <button onClick={onEdit} className="p-0.5 hover:opacity-70" title="Edit">
-          <Pencil size={11} />
-        </button>
-        <button onClick={onDelete} className="p-0.5 hover:opacity-70" title="Delete">
-          <Trash2 size={11} />
-        </button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="p-0.5 rounded hover:opacity-70 transition-opacity" title="Actions">
+            <MoreHorizontal size={13} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onText} disabled={count === 0}>
+            <MessageSquare size={13} className="mr-2" /> Text People
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onEmail} disabled={count === 0}>
+            <Mail size={13} className="mr-2" /> Email People
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onDownload} disabled={count === 0}>
+            <Download size={13} className="mr-2" /> Download CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onEdit}>
+            <Pencil size={13} className="mr-2" /> Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-red-600" onClick={onDelete}>
+            <Trash2 size={13} className="mr-2" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

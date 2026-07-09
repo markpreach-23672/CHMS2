@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, Upload, Copy, Edit3, GitBranch } from 'lucide-react';
+import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, MessageSquare, Upload, Copy, Edit3, GitBranch } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +30,7 @@ import ImportPeopleDialog from '@/components/people/ImportPeopleDialog';
 import DuplicateDetector from '@/components/people/DuplicateDetector';
 import BulkUpdateFieldsDialog from '@/components/people/BulkUpdateFieldsDialog';
 import BulkWorkflowDialog from '@/components/people/BulkWorkflowDialog';
+import TextMessageDialog from '@/components/people/TextMessageDialog';
 
 export default function People() {
   const [people, setPeople] = useState([]);
@@ -45,6 +46,7 @@ export default function People() {
   const [showBulkWorkflow, setShowBulkWorkflow] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
+  const [textRecipients, setTextRecipients] = useState(null);
 
   const loadPeople = useCallback(async () => {
     setLoading(true);
@@ -147,6 +149,15 @@ export default function People() {
     }
   };
 
+  const openBulkText = () => {
+    const recips = Array.from(selected)
+      .map((id) => people.find((p) => p.id === id))
+      .filter(Boolean)
+      .map((p) => ({ name: `${p.first_name} ${p.last_name}`, phone: p.phone }))
+      .filter((r) => r.phone);
+    setTextRecipients(recips);
+  };
+
   const handleSaved = (savedPerson) => {
     setPeople((prev) => {
       const idx = prev.findIndex((p) => p.id === savedPerson.id);
@@ -223,6 +234,10 @@ export default function People() {
         <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
           <span className="text-sm font-medium text-indigo-900">{selected.size} selected</span>
           <div className="flex-1" />
+          <Button variant="outline" size="sm" onClick={openBulkText}>
+            <MessageSquare size={14} className="mr-1.5" />
+            Text
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowBulkTag(true)}>
             <TagIcon size={14} className="mr-1.5" />
             Tag
@@ -319,10 +334,33 @@ export default function People() {
                           </p>
                         )}
                         {person.phone && (
-                          <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                            <Phone size={12} className="text-slate-400" />
-                            {person.phone}
-                          </p>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="text-xs text-slate-500 flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
+                                <Phone size={12} className="text-slate-400" />
+                                {person.phone}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setTextRecipients([
+                                    {
+                                      name: `${person.first_name} ${person.last_name}`,
+                                      phone: person.phone,
+                                    },
+                                  ])
+                                }
+                              >
+                                <MessageSquare size={13} className="mr-2" /> Send Text
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={`tel:${person.phone}`}>
+                                  <Phone size={13} className="mr-2" /> Call
+                                </a>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     </td>
@@ -492,6 +530,13 @@ export default function People() {
           onMerged={(primaryId, deletedId) => {
             setPeople(prev => prev.filter(p => p.id !== deletedId));
           }}
+        />
+      )}
+
+      {textRecipients && (
+        <TextMessageDialog
+          recipients={textRecipients}
+          onClose={() => setTextRecipients(null)}
         />
       )}
     </div>
