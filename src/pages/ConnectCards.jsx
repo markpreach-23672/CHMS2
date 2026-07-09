@@ -312,18 +312,21 @@ export default function ConnectCards() {
           editingCard={editingCard}
           onSave={async (data) => {
             try {
+              const payload = editingCard ? { id: editingCard.id, ...data } : data;
+              const res = await base44.functions.invoke('saveConnectCard', payload);
+              const result = res.data;
+              if (result?.error) throw new Error(result.error);
               if (editingCard) {
-                const updated = await base44.entities.ConnectCard.update(editingCard.id, data);
-                setCards((prev) => prev.map((c) => c.id === editingCard.id ? updated : c));
+                setCards((prev) => prev.map((c) => c.id === editingCard.id ? result : c));
                 setEditingCard(null);
               } else {
-                const created = await base44.entities.ConnectCard.create(data);
-                setCards((prev) => [...prev, created]);
+                setCards((prev) => [...prev, result]);
                 setShowCardForm(false);
-                setShareCard(created);
+                setShareCard(result);
               }
             } catch (err) {
-              alert('Failed to save card.');
+              const backendError = err.response?.data?.error || err.message;
+              alert('Failed to save card: ' + (backendError || 'Unknown error'));
             }
           }}
           onClose={() => { setShowCardForm(false); setEditingCard(null); }}
