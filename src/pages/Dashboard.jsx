@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Users, Tag, DollarSign, Calendar as CalendarIcon, TrendingUp, ArrowUpRight, UserPlus, Clock } from 'lucide-react';
+import GuestFollowupFunnel from '@/components/dashboard/GuestFollowupFunnel';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ people: 0, tags: 0, donations: 0, events: 0 });
@@ -72,6 +73,8 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      <GuestFollowupFunnel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200">
