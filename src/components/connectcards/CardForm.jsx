@@ -53,7 +53,7 @@ export default function CardForm({ workflows, tags, editingCard, onSave, onClose
     setKeyword(tpl.keyword);
     setButtonText(tpl.button_text);
     setConfirmationMsg(tpl.confirmation_message);
-    setFields(Array.isArray(tpl.fields) ? tpl.fields.map(f => ({ ...f })) : []);
+    setFields(tpl.fields.map(f => ({ ...f })));
     setShowTemplatePicker(false);
   };
 
