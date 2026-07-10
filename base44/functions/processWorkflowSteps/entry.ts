@@ -147,7 +147,7 @@ function guestInfoBlock(person, full, indent = '') {
   return block;
 }
 
-async function sendTwilioSMS(to, message, mediaUrl) {
+async function sendTwilioSMS(to, message, mediaUrl, fromNumberOverride) {
   try {
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -157,12 +157,15 @@ async function sendTwilioSMS(to, message, mediaUrl) {
     }
     const auth = btoa(`${accountSid}:${authToken}`);
 
-    // Look up the first phone number on the account
-    const numbersRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json`, {
-      headers: { 'Authorization': `Basic ${auth}` }
-    });
-    const numbersData = await numbersRes.json();
-    const fromNumber = numbersData.incoming_phone_numbers?.[0]?.phone_number;
+    let fromNumber = fromNumberOverride || '';
+    if (!fromNumber) {
+      // Look up the first phone number on the account
+      const numbersRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json`, {
+        headers: { 'Authorization': `Basic ${auth}` }
+      });
+      const numbersData = await numbersRes.json();
+      fromNumber = numbersData.incoming_phone_numbers?.[0]?.phone_number;
+    }
     if (!fromNumber) {
       console.error('No Twilio phone number found on account');
       return false;
@@ -301,7 +304,7 @@ async function processStep(base44, step, person, fromEmail, church, cardFields) 
     } else if (mode === 'contact_only' || mode === 'full_info') {
       msg = msg + '\n--- Guest Information ---\n' + guestInfoBlock(person, mode === 'full_info');
     }
-    await sendTwilioSMS(phone, msg, step.media_url);
+    await sendTwilioSMS(phone, msg, step.media_url, step.from_number);
     return;
   }
 

@@ -57,6 +57,8 @@ export default function ConnectCards() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [analyticsWorkflow, setAnalyticsWorkflow] = useState(null);
   const [bulkEnrollWorkflow, setBulkEnrollWorkflow] = useState(null);
+  const [twilioNumber, setTwilioNumber] = useState('');
+  const [staffMobile, setStaffMobile] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -70,6 +72,8 @@ export default function ConnectCards() {
       setUsers(data.users || []);
       setTags(data.tags || []);
       setSteps(data.steps || {});
+      setTwilioNumber(data.twilio_number || '');
+      setStaffMobile(data.staff_mobile || '');
       const cals = await base44.entities.DepartmentCalendar.list().catch(() => []);
       setCalendars(cals);
     } catch (err) {
@@ -324,7 +328,7 @@ export default function ConnectCards() {
                           })}
                           {wfSteps.length === 0 && <p className="text-xs text-slate-400 py-2">No steps yet. Add one below.</p>}
                         </div>
-                        <AddStepButton workflow={wf} cards={cards} onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
+                        <AddStepButton workflow={wf} cards={cards} twilioNumber={twilioNumber} staffMobile={staffMobile} onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
                       </div>
                     )}
                   </div>
@@ -455,7 +459,7 @@ export default function ConnectCards() {
   );
 }
 
-function AddStepButton({ workflow, cards, onAdd, users, tags }) {
+function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, users, tags }) {
   const [show, setShow] = useState(false);
   const [type, setType] = useState('email');
   const [delayDays, setDelayDays] = useState('0');
@@ -470,6 +474,7 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
   const [timingMode, setTimingMode] = useState('immediate');
   const [linkUrl, setLinkUrl] = useState('');
   const [mediaUrl, setMediaUrl] = useState('');
+  const [fromSource, setFromSource] = useState('twilio');
   const fileInputRef = useRef(null);
 
   const triggerCard = workflow?.trigger_connect_card_id ? cards?.find((c) => c.id === workflow.trigger_connect_card_id) : null;
@@ -495,6 +500,9 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
       data.body = body;
       data.guest_info_mode = guestInfoMode;
       if (mediaUrl) data.media_url = mediaUrl;
+    }
+    if (type === 'text' && fromSource === 'personal' && staffMobile) {
+      data.from_number = staffMobile;
     }
     if (type === 'task') {
       data.task_description = taskDescription;
@@ -523,6 +531,7 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
     setTimingMode('immediate');
     setLinkUrl('');
     setMediaUrl('');
+    setFromSource('twilio');
   };
 
   const guestInfoSelect = (
@@ -658,6 +667,18 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
             </div>
           </div>
           {guestInfoSelect}
+          {type === 'text' && (
+            <div>
+              <Label className="text-[10px] text-slate-500">Send from</Label>
+              <Select value={fromSource} onValueChange={setFromSource}>
+                <SelectTrigger className="h-8 text-xs mt-0.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="twilio">Church number{twilioNumber ? ` (${twilioNumber})` : ''}</SelectItem>
+                  <SelectItem value="personal" disabled={!staffMobile}>My cell{staffMobile ? ` (${staffMobile})` : ' — not on file'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </>
       )}
       {type === 'task' && (

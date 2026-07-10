@@ -51,6 +51,10 @@
       "type": "string",
       "title": "Media URL"
     },
+    "from_number": {
+      "type": "string",
+      "title": "From Number (SMS)"
+    },
     "task_description": {
       "type": "string",
       "title": "Task Description"

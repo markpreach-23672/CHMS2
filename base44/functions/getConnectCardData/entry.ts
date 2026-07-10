@@ -31,6 +31,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve the signed-in staff member's mobile from their linked People record
+    let staffMobile = '';
+    if (user.email) {
+      try {
+        const mePeople = await base44.asServiceRole.entities.Person.filter({ email: user.email });
+        const mePerson = mePeople[0];
+        if (mePerson) staffMobile = mePerson.mobile || mePerson.phone || '';
+      } catch (e) {
+        console.error('Staff mobile lookup failed:', e.message);
+      }
+    }
+
     return Response.json({
       cards,
       workflows,
@@ -38,6 +50,8 @@ Deno.serve(async (req) => {
       enrollments,
       tags,
       users,
+      twilio_number: Deno.env.get("TWILIO_PHONE_NUMBER") || '',
+      staff_mobile: staffMobile,
     });
   } catch (error) {
     console.error('getConnectCardData error:', error.message);
