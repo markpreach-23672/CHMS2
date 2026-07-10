@@ -323,30 +323,37 @@ function StaffTab() {
     if (!inviteEmail.trim()) return;
     setInviting(true);
     try {
-      await base44.users.inviteUser(inviteEmail, inviteRole);
+      const res = await base44.functions.invoke('inviteStaffMember', { email: inviteEmail, role: inviteRole });
+      const data = res.data;
+      if (data?.error) throw new Error(data.error);
+      alert(data?.message || 'Invite sent.');
       setInviteEmail('');
       setShowInvite(false);
       load();
     } catch (err) {
-      alert('Failed to invite user. Make sure you have admin permissions.');
+      alert('Failed to invite user: ' + (err.message || 'Unknown error'));
     } finally {
       setInviting(false);
     }
   };
 
   const handleInviteFromMember = async (person, role) => {
-    if (!person.email) {
+    const email = (person.email || '').trim();
+    if (!email) {
       alert('This member does not have an email address on file.');
       return;
     }
     setInviting(true);
     try {
-      await base44.users.inviteUser(person.email, role);
+      const res = await base44.functions.invoke('inviteStaffMember', { email, role });
+      const data = res.data;
+      if (data?.error) throw new Error(data.error);
+      alert(data?.message || 'Invite sent.');
       setShowAddFromMembers(false);
       setSearchQuery('');
       load();
     } catch (err) {
-      alert('Failed to invite user. They may already have an account or lack an email.');
+      alert('Failed to invite user: ' + (err.message || 'Unknown error'));
     } finally {
       setInviting(false);
     }
