@@ -4,92 +4,92 @@ const DEFAULTS = [
   {
     title: 'Service Times & Location',
     category: 'Visiting',
-    body: 'Our Sunday services are at 9:00 AM and 11:00 AM, and midweek prayer is Wednesday at 7:00 PM. The church is located at [your street address, city]. Children’s ministry (birth–5th grade) runs during both Sunday services. Plan to arrive about 10 minutes early so you can check in your kids and grab a cup of coffee.',
+    body: `When you visit, here's what to expect:\n1. Arrive about 10 minutes early to park, check in kids, and grab coffee.\n2. Check in children (birth–5th grade) at the children's ministry desk before the service.\n3. Find a seat in the auditorium — ushers can help with directions.\n4. After the service, stop by the Connect Card table in the lobby so we can welcome you and share next steps.\n\nService times: Sunday 9:00 AM & 11:00 AM. Midweek prayer: Wednesday 7:00 PM. Location: [your street address, city].`,
   },
   {
     title: 'How to Give',
     category: 'Giving',
-    body: 'You can give in three ways:\n• Online — open the Giving tab in your member portal and choose a fund and amount.\n• Text-to-give — text the amount to [your text-to-give number].\n• In person — place cash or checks (made payable to the church) in the offering during any service.\nYou’ll receive a year-end giving statement for your tax records. If you have questions about a specific gift, contact the church office.',
+    body: `You can give in three ways.\n\nOnline:\n1. Open the Giving tab in your member portal.\n2. Choose a fund and enter the amount.\n3. Pick one-time or recurring.\n4. Enter payment details and confirm.\n\nText-to-give:\n1. Text the amount to [your text-to-give number].\n2. Follow the text link to set up your first gift.\n3. After that, text an amount to give again.\n\nIn person:\n1. Place cash or a check (payable to the church) in the offering during any service.\n2. Use a giving envelope if you'd like a year-end statement.`,
   },
   {
     title: 'Volunteering & Serving',
     category: 'Get Involved',
-    body: 'We’d love to help you find a place to serve! Open volunteer roles are listed under the Volunteers tab — tap a role to sign up. You can also fill out a Connect Card marked “I want to serve” and our team will follow up with next steps and a conversation about where you might fit best.',
+    body: `Ready to serve? Here's how:\n1. Open the Volunteers tab to see open roles.\n2. Tap a role to read its description.\n3. Tap Sign Up to express interest.\n4. Or fill out a Connect Card marked "I want to serve."\n5. Our team will follow up with next steps.`,
   },
   {
     title: 'What Are Connect Cards?',
     category: 'Connect',
-    body: 'Connect Cards are quick digital forms for prayer requests, decisions, event sign-ups, and more. Scan the QR code printed in the bulletin or on signs around the church, fill out the short form, and our team will follow up as needed. You never have to fill one out — but it’s the easiest way to let us know how we can serve you.',
+    body: `Connect Cards are quick digital forms. To use one:\n1. Scan the QR code in the bulletin or on signs around the church.\n2. The card opens on your phone — no app needed.\n3. Fill out the short form (name, contact, and what you'd like to share).\n4. Tap Submit.\n5. Our team receives your card and follows up as needed.`,
   },
   {
     title: 'Updating Your Information',
     category: 'Account',
-    body: 'Keep your profile current! On your member dashboard, use the profile card to edit your contact info, address, and family members. Changes save automatically. If you need to change something you can’t edit (like your email or a family relationship), let us know via a Connect Card.',
+    body: `To update your profile:\n1. Open your member portal (My Family).\n2. Click the profile card.\n3. Edit your contact info, address, or other fields.\n4. Changes save automatically.\n5. For something you can't edit (like your email or a family relationship), send a Connect Card.`,
   },
   {
     title: 'Your Dashboard',
     category: 'Dashboard',
-    body: 'Your dashboard is your home base. Members see their profile, tags, giving history, quick actions, and the help desk chat. Church staff see a dashboard with totals (people, tags, donations, upcoming events), recently added people, and any unresolved help desk questions to review.',
+    body: `Your dashboard is your home base.\n\nMembers:\n1. Sign in and open your dashboard.\n2. Review your profile, tags, and giving summary.\n3. Use Quick Actions to jump to common tasks.\n4. Use the Help Desk chat to ask any question.\n\nStaff:\n1. Sign in to see church totals (people, tags, donations, events).\n2. Review recently added people.\n3. Check "Unresolved Help Desk Questions" and resolve any open items.`,
   },
   {
     title: 'The People Directory',
     category: 'People',
-    body: 'The People directory is where church staff manage everyone in the church. Staff can add a person, edit contact details, record notes, apply tags, enroll people in follow-up workflows, and view a person’s giving and family connections. Members don’t manage the directory — to update your own info, use your member portal profile.',
+    body: `Staff manage everyone in the church here.\n1. Open the People tab.\n2. Search by name, email, or phone.\n3. Click a person to view or edit their details.\n4. Click Add Person to create a new profile.\n5. From a profile, apply tags, add notes, or enroll in a follow-up workflow.\n\nMembers: to update your own info, use your member portal.`,
   },
   {
     title: 'Families & Households',
     category: 'Families',
-    body: 'Families group related people into a household so shared address, phone, and members are visible at a glance. Staff can create a family and add members (head of household, spouse, adult, child). Members can view their own family in the member portal; to make changes, send a Connect Card.',
+    body: `Families group related people into a household.\n1. Open the Families tab.\n2. Click a family to see its members and shared address.\n3. To create one, click Add Family and enter the family name and address.\n4. Add members and assign roles (head of household, spouse, adult, child).\n5. Members view their own family in the member portal; changes go through a Connect Card.`,
   },
   {
     title: 'Tags & Groups',
     category: 'Tags',
-    body: 'Tags organize people into groups — like “First-time Guest,” “Volunteer,” or “Member.” Staff use tags to filter people, send group messages, trigger follow-up workflows, and build reports. Each tag sits in a folder and has a color for easy spotting.',
+    body: `Tags organize people into groups.\n1. Open the Tags tab.\n2. Create a folder with Add Folder to group related tags.\n3. Click Add Tag, name it, pick a color, and save it into a folder.\n4. Apply tags from a person's profile (Tag button).\n5. Use tags to filter people, send group messages, or trigger workflows.`,
   },
   {
     title: 'Finding People (Search)',
     category: 'Search',
-    body: 'Use Search to find anyone fast. Staff can search by name, email, or phone, and filter by tags, status, or custom fields. Saved searches let you re-run common lookups (like “Active volunteers”). Members looking for their own record should open the member portal.',
+    body: `Use Search to find anyone fast.\n1. Open the Search tab.\n2. Type a name, email, or phone in the search bar.\n3. Add filters (tags, status, custom fields) to narrow results.\n4. Click a result to open the person's profile.\n5. Save common lookups as a Saved Search to re-run them anytime.`,
   },
   {
     title: 'Reports',
     category: 'Reports',
-    body: 'Reports turn church data into printable views — weekly guest follow-up, giving summaries, a church directory, mailing labels, and custom report builder. Staff can generate, print, or export reports. The weekly guest report can be emailed automatically to your team.',
+    body: `Reports turn your data into printable views.\n1. Open the Reports tab.\n2. Pick a prebuilt report (weekly guest follow-up, giving summary, directory, mailing labels).\n3. Set any filters or date range.\n4. Click Generate to preview.\n5. Print or export the result.\n6. Use Report Builder for a custom report, or enable the weekly guest report email to send it automatically.`,
   },
   {
     title: 'Calendar & Events',
     category: 'Calendar',
-    body: 'The Calendar shows everything happening at the church — services, meetings, and special events. Events can be one-time or recurring, placed on a department calendar, and synced to Google Calendar. A public calendar view lets members and visitors see upcoming events, and each public event has a shareable link and an “Add to calendar” option.',
+    body: `The Calendar shows everything happening at the church.\n1. Open the Calendar tab.\n2. Switch between Month, Week, Day, or Agenda views.\n3. Click a date/time and Add Event to create one.\n4. Set the title, time, location, and (optionally) recurrence.\n5. Pick a department calendar and sync to Google Calendar if connected.\n6. For a public view, mark the calendar public and share its link; each event has an "Add to calendar" option.`,
   },
   {
     title: 'Forms & Registrations',
     category: 'Forms',
-    body: 'Forms collect information for registrations, sign-ups, and more — event registration, membership, volunteer intake, and custom forms. Each form can have its own fields, payment options, tags, and a follow-up workflow. Members and visitors fill out a public form link; submissions create records and can trigger automatic follow-up.',
+    body: `Forms collect information for registrations and sign-ups.\n1. Open the Forms tab.\n2. Click New Form (or start from a template).\n3. Add fields (name, email, payment, etc.) and mark required ones.\n4. Set tags, a follow-up workflow, and a confirmation message.\n5. Save and open Share to get the public link or embed code.\n6. Review submissions under the form's Responses tab.`,
   },
   {
     title: 'Elections & Voting',
     category: 'Elections',
-    body: 'Elections let the church hold a vote — for board members, budget approval, or any decision. Staff create an election with candidates and an open/close window; members receive a link and vote. Each person can vote up to the set limit, and results are tallied automatically.',
+    body: `Elections let the church hold a vote.\n1. Open the Elections tab and click New Election.\n2. Enter the title, candidates, and the open/close window.\n3. Set how many votes each person gets.\n4. Open the election to send members the voting link.\n5. Members click the link, cast their vote, and results tally automatically.\n6. Close the election to lock results.`,
   },
   {
     title: 'Using the Help Desk',
     category: 'Help Desk',
-    body: 'The Help Desk chat answers your questions instantly using our church’s help materials. Just type your question. If the assistant can’t find an answer, it logs your question for our staff team to follow up. Church staff can review unresolved questions and manage the help articles from the Help Desk page.',
+    body: `The Help Desk chat answers your questions instantly.\n1. Open your dashboard and find the Help Desk chat.\n2. Type your question (or tap a suggested question).\n3. The assistant answers from our church's help materials.\n4. If it can't answer, it logs your question for staff follow-up.\n\nStaff: review unresolved questions and manage the help articles from the Help Desk page.`,
   },
   {
     title: 'Church Settings',
     category: 'Settings',
-    body: 'Settings is where church staff configure the church: profile info (name, address, contact, branding color), custom fields for people and families, staff accounts and permissions, and locations. Only church admins can change settings. Members don’t need to use Settings — personal info lives in the member portal.',
+    body: `Settings is for church admins.\n1. Open the Settings tab.\n2. Update church profile (name, address, contact, branding color).\n3. Add custom fields for people or families under Custom Fields.\n4. Manage staff accounts and permissions under Staff & Permissions.\n5. Configure locations under Locations.\n\nOnly church admins can change settings. Members don't need to use Settings.`,
   },
   {
     title: 'Your Member Portal',
     category: 'Member Portal',
-    body: 'The Member Portal (“My Family”) is your personal space. Update your contact info and address, view your family, see your tags, and review your giving history and statements. Changes save automatically. If something’s missing or wrong that you can’t edit, send a Connect Card or ask the help desk.',
+    body: `Your personal space, at "My Family".\n1. Sign in and open My Family.\n2. Edit your contact info and address in the profile card.\n3. View your family members and tags.\n4. Review your giving history and statements.\n5. For anything you can't change, send a Connect Card or ask the Help Desk.`,
   },
   {
     title: 'Giving Statements',
     category: 'Giving',
-    body: 'At year-end (or anytime you request one), the church provides a giving statement summarizing your contributions for tax purposes. Staff can generate and email individual or bulk statements. If you need a copy or notice a discrepancy, contact the church office or ask here.',
+    body: `To get a giving statement:\n1. Open your member portal and find the Giving section.\n2. View your giving history and any available statement.\n3. If you need a new or corrected statement, contact the church office or ask the Help Desk.\n\nStaff can generate individual or bulk statements from the Giving tab.`,
   },
 ];
 
@@ -104,16 +104,27 @@ Deno.serve(async (req) => {
     const churchId = user.church_id || (user.data && user.data.church_id) || '';
 
     const existing = await base44.entities.HelpDeskArticle.filter({ church_id: churchId });
-    const existingTitles = new Set(existing.map((a) => a.title));
-    const toCreate = DEFAULTS
-      .filter((d) => !existingTitles.has(d.title))
-      .map((d) => ({ ...d, church_id: churchId, is_active: true }));
+    const byTitle = {};
+    for (const a of existing) byTitle[a.title] = a;
 
-    if (toCreate.length === 0) {
-      return Response.json({ success: true, created: 0, message: 'All starter articles already exist.' });
+    let created = 0;
+    let updated = 0;
+    for (const d of DEFAULTS) {
+      if (byTitle[d.title]) {
+        // Refresh text only; preserve any screenshot the admin attached.
+        await base44.entities.HelpDeskArticle.update(byTitle[d.title].id, {
+          title: d.title,
+          body: d.body,
+          category: d.category,
+        });
+        updated++;
+      } else {
+        await base44.entities.HelpDeskArticle.create({ ...d, church_id: churchId, is_active: true });
+        created++;
+      }
     }
-    const created = await base44.entities.HelpDeskArticle.bulkCreate(toCreate);
-    return Response.json({ success: true, created: created.length });
+
+    return Response.json({ success: true, created, updated });
   } catch (error) {
     console.error('seedHelpArticles error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });

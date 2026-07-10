@@ -12,7 +12,7 @@ export default function ArticlesManager() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ title: '', body: '', category: 'General' });
+  const [form, setForm] = useState({ title: '', body: '', category: 'General', image_url: '' });
   const [seeding, setSeeding] = useState(false);
 
   const load = async () => {
@@ -29,12 +29,12 @@ export default function ArticlesManager() {
   }, []);
 
   const openNew = () => {
-    setForm({ title: '', body: '', category: 'General' });
+    setForm({ title: '', body: '', category: 'General', image_url: '' });
     setEditing(null);
     setOpen(true);
   };
   const openEdit = (a) => {
-    setForm({ title: a.title, body: a.body || '', category: a.category || 'General' });
+    setForm({ title: a.title, body: a.body || '', category: a.category || 'General', image_url: a.image_url || '' });
     setEditing(a);
     setOpen(true);
   };
@@ -65,6 +65,7 @@ export default function ArticlesManager() {
   };
 
   const seed = async () => {
+    if (!confirm('This will add any missing starter articles and refresh existing ones to the latest step-by-step version. Continue?')) return;
     setSeeding(true);
     try {
       await base44.functions.invoke('seedHelpArticles', {});
@@ -105,6 +106,9 @@ export default function ArticlesManager() {
         <div className="space-y-2">
           {articles.map((a) => (
             <div key={a.id} className="flex items-start justify-between gap-3 p-4 rounded-lg border border-slate-200">
+              {a.image_url && (
+                <img src={a.image_url} alt="" className="w-16 h-16 rounded-lg object-cover border border-slate-200 flex-shrink-0" />
+              )}
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-sm text-slate-900 truncate">{a.title}</p>
@@ -144,6 +148,13 @@ export default function ArticlesManager() {
             <div>
               <Label>Content</Label>
               <Textarea rows={8} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Write the answer the AI should give members…" />
+            </div>
+            <div>
+              <Label>Screenshot URL (optional)</Label>
+              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://… (paste an image URL)" />
+              {form.image_url && (
+                <img src={form.image_url} alt="Preview" className="mt-2 rounded-lg border border-slate-200 max-h-40 object-contain" />
+              )}
             </div>
           </div>
           <DialogFooter>

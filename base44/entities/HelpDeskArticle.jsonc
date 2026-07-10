@@ -19,6 +19,10 @@
       "title": "Category",
       "default": "General"
     },
+    "image_url": {
+      "type": "string",
+      "title": "Screenshot URL"
+    },
     "is_active": {
       "type": "boolean",
       "title": "Active",
