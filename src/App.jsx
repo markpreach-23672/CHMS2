@@ -27,6 +27,7 @@ import Forms from '@/pages/Forms';
 import PublicForm from '@/pages/PublicForm';
 import PublicCalendar from '@/pages/PublicCalendar';
 import Elections from '@/pages/Elections';
+import HelpDesk from '@/pages/HelpDesk';
 import PublicElection from '@/pages/PublicElection';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
@@ -77,6 +78,7 @@ const AuthenticatedApp = () => {
         <Route path="/volunteers" element={<Volunteers />} />
         <Route path="/forms" element={<Forms />} />
         <Route path="/elections" element={<Elections />} />
+        <Route path="/help-desk" element={<HelpDesk />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/my-family" element={<MemberPortal />} />

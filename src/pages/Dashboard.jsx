@@ -5,6 +5,7 @@ import { Users, Tag, DollarSign, Calendar as CalendarIcon, TrendingUp, ArrowUpRi
 import GuestFollowupFunnel from '@/components/dashboard/GuestFollowupFunnel';
 import { useAuth } from '@/lib/AuthContext';
 import MemberDashboard from '@/components/dashboard/MemberDashboard';
+import HelpDeskTicketsCard from '@/components/helpdesk/HelpDeskTicketsCard';
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ people: 0, tags: 0, donations: 0, events: 0 });
@@ -79,6 +80,9 @@ function AdminDashboard() {
       <GuestFollowupFunnel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="lg:col-span-2">
+          <HelpDeskTicketsCard />
+        </div>
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <h2 className="font-semibold text-slate-900 text-sm">Recently Added People</h2>

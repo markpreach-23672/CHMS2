@@ -6,6 +6,7 @@ import MemberProfileEditor from '@/components/portal/MemberProfileEditor';
 import MemberGivingSection from '@/components/portal/MemberGivingSection';
 import MemberOnboarding from '@/components/portal/MemberOnboarding';
 import MemberTagsCard from '@/components/dashboard/MemberTagsCard';
+import HelpDeskChat from '@/components/helpdesk/HelpDeskChat';
 
 export default function MemberDashboard({ user }) {
   const [person, setPerson] = useState(null);
@@ -52,6 +53,10 @@ export default function MemberDashboard({ user }) {
             <MemberOnboarding email={user?.email} church={church} onCreated={setPerson} />
           </div>
         )}
+
+        <div className="lg:col-span-2">
+          <HelpDeskChat />
+        </div>
 
         <div className="bg-white rounded-xl border border-slate-200">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">

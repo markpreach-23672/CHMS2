@@ -1,0 +1,109 @@
+{
+  "name": "HelpDeskArticle",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "body": {
+      "type": "string",
+      "title": "Content"
+    },
+    "category": {
+      "type": "string",
+      "title": "Category",
+      "default": "General"
+    },
+    "is_active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    }
+  },
+  "required": [
+    "title",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
