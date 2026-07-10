@@ -48,10 +48,10 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-white font-bold text-sm">PS</span>
+              <span className="text-white font-bold text-sm">EF</span>
             </div>
             <div>
-              <span className="text-slate-900 font-semibold text-sm block">Project Shepherd</span>
+              <span className="text-slate-900 font-semibold text-sm block">Easy Flow Church</span>
               <span className="text-slate-400 text-[10px]">Church Management</span>
             </div>
           </div>
@@ -72,7 +72,7 @@ export default function Landing() {
             Grow your church community,<br className="hidden sm:block" /> one connection at a time.
           </h1>
           <p className="mt-5 max-w-2xl mx-auto text-lg text-slate-600">
-            Project Shepherd brings your people, giving, calendar, and follow-up workflows together — so your team can focus on ministry, not spreadsheets.
+            Easy Flow Church brings your people, giving, calendar, and follow-up workflows together — so your team can focus on ministry, not spreadsheets.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/login" className="flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20">
@@ -121,7 +121,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-slate-100">
         <div className="max-w-6xl mx-auto px-6 py-8 text-center text-sm text-slate-400">
-          © {new Date().getFullYear()} Project Shepherd · Church Management
+          © {new Date().getFullYear()} Easy Flow Church · Church Management
         </div>
       </footer>
     </div>

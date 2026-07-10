@@ -48,10 +48,10 @@ export default function Layout() {
         <div className="px-5 py-5 border-b border-slate-800">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-white font-bold text-sm">PS</span>
+              <span className="text-white font-bold text-sm">EF</span>
             </div>
             <div>
-              <span className="text-white font-semibold text-sm block">Project Shepherd</span>
+              <span className="text-white font-semibold text-sm block">Easy Flow Church</span>
               <span className="text-slate-500 text-[10px]">Church Management</span>
             </div>
           </Link>
