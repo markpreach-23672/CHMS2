@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Users, Tag, DollarSign, Calendar as CalendarIcon, TrendingUp, ArrowUpRight, UserPlus, Clock } from 'lucide-react';
 import GuestFollowupFunnel from '@/components/dashboard/GuestFollowupFunnel';
+import { useAuth } from '@/lib/AuthContext';
+import MemberDashboard from '@/components/dashboard/MemberDashboard';
 
-export default function Dashboard() {
+function AdminDashboard() {
   const [stats, setStats] = useState({ people: 0, tags: 0, donations: 0, events: 0 });
   const [recentPeople, setRecentPeople] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -160,4 +162,15 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+export default function Dashboard() {
+  const { user, isLoadingAuth } = useAuth();
+  if (isLoadingAuth) {
+    return <div className="p-8 max-w-7xl mx-auto text-sm text-slate-400">Loading...</div>;
+  }
+  if (user?.role === 'member') {
+    return <MemberDashboard user={user} />;
+  }
+  return <AdminDashboard />;
 }
