@@ -246,15 +246,17 @@ async function processStep(base44, step, person, fromEmail, church, card, fieldD
       .replace(/\{\{church_name\}\}/g, ch.name || 'our church');
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
+      const emailPayload = { from: fromEmail, to: person.email, subject };
+      if (step.media_url) {
+        const escaped = (body || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        emailPayload.html = `<div>${escaped}<br><br><img src="${step.media_url}" style="max-width:100%;border-radius:8px;" /></div>`;
+      } else {
+        emailPayload.text = body;
+      }
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: person.email,
-          subject,
-          text: body
-        })
+        body: JSON.stringify(emailPayload)
       });
       if (!res.ok) {
         const errText = await res.text();

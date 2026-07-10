@@ -147,7 +147,7 @@ function guestInfoBlock(person, full, indent = '') {
   return block;
 }
 
-async function sendTwilioSMS(to, message) {
+async function sendTwilioSMS(to, message, mediaUrl) {
   try {
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
@@ -171,7 +171,7 @@ async function sendTwilioSMS(to, message) {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
       method: 'POST',
       headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ From: fromNumber, To: to, Body: message })
+      body: new URLSearchParams({ From: fromNumber, To: to, Body: message, ...(mediaUrl ? { MediaUrl: mediaUrl } : {}) })
     });
     if (!res.ok) {
       const errText = await res.text();
@@ -301,7 +301,7 @@ async function processStep(base44, step, person, fromEmail, church, cardFields) 
     } else if (mode === 'contact_only' || mode === 'full_info') {
       msg = msg + '\n--- Guest Information ---\n' + guestInfoBlock(person, mode === 'full_info');
     }
-    await sendTwilioSMS(phone, msg);
+    await sendTwilioSMS(phone, msg, step.media_url);
     return;
   }
 
@@ -317,15 +317,17 @@ async function processStep(base44, step, person, fromEmail, church, cardFields) 
     const subject = applyMergeFields(step.subject || 'Update from our church', person, church, cardFields);
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
+      const emailPayload = { from: fromEmail, to: person.email, subject };
+      if (step.media_url) {
+        const escaped = (body || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        emailPayload.html = `<div>${escaped}<br><br><img src="${step.media_url}" style="max-width:100%;border-radius:8px;" /></div>`;
+      } else {
+        emailPayload.text = body;
+      }
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: person.email,
-          subject,
-          text: body
-        })
+        body: JSON.stringify(emailPayload)
       });
       if (!res.ok) {
         const errText = await res.text();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,8 @@ const PERSON_DATE_LABELS = {
   baptism_date: 'Baptism Date',
   membership_date: 'Membership Date',
 };
+
+const EMOJIS = ['😀', '😊', '🙏', '❤️', '👍', '✝️', '⛪', '🎉', '🎂', '📖', '✨', '🕊️', '🌟', '🎁', '📅', '💬'];
 
 const triggerLabel = (wf, cards, tags, calendars) => {
   switch (wf.trigger_type) {
@@ -466,9 +468,25 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
   const [guestInfoMode, setGuestInfoMode] = useState('none');
   const [tagId, setTagId] = useState('');
   const [timingMode, setTimingMode] = useState('immediate');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [mediaUrl, setMediaUrl] = useState('');
+  const fileInputRef = useRef(null);
 
   const triggerCard = workflow?.trigger_connect_card_id ? cards?.find((c) => c.id === workflow.trigger_connect_card_id) : null;
   const cardFields = (triggerCard?.fields || []).filter((f) => f.label);
+
+  const insertText = (text) => setBody((prev) => (prev ? prev + ' ' : '') + text);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await base44.integrations.Core.UploadFile({ file });
+      setMediaUrl(res.file_url);
+    } catch (err) {
+      alert('Failed to upload media.');
+    }
+  };
 
   const handleAdd = () => {
     const data = { step_type: type, delay_days: timingMode === 'immediate' ? 0 : (parseInt(delayDays) || 0), delay_unit: delayUnit };
@@ -476,6 +494,7 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
       data.subject = subject;
       data.body = body;
       data.guest_info_mode = guestInfoMode;
+      if (mediaUrl) data.media_url = mediaUrl;
     }
     if (type === 'task') {
       data.task_description = taskDescription;
@@ -502,6 +521,8 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
     setGuestInfoMode('none');
     setTagId('');
     setTimingMode('immediate');
+    setLinkUrl('');
+    setMediaUrl('');
   };
 
   const guestInfoSelect = (
@@ -582,32 +603,59 @@ function AddStepButton({ workflow, cards, onAdd, users, tags }) {
           <div>
             <Label className="text-[10px] text-slate-500">Body</Label>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={3} />
-            <select value="" onChange={(e) => { if (e.target.value) { setBody((prev) => (prev ? prev + ' ' : '') + e.target.value); } }} className="mt-1 w-full h-7 px-2 rounded-md border border-input bg-transparent text-[10px] text-slate-500">
-              <option value="">+ Insert merge field</option>
-              <optgroup label="Member">
-                <option value="{{first_name}}">First Name</option>
-                <option value="{{last_name}}">Last Name</option>
-                <option value="{{full_name}}">Full Name</option>
-                <option value="{{email}}">Email</option>
-                <option value="{{phone}}">Phone</option>
-                <option value="{{birth_date}}">Birth Date</option>
-              </optgroup>
-              <optgroup label="Church">
-                <option value="{{church_name}}">Church Name</option>
-                <option value="{{church_address}}">Address</option>
-                <option value="{{church_city}}">City</option>
-                <option value="{{church_state}}">State</option>
-                <option value="{{church_zip}}">ZIP</option>
-                <option value="{{church_phone}}">Phone</option>
-                <option value="{{church_email}}">Email</option>
-                <option value="{{church_website}}">Website</option>
-              </optgroup>
-              {cardFields.length > 0 && (
-                <optgroup label="Connect Card">
-                  {cardFields.map((f) => <option key={f.key} value={`{{field:${f.label}}}`}>{f.label}</option>)}
-                </optgroup>
-              )}
-            </select>
+            <div className="mt-2 space-y-2 border border-slate-200 rounded-lg p-2">
+              <div>
+                <p className="text-[10px] text-slate-500 font-medium">Merge fields</p>
+                <select value="" onChange={(e) => { if (e.target.value) insertText(e.target.value); }} className="mt-1 w-full h-7 px-2 rounded-md border border-input bg-transparent text-[10px] text-slate-500">
+                  <option value="">+ Insert merge field</option>
+                  <optgroup label="Member">
+                    <option value="{{first_name}}">First Name</option>
+                    <option value="{{last_name}}">Last Name</option>
+                    <option value="{{full_name}}">Full Name</option>
+                    <option value="{{email}}">Email</option>
+                    <option value="{{phone}}">Phone</option>
+                    <option value="{{birth_date}}">Birth Date</option>
+                  </optgroup>
+                  <optgroup label="Church">
+                    <option value="{{church_name}}">Church Name</option>
+                    <option value="{{church_address}}">Address</option>
+                    <option value="{{church_city}}">City</option>
+                    <option value="{{church_state}}">State</option>
+                    <option value="{{church_zip}}">ZIP</option>
+                    <option value="{{church_phone}}">Phone</option>
+                    <option value="{{church_email}}">Email</option>
+                    <option value="{{church_website}}">Website</option>
+                  </optgroup>
+                  {cardFields.length > 0 && (
+                    <optgroup label="Connect Card">
+                      {cardFields.map((f) => <option key={f.key} value={`{{field:${f.label}}}`}>{f.label}</option>)}
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 font-medium">Emoji</p>
+                <div className="flex flex-wrap gap-0.5 mt-1">
+                  {EMOJIS.map((e) => <button key={e} type="button" onClick={() => insertText(e)} className="text-sm hover:bg-slate-100 rounded px-1 leading-relaxed">{e}</button>)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 font-medium">Web link</p>
+                <div className="flex gap-1 mt-1">
+                  <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." className="h-7 text-[10px] flex-1" />
+                  <Button type="button" size="sm" variant="outline" onClick={() => { if (linkUrl.trim()) { insertText(linkUrl.trim()); setLinkUrl(''); } }} className="h-7 text-[10px] px-2">Insert</Button>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 font-medium">Media</p>
+                <div className="flex gap-1 mt-1">
+                  <Input value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="Image URL" className="h-7 text-[10px] flex-1" />
+                  <Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-7 text-[10px] px-2">Upload</Button>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+                </div>
+                {mediaUrl && <img src={mediaUrl} alt="media preview" className="mt-1 h-12 rounded object-cover" />}
+              </div>
+            </div>
           </div>
           {guestInfoSelect}
         </>

@@ -47,6 +47,10 @@
       "type": "string",
       "title": "Message Body"
     },
+    "media_url": {
+      "type": "string",
+      "title": "Media URL"
+    },
     "task_description": {
       "type": "string",
       "title": "Task Description"
