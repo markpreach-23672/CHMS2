@@ -13,6 +13,7 @@ import PersonDetail from '@/pages/PersonDetail';
 import Tags from '@/pages/Tags';
 import Giving from '@/pages/Giving';
 import GivingStatement from '@/pages/GivingStatement';
+import MemberPortal from '@/pages/MemberPortal';
 import GivingStatementsBulk from '@/pages/GivingStatementsBulk';
 import CalendarPage from '@/pages/CalendarPage';
 import ConnectCards from '@/pages/ConnectCards';
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
         <Route path="/elections" element={<Elections />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
+      <Route path="/my-family" element={<MemberPortal />} />
       <Route path="/giving/statement/:id" element={<GivingStatement />} />
       <Route path="/giving/statements/bulk" element={<GivingStatementsBulk />} />
       <Route path="*" element={<PageNotFound />} />

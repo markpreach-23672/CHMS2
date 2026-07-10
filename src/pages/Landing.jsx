@@ -9,9 +9,17 @@ export default function Landing() {
 
   useEffect(() => {
     base44.auth.isAuthenticated()
-      .then((authed) => {
-        if (authed) navigate('/dashboard', { replace: true });
-        else setChecking(false);
+      .then(async (authed) => {
+        if (authed) {
+          try {
+            const u = await base44.auth.me();
+            navigate(u?.role === 'member' ? '/my-family' : '/dashboard', { replace: true });
+          } catch (err) {
+            navigate('/dashboard', { replace: true });
+          }
+        } else {
+          setChecking(false);
+        }
       })
       .catch(() => setChecking(false));
   }, [navigate]);

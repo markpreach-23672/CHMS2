@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Search, Plus, Trash2, Tag as TagIcon, MoreHorizontal, Mail, Phone, MessageSquare, Upload, Copy, Edit3, GitBranch } from 'lucide-react';
 import {
   DropdownMenu,
@@ -48,6 +49,10 @@ export default function People() {
   const [showImport, setShowImport] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [textRecipients, setTextRecipients] = useState(null);
+  const [showInviteNew, setShowInviteNew] = useState(false);
+  const [inviteNewEmail, setInviteNewEmail] = useState('');
+  const [inviteNewName, setInviteNewName] = useState('');
+  const [inviting, setInviting] = useState(false);
 
   const loadPeople = useCallback(async () => {
     setLoading(true);
@@ -110,6 +115,33 @@ export default function People() {
     } catch (err) {
       alert('Failed to delete person.');
     }
+  };
+
+  const handleInviteToPortal = async (person) => {
+    if (!person.email) { alert('This member has no email on file. Add an email first.'); return; }
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(person.email, 'member');
+      await base44.functions.invoke('sendMemberInviteEmail', { email: person.email, first_name: person.first_name, existing: true });
+      alert(`Invitation sent to ${person.email}.`);
+    } catch (err) {
+      alert('Failed to send invitation: ' + (err.response?.data?.error || err.message));
+    } finally { setInviting(false); }
+  };
+
+  const handleInviteNew = async () => {
+    if (!inviteNewEmail.trim()) { alert('Email is required.'); return; }
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(inviteNewEmail, 'member');
+      await base44.functions.invoke('sendMemberInviteEmail', { email: inviteNewEmail, first_name: inviteNewName, existing: false });
+      alert(`Invitation sent to ${inviteNewEmail}. They'll enter their info when they sign in.`);
+      setShowInviteNew(false);
+      setInviteNewEmail('');
+      setInviteNewName('');
+    } catch (err) {
+      alert('Failed to send invitation: ' + (err.response?.data?.error || err.message));
+    } finally { setInviting(false); }
   };
 
   const handleBulkDelete = async () => {
@@ -187,6 +219,10 @@ export default function People() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowInviteNew(true)}>
+            <Mail size={16} className="mr-1.5" />
+            Invite Member
+          </Button>
           <Button variant="outline" onClick={() => setShowDuplicates(true)}>
             <Copy size={16} className="mr-1.5" />
             Find Duplicates
@@ -407,6 +443,9 @@ export default function People() {
                           <DropdownMenuItem asChild>
                             <Link to={`/people/${person.id}`}>View Profile</Link>
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleInviteToPortal(person)}>
+                            <Mail size={13} className="mr-2" /> Invite to Portal
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(person)}>
                             Delete
                           </DropdownMenuItem>
@@ -541,6 +580,31 @@ export default function People() {
           recipients={textRecipients}
           onClose={() => setTextRecipients(null)}
         />
+      )}
+
+      {showInviteNew && (
+        <Dialog open onOpenChange={() => setShowInviteNew(false)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Invite a Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs font-medium text-slate-600">Email *</Label>
+                <Input type="email" value={inviteNewEmail} onChange={(e) => setInviteNewEmail(e.target.value)} className="mt-1" autoFocus placeholder="member@email.com" />
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-slate-600">First Name (optional)</Label>
+                <Input value={inviteNewName} onChange={(e) => setInviteNewName(e.target.value)} className="mt-1" />
+              </div>
+              <p className="text-xs text-slate-400">If they're new, they'll enter their own personal & family info when they sign in. For someone already in your people list, use "Invite to Portal" from their row instead.</p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowInviteNew(false)}>Cancel</Button>
+              <Button onClick={handleInviteNew} disabled={inviting || !inviteNewEmail.trim()} className="bg-indigo-600 hover:bg-indigo-700">{inviting ? 'Sending...' : 'Send Invite'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

@@ -7,7 +7,8 @@
       "enum": [
         "super_admin",
         "church_admin",
-        "staff"
+        "staff",
+        "member"
       ],
       "default": "staff"
     },
