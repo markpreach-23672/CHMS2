@@ -384,10 +384,8 @@ function StaffTab() {
   };
 
   const roleLabel = { super_admin: 'Super Admin', church_admin: 'Church Admin', staff: 'Staff' };
-  const existingEmails = new Set(users.map((u) => u.email?.toLowerCase()).filter(Boolean));
   const filteredPeople = people.filter((p) =>
     p.email &&
-    !existingEmails.has(p.email.toLowerCase()) &&
     (searchQuery === '' ||
       `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.email.toLowerCase().includes(searchQuery.toLowerCase()))
