@@ -322,7 +322,7 @@ export default function ConnectCards() {
                           })}
                           {wfSteps.length === 0 && <p className="text-xs text-slate-400 py-2">No steps yet. Add one below.</p>}
                         </div>
-                        <AddStepButton onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
+                        <AddStepButton workflow={wf} cards={cards} onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
                       </div>
                     )}
                   </div>
@@ -453,7 +453,7 @@ export default function ConnectCards() {
   );
 }
 
-function AddStepButton({ onAdd, users, tags }) {
+function AddStepButton({ workflow, cards, onAdd, users, tags }) {
   const [show, setShow] = useState(false);
   const [type, setType] = useState('email');
   const [delayDays, setDelayDays] = useState('0');
@@ -465,9 +465,13 @@ function AddStepButton({ onAdd, users, tags }) {
   const [delayUnit, setDelayUnit] = useState('days');
   const [guestInfoMode, setGuestInfoMode] = useState('none');
   const [tagId, setTagId] = useState('');
+  const [timingMode, setTimingMode] = useState('immediate');
+
+  const triggerCard = workflow?.trigger_connect_card_id ? cards?.find((c) => c.id === workflow.trigger_connect_card_id) : null;
+  const cardFields = (triggerCard?.fields || []).filter((f) => f.label);
 
   const handleAdd = () => {
-    const data = { step_type: type, delay_days: parseInt(delayDays) || 0, delay_unit: delayUnit };
+    const data = { step_type: type, delay_days: timingMode === 'immediate' ? 0 : (parseInt(delayDays) || 0), delay_unit: delayUnit };
     if (type === 'email' || type === 'text') {
       data.subject = subject;
       data.body = body;
@@ -497,6 +501,7 @@ function AddStepButton({ onAdd, users, tags }) {
     setDelayUnit('days');
     setGuestInfoMode('none');
     setTagId('');
+    setTimingMode('immediate');
   };
 
   const guestInfoSelect = (
@@ -544,15 +549,27 @@ function AddStepButton({ onAdd, users, tags }) {
         </div>
         <div>
           <Label className="text-[10px] text-slate-500">Timing</Label>
-          <div className="flex gap-2 mt-0.5">
-            <Input type="number" value={delayDays} onChange={(e) => setDelayDays(e.target.value)} className="h-8 text-xs w-16" />
-            <Select value={delayUnit} onValueChange={setDelayUnit}>
-              <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
+          <div className="mt-0.5 space-y-2">
+            <Select value={timingMode} onValueChange={setTimingMode}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="hours">Hours from visit</SelectItem>
-                <SelectItem value="days">Days from visit</SelectItem>
+                <SelectItem value="immediate">Send immediately</SelectItem>
+                <SelectItem value="schedule">Schedule for later</SelectItem>
               </SelectContent>
             </Select>
+            {timingMode === 'schedule' && (
+              <div className="flex gap-2">
+                <Input type="number" min="1" value={delayDays} onChange={(e) => setDelayDays(e.target.value)} className="h-8 text-xs w-20" />
+                <Select value={delayUnit} onValueChange={setDelayUnit}>
+                  <SelectTrigger className="h-8 text-xs flex-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="days">Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -564,8 +581,33 @@ function AddStepButton({ onAdd, users, tags }) {
           </div>
           <div>
             <Label className="text-[10px] text-slate-500">Body</Label>
-            <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={2} />
-            <p className="text-[10px] text-slate-400 mt-0.5">Merge fields: {'{{first_name}}'}, {'{{last_name}}'}, {'{{church_name}}'}, {'{{full_name}}'}</p>
+            <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="text-xs mt-0.5" rows={3} />
+            <select value="" onChange={(e) => { if (e.target.value) { setBody((prev) => (prev ? prev + ' ' : '') + e.target.value); } }} className="mt-1 w-full h-7 px-2 rounded-md border border-input bg-transparent text-[10px] text-slate-500">
+              <option value="">+ Insert merge field</option>
+              <optgroup label="Member">
+                <option value="{{first_name}}">First Name</option>
+                <option value="{{last_name}}">Last Name</option>
+                <option value="{{full_name}}">Full Name</option>
+                <option value="{{email}}">Email</option>
+                <option value="{{phone}}">Phone</option>
+                <option value="{{birth_date}}">Birth Date</option>
+              </optgroup>
+              <optgroup label="Church">
+                <option value="{{church_name}}">Church Name</option>
+                <option value="{{church_address}}">Address</option>
+                <option value="{{church_city}}">City</option>
+                <option value="{{church_state}}">State</option>
+                <option value="{{church_zip}}">ZIP</option>
+                <option value="{{church_phone}}">Phone</option>
+                <option value="{{church_email}}">Email</option>
+                <option value="{{church_website}}">Website</option>
+              </optgroup>
+              {cardFields.length > 0 && (
+                <optgroup label="Connect Card">
+                  {cardFields.map((f) => <option key={f.key} value={`{{field:${f.label}}}`}>{f.label}</option>)}
+                </optgroup>
+              )}
+            </select>
           </div>
           {guestInfoSelect}
         </>

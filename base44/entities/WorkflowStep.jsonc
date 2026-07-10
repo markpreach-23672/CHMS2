@@ -32,6 +32,7 @@
     "delay_unit": {
       "type": "string",
       "enum": [
+        "minutes",
         "hours",
         "days"
       ],

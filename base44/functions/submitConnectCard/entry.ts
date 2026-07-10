@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
           for (let i = 0; i < steps.length; i++) {
             const step = steps[i];
             if ((step.delay_days || 0) === 0) {
-              await processStep(base44, step, person, fromEmail);
+              await processStep(base44, step, person, fromEmail, churches[0], card, data);
               nextStep = i + 1;
             } else {
               break;
@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function processStep(base44, step, person, fromEmail) {
+async function processStep(base44, step, person, fromEmail, church, card, fieldData) {
   if (step.step_type === 'staff_notify' && step.assigned_to_user_id) {
     try {
       const staffUser = await base44.asServiceRole.entities.User.get(step.assigned_to_user_id);
@@ -217,9 +217,33 @@ async function processStep(base44, step, person, fromEmail) {
     }
   }
   if (step.step_type === 'email' && person.email) {
+    const ch = church || {};
+    const cardFields = Array.isArray(card?.fields) ? card.fields : [];
     let body = step.body || '';
     body = body.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
     body = body.replace(/\{\{last_name\}\}/g, person.last_name || '');
+    body = body.replace(/\{\{full_name\}\}/g, `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Friend');
+    body = body.replace(/\{\{email\}\}/g, person.email || '');
+    body = body.replace(/\{\{phone\}\}/g, person.phone || person.mobile || '');
+    body = body.replace(/\{\{church_name\}\}/g, ch.name || 'our church');
+    body = body.replace(/\{\{church_address\}\}/g, ch.address || '');
+    body = body.replace(/\{\{church_city\}\}/g, ch.city || '');
+    body = body.replace(/\{\{church_state\}\}/g, ch.state || '');
+    body = body.replace(/\{\{church_zip\}\}/g, ch.zip || '');
+    body = body.replace(/\{\{church_phone\}\}/g, ch.phone || '');
+    body = body.replace(/\{\{church_email\}\}/g, ch.email || '');
+    body = body.replace(/\{\{church_website\}\}/g, ch.site_url || '');
+    body = body.replace(/\{\{field:([^}]+)\}\}/g, (m, label) => {
+      const f = cardFields.find((x) => (x.label || '').toLowerCase() === label.trim().toLowerCase());
+      if (!f) return m;
+      if (fieldData && fieldData[f.key] !== undefined) return String(fieldData[f.key] || '');
+      if (f.maps_to && f.maps_to !== 'custom' && person[f.maps_to] !== undefined) return String(person[f.maps_to] || '');
+      return '';
+    });
+    const subject = (step.subject || 'Welcome')
+      .replace(/\{\{first_name\}\}/g, person.first_name || 'there')
+      .replace(/\{\{last_name\}\}/g, person.last_name || '')
+      .replace(/\{\{church_name\}\}/g, ch.name || 'our church');
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       const res = await fetch('https://api.resend.com/emails', {
@@ -228,7 +252,7 @@ async function processStep(base44, step, person, fromEmail) {
         body: JSON.stringify({
           from: fromEmail,
           to: person.email,
-          subject: step.subject || 'Welcome',
+          subject,
           text: body
         })
       });

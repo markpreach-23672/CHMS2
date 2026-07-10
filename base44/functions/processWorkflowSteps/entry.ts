@@ -5,12 +5,14 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     const churches = await base44.asServiceRole.entities.Church.list();
-    const fromEmail = churches[0]?.resend_from_email || 'Church <onboarding@resend.dev>';
-    const churchName = churches[0]?.name || 'our church';
+    const church = churches[0] || {};
+    const fromEmail = church.resend_from_email || 'Church <onboarding@resend.dev>';
 
     const enrollments = await base44.asServiceRole.entities.WorkflowEnrollment.filter({ status: 'active' });
     const now = new Date();
     let processedCount = 0;
+    const workflowCache = {};
+    const cardCache = {};
 
     for (const enrollment of enrollments) {
       try {
@@ -28,6 +30,21 @@ Deno.serve(async (req) => {
         const person = await base44.asServiceRole.entities.Person.get(enrollment.person_id);
         if (!person) continue;
 
+        let workflow = workflowCache[enrollment.workflow_id];
+        if (!workflow) {
+          workflow = await base44.asServiceRole.entities.Workflow.get(enrollment.workflow_id).catch(() => null);
+          workflowCache[enrollment.workflow_id] = workflow;
+        }
+        let cardFields = null;
+        if (workflow && workflow.trigger_connect_card_id) {
+          let card = cardCache[workflow.trigger_connect_card_id];
+          if (!card) {
+            card = await base44.asServiceRole.entities.ConnectCard.get(workflow.trigger_connect_card_id).catch(() => null);
+            cardCache[workflow.trigger_connect_card_id] = card;
+          }
+          cardFields = Array.isArray(card?.fields) ? card.fields : null;
+        }
+
         const enrolledDate = new Date(enrollment.enrolled_date);
         let currentStepIdx = enrollment.current_step;
         let stepAdvanced = false;
@@ -35,11 +52,13 @@ Deno.serve(async (req) => {
         while (currentStepIdx < steps.length) {
           const step = steps[currentStepIdx];
           const delayValue = step.delay_days || 0;
-          const delayMs = step.delay_unit === 'hours' ? delayValue * 60 * 60 * 1000 : delayValue * 24 * 60 * 60 * 1000;
+          const delayMs = step.delay_unit === 'minutes' ? delayValue * 60 * 1000
+            : step.delay_unit === 'hours' ? delayValue * 60 * 60 * 1000
+            : delayValue * 24 * 60 * 60 * 1000;
           const stepDueDate = new Date(enrolledDate.getTime() + delayMs);
 
           if (now >= stepDueDate) {
-            await processStep(base44, step, person, fromEmail, churchName);
+            await processStep(base44, step, person, fromEmail, church, cardFields);
             currentStepIdx++;
             stepAdvanced = true;
           } else {
@@ -72,14 +91,39 @@ Deno.serve(async (req) => {
   }
 });
 
-function applyMergeFields(body, person, churchName) {
+function applyMergeFields(body, person, church, cardFields) {
   let result = body || '';
+  const ch = church || {};
   result = result.replace(/\{\{first_name\}\}/g, person.first_name || 'there');
   result = result.replace(/\{\{last_name\}\}/g, person.last_name || '');
   result = result.replace(/\{\{full_name\}\}/g, `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Friend');
   result = result.replace(/\{\{email\}\}/g, person.email || '');
   result = result.replace(/\{\{phone\}\}/g, person.phone || person.mobile || '');
-  result = result.replace(/\{\{church_name\}\}/g, churchName || 'our church');
+  result = result.replace(/\{\{mobile\}\}/g, person.mobile || '');
+  result = result.replace(/\{\{address\}\}/g, person.address || '');
+  result = result.replace(/\{\{city\}\}/g, person.city || '');
+  result = result.replace(/\{\{state\}\}/g, person.state || '');
+  result = result.replace(/\{\{zip\}\}/g, person.zip || '');
+  result = result.replace(/\{\{birth_date\}\}/g, person.birth_date || '');
+  result = result.replace(/\{\{notes\}\}/g, person.notes || '');
+  result = result.replace(/\{\{church_name\}\}/g, ch.name || 'our church');
+  result = result.replace(/\{\{church_address\}\}/g, ch.address || '');
+  result = result.replace(/\{\{church_city\}\}/g, ch.city || '');
+  result = result.replace(/\{\{church_state\}\}/g, ch.state || '');
+  result = result.replace(/\{\{church_zip\}\}/g, ch.zip || '');
+  result = result.replace(/\{\{church_phone\}\}/g, ch.phone || '');
+  result = result.replace(/\{\{church_email\}\}/g, ch.email || '');
+  result = result.replace(/\{\{church_website\}\}/g, ch.site_url || '');
+  if (cardFields && cardFields.length > 0) {
+    const customData = person.custom_fields || {};
+    result = result.replace(/\{\{field:([^}]+)\}\}/g, (match, label) => {
+      const field = cardFields.find((f) => (f.label || '').toLowerCase() === label.trim().toLowerCase());
+      if (!field) return match;
+      if (field.maps_to && field.maps_to !== 'custom' && person[field.maps_to] !== undefined) return String(person[field.maps_to] || '');
+      if (field.maps_to === 'custom' && customData[field.key] !== undefined) return String(customData[field.key] || '');
+      return '';
+    });
+  }
   return result;
 }
 
@@ -142,7 +186,7 @@ async function sendTwilioSMS(to, message) {
   }
 }
 
-async function processStep(base44, step, person, fromEmail, churchName) {
+async function processStep(base44, step, person, fromEmail, church, cardFields) {
   // Apply tag
   if (step.step_type === 'apply_tag' && step.tag_id) {
     try {
@@ -250,7 +294,7 @@ async function processStep(base44, step, person, fromEmail, churchName) {
       console.error(`No phone number for person ${person.id}, skipping text step`);
       return;
     }
-    let msg = applyMergeFields(step.body, person, churchName);
+    let msg = applyMergeFields(step.body, person, church, cardFields);
     const mode = effectiveMode(step, false);
     if (mode === 'name_greeting') {
       msg = `Hi ${person.first_name || 'there'}, ` + msg;
@@ -263,14 +307,14 @@ async function processStep(base44, step, person, fromEmail, churchName) {
 
   // Email
   if (step.step_type === 'email' && person.email) {
-    let body = applyMergeFields(step.body, person, churchName);
+    let body = applyMergeFields(step.body, person, church, cardFields);
     const mode = effectiveMode(step, false);
     if (mode === 'name_greeting') {
       body = `Hi ${person.first_name || 'there'},\n\n` + body;
     } else if (mode === 'contact_only' || mode === 'full_info') {
       body = body + '\n\n--- Guest Information ---\n' + guestInfoBlock(person, mode === 'full_info');
     }
-    const subject = applyMergeFields(step.subject || 'Update from our church', person, churchName);
+    const subject = applyMergeFields(step.subject || 'Update from our church', person, church, cardFields);
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       const res = await fetch('https://api.resend.com/emails', {
