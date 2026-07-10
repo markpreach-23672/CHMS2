@@ -65,13 +65,31 @@
           }
         },
         {
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
           "user_condition": {
-            "role": "church_admin"
+            "role": "super_admin"
           }
         }
       ]
     },
-    "read": true,
     "update": {
       "$or": [
         {
@@ -80,9 +98,16 @@
           }
         },
         {
-          "user_condition": {
-            "role": "church_admin"
-          }
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
         }
       ]
     },
@@ -94,9 +119,16 @@
           }
         },
         {
-          "user_condition": {
-            "role": "church_admin"
-          }
+          "$and": [
+            {
+              "data.church_id": "{{user.data.church_id}}"
+            },
+            {
+              "user_condition": {
+                "role": "church_admin"
+              }
+            }
+          ]
         }
       ]
     }
