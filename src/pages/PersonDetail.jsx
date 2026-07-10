@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 import PersonForm from '@/components/people/PersonForm';
 import TagPicker from '@/components/people/TagPicker';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
+import AddFamilyMemberDialog from '@/components/people/AddFamilyMemberDialog';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -39,43 +40,49 @@ export default function PersonDetail() {
   const [enrollments, setEnrollments] = useState([]);
   const [folders, setFolders] = useState([]);
   const [volunteerRoles, setVolunteerRoles] = useState([]);
+  const [showAddFamily, setShowAddFamily] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      base44.entities.Person.get(id),
-      base44.entities.Tag.list(),
-      base44.entities.CustomField.list(),
-      base44.entities.TagFolder.list(),
-      base44.entities.VolunteerRole.list(),
-    ])
-      .then(async ([p, t, cf, fldrs, vroles]) => {
-        setPerson(p);
-        setTags(t);
-        setCustomFields(cf);
-        setFolders(fldrs);
-        setVolunteerRoles(vroles);
+  const loadData = useCallback(async () => {
+    try {
+      const [p, t, cf, fldrs, vroles] = await Promise.all([
+        base44.entities.Person.get(id),
+        base44.entities.Tag.list(),
+        base44.entities.CustomField.list(),
+        base44.entities.TagFolder.list(),
+        base44.entities.VolunteerRole.list(),
+      ]);
+      setPerson(p);
+      setTags(t);
+      setCustomFields(cf);
+      setFolders(fldrs);
+      setVolunteerRoles(vroles);
 
-        if (p.family_id) {
-          const [fam, members] = await Promise.all([
-            base44.entities.Family.get(p.family_id).catch(() => null),
-            base44.entities.Person.filter({ family_id: p.family_id }),
-          ]);
-          setFamily(fam);
-          setFamilyMembers(members.filter((m) => m.id !== p.id));
-        }
+      if (p.family_id) {
+        const [fam, members] = await Promise.all([
+          base44.entities.Family.get(p.family_id).catch(() => null),
+          base44.entities.Person.filter({ family_id: p.family_id }),
+        ]);
+        setFamily(fam);
+        setFamilyMembers(members);
+      } else {
+        setFamily(null);
+        setFamilyMembers([]);
+      }
 
-        const dons = await base44.entities.Donation.filter({ person_id: p.id }).catch(() => []);
-        setDonations(dons);
-        const ens = await base44.entities.WorkflowEnrollment.filter({ person_id: p.id }).catch(() => []);
-        setEnrollments(ens);
-        const me = await base44.auth.me().catch(() => null);
-        setCurrentUser(me);
-      })
-      .catch(() => {
-        setPerson(null);
-      })
-      .finally(() => setLoading(false));
+      const dons = await base44.entities.Donation.filter({ person_id: p.id }).catch(() => []);
+      setDonations(dons);
+      const ens = await base44.entities.WorkflowEnrollment.filter({ person_id: p.id }).catch(() => []);
+      setEnrollments(ens);
+      const me = await base44.auth.me().catch(() => null);
+      setCurrentUser(me);
+    } catch {
+      setPerson(null);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleDelete = async () => {
     if (!confirm(`Delete ${person.first_name} ${person.last_name}?`)) return;
@@ -373,10 +380,18 @@ export default function PersonDetail() {
         <div className="lg:col-span-2 space-y-6">
           {/* Family */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-3">
-              <Users size={15} className="text-slate-400" />
-              Family
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Users size={15} className="text-slate-400" />
+                Family
+              </h3>
+              <button
+                onClick={() => setShowAddFamily(true)}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                + Add Member
+              </button>
+            </div>
             {family ? (
               <div>
                 <p className="text-sm font-medium text-slate-900 mb-3">{family.family_name} Family</p>
@@ -386,7 +401,7 @@ export default function PersonDetail() {
                       <Link
                         key={member.id}
                         to={`/people/${member.id}`}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors"
+                        className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors ${member.id === person.id ? 'bg-indigo-50/50' : ''}`}
                       >
                         <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
                           {member.photo_url ? (
@@ -398,18 +413,21 @@ export default function PersonDetail() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-900">{member.first_name} {member.last_name}</p>
+                          <p className="text-sm font-medium text-slate-900">
+                            {member.first_name} {member.last_name}
+                            {member.id === person.id && <span className="text-xs text-indigo-600 ml-1">(you)</span>}
+                          </p>
                           <p className="text-xs text-slate-400">{roleLabel[member.family_role] || 'Family Member'}</p>
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400">No other family members.</p>
+                  <p className="text-xs text-slate-400">No family members yet.</p>
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-400">Not part of a family unit.</p>
+              <p className="text-xs text-slate-400">Not part of a family yet. Add a member to start one.</p>
             )}
           </div>
 
@@ -503,6 +521,14 @@ export default function PersonDetail() {
         <TextMessageDialog
           recipients={[textRecipient]}
           onClose={() => setTextRecipient(null)}
+        />
+      )}
+
+      {showAddFamily && (
+        <AddFamilyMemberDialog
+          currentPerson={person}
+          onClose={() => setShowAddFamily(false)}
+          onAdded={() => { setShowAddFamily(false); loadData(); }}
         />
       )}
     </div>
