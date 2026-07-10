@@ -7,26 +7,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertTriangle } from 'lucide-react';
 import moment from 'moment';
 
-export default function EventForm({ calendars, selectedDate, events, getCalendar, locations, tags, onSave, onClose }) {
-  const [title, setTitle] = useState('');
-  const [calendarId, setCalendarId] = useState(calendars[0]?.id || '');
-  const [startTime, setStartTime] = useState(selectedDate ? selectedDate.format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm'));
-  const [endTime, setEndTime] = useState(selectedDate ? selectedDate.format('YYYY-MM-DD') + 'T12:00' : moment().format('YYYY-MM-DD') + 'T12:00');
-  const [location, setLocation] = useState('');
-  const [description, setDescription] = useState('');
-  const [allDay, setAllDay] = useState(false);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recFreq, setRecFreq] = useState('weekly');
-  const [recInterval, setRecInterval] = useState(1);
-  const [recEndDate, setRecEndDate] = useState('');
+export default function EventForm({ calendars, selectedDate, events, getCalendar, locations, tags, editingEvent, onSave, onClose }) {
+  const ev = editingEvent;
+  const [title, setTitle] = useState(ev?.title || '');
+  const [calendarId, setCalendarId] = useState(ev?.calendar_id || calendars[0]?.id || '');
+  const [startTime, setStartTime] = useState(ev ? moment(ev.start_time).format('YYYY-MM-DDTHH:mm') : (selectedDate ? selectedDate.format('YYYY-MM-DDTHH:mm') : moment().format('YYYY-MM-DDTHH:mm')));
+  const [endTime, setEndTime] = useState(ev?.end_time ? moment(ev.end_time).format('YYYY-MM-DDTHH:mm') : (selectedDate ? selectedDate.format('YYYY-MM-DD') + 'T12:00' : moment().format('YYYY-MM-DD') + 'T12:00'));
+  const [location, setLocation] = useState(ev?.location || '');
+  const [description, setDescription] = useState(ev?.description || '');
+  const [allDay, setAllDay] = useState(Boolean(ev?.all_day));
+  const [isRecurring, setIsRecurring] = useState(Boolean(ev?.is_recurring));
+  const [recFreq, setRecFreq] = useState(ev?.recurrence_frequency || 'weekly');
+  const [recInterval, setRecInterval] = useState(ev?.recurrence_interval || 1);
+  const [recEndDate, setRecEndDate] = useState(ev?.recurrence_end_date || '');
   const [recDays, setRecDays] = useState(() => {
+    if (ev?.recurrence_days) return ev.recurrence_days;
     const dow = selectedDate ? selectedDate.day() : moment().day();
     return [dow];
   });
-  const [monthlyMode, setMonthlyMode] = useState('date');
-  const [recWeek, setRecWeek] = useState(() => selectedDate ? Math.ceil(selectedDate.date() / 7) : 1);
-  const [recWeekday, setRecWeekday] = useState(() => selectedDate ? selectedDate.day() : 0);
-  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [monthlyMode, setMonthlyMode] = useState(ev?.recurrence_week ? 'weekday' : 'date');
+  const [recWeek, setRecWeek] = useState(ev?.recurrence_week || (selectedDate ? Math.ceil(selectedDate.date() / 7) : 1));
+  const [recWeekday, setRecWeekday] = useState(ev?.recurrence_weekday ?? (selectedDate ? selectedDate.day() : 0));
+  const [selectedTagIds, setSelectedTagIds] = useState(ev?.tag_ids || []);
 
   const conflicts = useMemo(() => {
     if (!location.trim()) return [];
@@ -34,6 +36,7 @@ export default function EventForm({ calendars, selectedDate, events, getCalendar
     const newEnd = allDay ? moment(startTime).endOf('day') : moment(endTime);
     if (!newStart.isValid() || !newEnd.isValid()) return [];
     return events.filter((e) => {
+      if (ev && e.id === ev.id) return false;
       if (!e.location || e.location.trim().toLowerCase() !== location.trim().toLowerCase()) return false;
       const eStart = moment(e.start_time);
       const eEnd = e.end_time ? moment(e.end_time) : moment(e.start_time).add(1, 'hour');
@@ -71,7 +74,7 @@ export default function EventForm({ calendars, selectedDate, events, getCalendar
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>New Event</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{ev ? 'Edit Event' : 'New Event'}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div>
             <Label className="text-xs font-medium text-slate-600">Title *</Label>
@@ -239,7 +242,7 @@ export default function EventForm({ calendars, selectedDate, events, getCalendar
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={handleSave} disabled={!title.trim() || (isRecurring && recFreq === 'weekly' && recDays.length === 0)} className={conflicts.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}>
-            {conflicts.length > 0 ? 'Create Anyway' : 'Create Event'}
+            {conflicts.length > 0 ? (ev ? 'Save Anyway' : 'Create Anyway') : (ev ? 'Save Changes' : 'Create Event')}
           </Button>
         </DialogFooter>
       </DialogContent>

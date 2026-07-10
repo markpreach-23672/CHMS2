@@ -7,7 +7,7 @@ const HOURS = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => i + HO
 const HOUR_HEIGHT = 52;
 const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
-export default function DayView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onDeleteEvent }) {
+export default function DayView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onSelectEvent }) {
   const today = moment();
   const isToday = currentDate.isSame(today, 'day');
   const dayEvents = getEventsForDay(currentDate);
@@ -30,7 +30,7 @@ export default function DayView({ currentDate, getEventsForDay, getCalendar, onS
             const cal = getCalendar(event.calendar_id);
             return (
               <div key={event.id} className="text-xs px-2 py-1 rounded text-white font-medium" style={{ backgroundColor: cal?.color || '#3b82f6' }}
-                onClick={() => { if (confirm(`Delete "${event.title}"?`)) onDeleteEvent(event); }}>
+                onClick={() => onSelectEvent(event)}>
                 🗓 {event.title}
               </div>
             );
@@ -62,7 +62,7 @@ export default function DayView({ currentDate, getEventsForDay, getCalendar, onS
               <div key={event.id}
                 className="absolute left-2 right-2 rounded-lg px-3 py-1 text-white overflow-hidden cursor-pointer"
                 style={{ top, height, backgroundColor: cal?.color || '#3b82f6' }}
-                onClick={(e) => { e.stopPropagation(); if (confirm(event.is_recurring ? `Delete "${event.title}"? This will delete the entire recurring series.` : `Delete "${event.title}"?`)) onDeleteEvent(event); }}
+                onClick={(e) => { e.stopPropagation(); onSelectEvent(event); }}
               >
                 <div className="text-sm font-medium truncate">{event.title}{event.is_recurring ? ' ↻' : ''}</div>
                 <div className="text-[10px] opacity-90">{start.format('h:mm A')}{event.end_time ? ` – ${end.format('h:mm A')}` : ''}</div>

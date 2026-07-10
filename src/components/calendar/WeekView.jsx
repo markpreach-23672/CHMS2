@@ -7,7 +7,7 @@ const HOURS = Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => i + HO
 const HOUR_HEIGHT = 44;
 const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
-export default function WeekView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onDeleteEvent }) {
+export default function WeekView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onSelectEvent }) {
   const today = moment();
   const weekStart = moment(currentDate).startOf('week');
   const days = Array.from({ length: 7 }, (_, i) => moment(weekStart).add(i, 'days'));
@@ -25,7 +25,7 @@ export default function WeekView({ currentDate, getEventsForDay, getCalendar, on
         key={event.id + dayDate.format('D')}
         className="absolute left-0.5 right-0.5 rounded text-[10px] px-1.5 py-0.5 text-white overflow-hidden cursor-pointer"
         style={{ top, height, backgroundColor: cal?.color || '#3b82f6' }}
-        onClick={(e) => { e.stopPropagation(); if (confirm(event.is_recurring ? `Delete "${event.title}"? This will delete the entire recurring series.` : `Delete "${event.title}"?`)) onDeleteEvent(event); }}
+        onClick={(e) => { e.stopPropagation(); onSelectEvent(event); }}
       >
         <div className="font-medium truncate">{event.title}{event.is_recurring ? ' ↻' : ''}</div>
         <div className="opacity-80">{start.format('h:mm A')}</div>
@@ -60,7 +60,7 @@ export default function WeekView({ currentDate, getEventsForDay, getCalendar, on
                 const cal = getCalendar(event.calendar_id);
                 return (
                   <div key={event.id} className="text-[9px] px-1 py-0.5 rounded truncate text-white font-medium" style={{ backgroundColor: cal?.color || '#3b82f6' }}
-                    onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${event.title}"?`)) onDeleteEvent(event); }}>
+                    onClick={(e) => { e.stopPropagation(); onSelectEvent(event); }}>
                     {event.title}
                   </div>
                 );

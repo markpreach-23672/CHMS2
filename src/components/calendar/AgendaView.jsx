@@ -1,8 +1,7 @@
 import React from 'react';
 import moment from 'moment';
-import { Trash2 } from 'lucide-react';
 
-export default function AgendaView({ currentDate, getEventsForDay, getCalendar, onDeleteEvent }) {
+export default function AgendaView({ currentDate, getEventsForDay, getCalendar, onSelectEvent }) {
   const days = Array.from({ length: 30 }, (_, i) => moment(currentDate).startOf('day').add(i, 'days'));
   const today = moment();
 
@@ -34,7 +33,7 @@ export default function AgendaView({ currentDate, getEventsForDay, getCalendar, 
               {bucket.events.map((event) => {
                 const cal = getCalendar(event.calendar_id);
                 return (
-                  <div key={event.id + bucket.date.format('D')} className="flex items-center gap-3 p-3 group">
+                  <div key={event.id + bucket.date.format('D')} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50" onClick={() => onSelectEvent(event)}>
                     <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cal?.color || '#3b82f6' }} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-slate-900 truncate">
@@ -46,12 +45,6 @@ export default function AgendaView({ currentDate, getEventsForDay, getCalendar, 
                         {cal && ` · ${cal.name}`}
                       </div>
                     </div>
-                    <button
-                      onClick={() => { if (confirm(event.is_recurring ? `Delete "${event.title}"? This will delete the entire recurring series.` : `Delete "${event.title}"?`)) onDeleteEvent(event); }}
-                      className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 );
               })}

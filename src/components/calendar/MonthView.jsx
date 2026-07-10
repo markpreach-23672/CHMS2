@@ -3,7 +3,7 @@ import moment from 'moment';
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function MonthView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onDeleteEvent }) {
+export default function MonthView({ currentDate, getEventsForDay, getCalendar, onSelectDate, onSelectEvent }) {
   const today = moment();
   const monthStart = moment(currentDate).startOf('month');
   const startDay = monthStart.day();
@@ -53,7 +53,7 @@ export default function MonthView({ currentDate, getEventsForDay, getCalendar, o
                       key={event.id + idx}
                       className="text-[10px] px-1.5 py-0.5 rounded truncate font-medium text-white"
                       style={{ backgroundColor: cal?.color || '#3b82f6' }}
-                      onClick={(e) => { e.stopPropagation(); if (confirm(event.is_recurring ? `Delete "${event.title}"? This will delete the entire recurring series.` : `Delete "${event.title}"?`)) onDeleteEvent(event); }}
+                      onClick={(e) => { e.stopPropagation(); onSelectEvent(event); }}
                       title={`${event.title} - ${moment(event.start_time).format('h:mm A')}${event.is_recurring ? ' (recurring)' : ''}`}
                     >
                       {event.all_day ? '🗓 ' : `${moment(event.start_time).format('h:mm')} `}{event.title}{event.is_recurring ? ' ↻' : ''}

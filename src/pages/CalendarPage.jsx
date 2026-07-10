@@ -10,6 +10,7 @@ import AgendaView from '@/components/calendar/AgendaView';
 import EventForm from '@/components/calendar/EventForm';
 import GoogleSyncDialog from '@/components/calendar/GoogleSyncDialog';
 import ShareCalendarDialog from '@/components/calendar/ShareCalendarDialog';
+import EventActionsDialog from '@/components/calendar/EventActionsDialog';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -24,6 +25,8 @@ export default function CalendarPage() {
   const [visibleCalendars, setVisibleCalendars] = useState(new Set());
   const [syncCalendar, setSyncCalendar] = useState(null);
   const [shareCalendar, setShareCalendar] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [editingEvent, setEditingEvent] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -142,9 +145,9 @@ export default function CalendarPage() {
     return 'Upcoming Events';
   };
 
-  const onSelectDate = (date) => { setSelectedDate(date); setShowEventForm(true); };
+  const onSelectDate = (date) => { setSelectedDate(date); setEditingEvent(null); setShowEventForm(true); };
 
-  const viewProps = { currentDate, getEventsForDay, getCalendar, onSelectDate, onDeleteEvent: handleDeleteEvent };
+  const viewProps = { currentDate, getEventsForDay, getCalendar, onSelectDate, onSelectEvent: (event) => setSelectedEvent(event) };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -153,7 +156,7 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-bold text-slate-900">Calendar</h1>
           <p className="text-slate-500 text-sm mt-1">Multi-department calendar with color-coded events.</p>
         </div>
-        <Button onClick={() => { setSelectedDate(moment()); setShowEventForm(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button onClick={() => { setSelectedDate(moment()); setEditingEvent(null); setShowEventForm(true); }} className="bg-indigo-600 hover:bg-indigo-700">
           <Plus size={16} className="mr-1.5" />
           Add Event
         </Button>
@@ -224,7 +227,7 @@ export default function CalendarPage() {
         />
       )}
 
-      {showEventForm && (
+      {(showEventForm || editingEvent) && (
         <EventForm
           calendars={calendars}
           selectedDate={selectedDate}
@@ -232,16 +235,33 @@ export default function CalendarPage() {
           getCalendar={getCalendar}
           locations={locations}
           tags={tags}
+          editingEvent={editingEvent}
           onSave={async (data) => {
             try {
-              const created = await base44.entities.CalendarEvent.create(data);
-              setEvents((prev) => [...prev, created]);
-              setShowEventForm(false);
+              if (editingEvent) {
+                const updated = await base44.entities.CalendarEvent.update(editingEvent.id, data);
+                setEvents((prev) => prev.map((e) => (e.id === editingEvent.id ? updated : e)));
+                setEditingEvent(null);
+              } else {
+                const created = await base44.entities.CalendarEvent.create(data);
+                setEvents((prev) => [...prev, created]);
+                setShowEventForm(false);
+              }
             } catch (err) {
-              alert('Failed to create event.');
+              alert('Failed to save event.');
             }
           }}
-          onClose={() => setShowEventForm(false)}
+          onClose={() => { setShowEventForm(false); setEditingEvent(null); }}
+        />
+      )}
+
+      {selectedEvent && (
+        <EventActionsDialog
+          event={selectedEvent}
+          getCalendar={getCalendar}
+          onEdit={() => { setEditingEvent(selectedEvent); setSelectedEvent(null); }}
+          onDelete={handleDeleteEvent}
+          onClose={() => setSelectedEvent(null)}
         />
       )}
     </div>
