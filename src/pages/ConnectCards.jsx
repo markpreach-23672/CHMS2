@@ -59,6 +59,8 @@ export default function ConnectCards() {
   const [bulkEnrollWorkflow, setBulkEnrollWorkflow] = useState(null);
   const [twilioNumber, setTwilioNumber] = useState('');
   const [staffMobile, setStaffMobile] = useState('');
+  const [editingStep, setEditingStep] = useState(null);
+  const [editingWorkflow, setEditingWorkflow] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -133,6 +135,20 @@ export default function ConnectCards() {
       setSteps((prev) => ({ ...prev, [wfId]: (prev[wfId] || []).filter((s) => s.id !== stepId) }));
     } catch (err) {
       alert('Failed to delete step.');
+    }
+  };
+
+  const handleEditStep = async (stepId, data) => {
+    const wfId = editingStep?.workflow_id;
+    try {
+      await base44.entities.WorkflowStep.update(stepId, data);
+      if (wfId) {
+        setSteps((prev) => ({ ...prev, [wfId]: (prev[wfId] || []).map((s) => (s.id === stepId ? { ...s, ...data } : s)) }));
+      }
+    } catch (err) {
+      alert('Failed to update step.');
+    } finally {
+      setEditingStep(null);
     }
   };
 
@@ -282,6 +298,7 @@ export default function ConnectCards() {
                       <DropdownMenu>
                         <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingWorkflow(wf); }}><Pencil size={14} className="mr-1.5" />Edit Workflow</DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAnalyticsWorkflow(wf); }}><BarChart3 size={14} className="mr-1.5" />Analytics</DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setBulkEnrollWorkflow(wf); }}><Users size={14} className="mr-1.5" />Bulk Enroll</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteWorkflow(wf); }}>Delete</DropdownMenuItem>
@@ -306,6 +323,9 @@ export default function ConnectCards() {
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-slate-900">{stepLabel(step.step_type)}</span>
                                     {step.delay_days > 0 && <span className="text-[10px] text-slate-400">after {step.delay_days} {(step.delay_unit || 'days') === 'hours' ? 'hour' : 'day'}{step.delay_days > 1 ? 's' : ''}</span>}
+                                    <button onClick={() => setEditingStep(step)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-500 transition-opacity">
+                                      <Pencil size={12} />
+                                    </button>
                                     <button onClick={() => handleDeleteStep(wf.id, step.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity">
                                       <Trash2 size={12} />
                                     </button>
@@ -328,7 +348,7 @@ export default function ConnectCards() {
                           })}
                           {wfSteps.length === 0 && <p className="text-xs text-slate-400 py-2">No steps yet. Add one below.</p>}
                         </div>
-                        <AddStepButton workflow={wf} cards={cards} twilioNumber={twilioNumber} staffMobile={staffMobile} onAdd={(data) => handleAddStep(wf.id, data)} users={users} tags={tags} />
+                        <AddStepButton workflow={wf} cards={cards} twilioNumber={twilioNumber} staffMobile={staffMobile} onAdd={(data) => handleAddStep(wf.id, data)} editingStep={editingStep?.workflow_id === wf.id ? editingStep : null} onEdit={handleEditStep} onCloseEdit={() => setEditingStep(null)} users={users} tags={tags} />
                       </div>
                     )}
                   </div>
@@ -437,29 +457,36 @@ export default function ConnectCards() {
       )}
 
       {/* Workflow Form */}
-      {showWorkflowForm && (
+      {(showWorkflowForm || editingWorkflow) && (
         <WorkflowForm
           cards={cards}
           tags={tags}
           calendars={calendars}
+          editingWorkflow={editingWorkflow}
           onSave={async (data) => {
             try {
-              const created = await base44.entities.Workflow.create(data);
-              setWorkflows((prev) => [...prev, created]);
-              setSteps((prev) => ({ ...prev, [created.id]: [] }));
-              setShowWorkflowForm(false);
+              if (editingWorkflow) {
+                const updated = await base44.entities.Workflow.update(editingWorkflow.id, data);
+                setWorkflows((prev) => prev.map((w) => (w.id === editingWorkflow.id ? updated : w)));
+                setEditingWorkflow(null);
+              } else {
+                const created = await base44.entities.Workflow.create(data);
+                setWorkflows((prev) => [...prev, created]);
+                setSteps((prev) => ({ ...prev, [created.id]: [] }));
+                setShowWorkflowForm(false);
+              }
             } catch (err) {
-              alert('Failed to create workflow.');
+              alert('Failed to save workflow.');
             }
           }}
-          onClose={() => setShowWorkflowForm(false)}
+          onClose={() => { setShowWorkflowForm(false); setEditingWorkflow(null); }}
         />
       )}
     </div>
   );
 }
 
-function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, users, tags }) {
+function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, editingStep, onEdit, onCloseEdit, users, tags }) {
   const [show, setShow] = useState(false);
   const [type, setType] = useState('email');
   const [delayDays, setDelayDays] = useState('0');
@@ -477,6 +504,31 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
   const [fromSource, setFromSource] = useState('twilio');
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    if (!editingStep) return;
+    setType(editingStep.step_type || 'email');
+    setSubject(editingStep.subject || '');
+    setBody(editingStep.body || '');
+    setDelayDays(String(editingStep.delay_days || 0));
+    setDelayUnit(editingStep.delay_unit || 'days');
+    setTimingMode((editingStep.delay_days || 0) > 0 ? 'schedule' : 'immediate');
+    setTaskDescription(editingStep.task_description || '');
+    setStaffUserId(editingStep.assigned_to_user_id || '');
+    setNotifyMethod(editingStep.notify_method || 'email');
+    setGuestInfoMode(editingStep.guest_info_mode || 'none');
+    setTagId(editingStep.tag_id || '');
+    setMediaUrl(editingStep.media_url || '');
+    setFromSource(editingStep.from_number ? 'personal' : 'twilio');
+    setLinkUrl('');
+  }, [editingStep]);
+
+  const openAdd = () => {
+    setType('email'); setDelayDays('0'); setSubject(''); setBody(''); setTaskDescription('');
+    setStaffUserId(''); setNotifyMethod('email'); setDelayUnit('days'); setGuestInfoMode('none');
+    setTagId(''); setTimingMode('immediate'); setLinkUrl(''); setMediaUrl(''); setFromSource('twilio');
+    setShow(true);
+  };
+
   const triggerCard = workflow?.trigger_connect_card_id ? cards?.find((c) => c.id === workflow.trigger_connect_card_id) : null;
   const cardFields = (triggerCard?.fields || []).filter((f) => f.label);
 
@@ -493,7 +545,7 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
     }
   };
 
-  const handleAdd = () => {
+  const handleSave = () => {
     const data = { step_type: type, delay_days: timingMode === 'immediate' ? 0 : (parseInt(delayDays) || 0), delay_unit: delayUnit };
     if (type === 'email' || type === 'text') {
       data.subject = subject;
@@ -503,6 +555,8 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
     }
     if (type === 'text' && fromSource === 'personal' && staffMobile) {
       data.from_number = staffMobile;
+    } else if (type === 'text') {
+      data.from_number = '';
     }
     if (type === 'task') {
       data.task_description = taskDescription;
@@ -515,6 +569,10 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
     }
     if (type === 'apply_tag' || type === 'remove_tag') {
       data.tag_id = tagId;
+    }
+    if (editingStep) {
+      onEdit(editingStep.id, data);
+      return;
     }
     onAdd(data);
     setShow(false);
@@ -549,17 +607,8 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
     </div>
   );
 
-  if (!show) {
-    return (
-      <button onClick={() => setShow(true)} className="mt-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-        <Plus size={12} />
-        Add Step
-      </button>
-    );
-  }
-
-  return (
-    <div className="mt-3 p-3 bg-slate-50 rounded-lg space-y-3">
+  const stepFields = (
+    <>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-[10px] text-slate-500">Step Type</Label>
@@ -729,25 +778,57 @@ function AddStepButton({ workflow, cards, twilioNumber, staffMobile, onAdd, user
           </select>
         </div>
       )}
+    </>
+  );
+
+  if (editingStep) {
+    return (
+      <Dialog open onOpenChange={onCloseEdit}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Edit Step</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {stepFields}
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={onCloseEdit}>Cancel</Button>
+              <Button size="sm" onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs">Save Changes</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!show) {
+    return (
+      <button onClick={openAdd} className="mt-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+        <Plus size={12} />
+        Add Step
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 p-3 bg-slate-50 rounded-lg space-y-3">
+      {stepFields}
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="outline" onClick={() => setShow(false)}>Cancel</Button>
-        <Button size="sm" onClick={handleAdd} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs">Add Step</Button>
+        <Button size="sm" onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 h-7 text-xs">Add Step</Button>
       </div>
     </div>
   );
 }
 
-function WorkflowForm({ cards, tags, calendars, onSave, onClose }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [triggerType, setTriggerType] = useState('connect_card');
-  const [triggerConnectCardId, setTriggerConnectCardId] = useState('');
-  const [triggerTagId, setTriggerTagId] = useState('');
-  const [triggerCalendarId, setTriggerCalendarId] = useState('');
-  const [triggerPersonDateField, setTriggerPersonDateField] = useState('birth_date');
+function WorkflowForm({ cards, tags, calendars, editingWorkflow, onSave, onClose }) {
+  const [name, setName] = useState(editingWorkflow?.name || '');
+  const [description, setDescription] = useState(editingWorkflow?.description || '');
+  const [triggerType, setTriggerType] = useState(editingWorkflow?.trigger_type || 'connect_card');
+  const [triggerConnectCardId, setTriggerConnectCardId] = useState(editingWorkflow?.trigger_connect_card_id || '');
+  const [triggerTagId, setTriggerTagId] = useState(editingWorkflow?.trigger_tag_id || '');
+  const [triggerCalendarId, setTriggerCalendarId] = useState(editingWorkflow?.trigger_calendar_id || '');
+  const [triggerPersonDateField, setTriggerPersonDateField] = useState(editingWorkflow?.trigger_person_date_field || 'birth_date');
 
   const handleSave = () => {
-    const data = { name, description: description || undefined, is_active: true, trigger_type: triggerType };
+    const data = { name, description: description || undefined, is_active: editingWorkflow?.is_active ?? true, trigger_type: triggerType };
     if (triggerType === 'connect_card' && triggerConnectCardId) data.trigger_connect_card_id = triggerConnectCardId;
     if (triggerType === 'tag' && triggerTagId) data.trigger_tag_id = triggerTagId;
     if (triggerType === 'calendar_date' && triggerCalendarId) data.trigger_calendar_id = triggerCalendarId;
@@ -758,7 +839,7 @@ function WorkflowForm({ cards, tags, calendars, onSave, onClose }) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>New Workflow</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editingWorkflow ? 'Edit Workflow' : 'New Workflow'}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div>
             <Label className="text-xs font-medium text-slate-600">Name *</Label>
@@ -824,7 +905,7 @@ function WorkflowForm({ cards, tags, calendars, onSave, onClose }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">Create Workflow</Button>
+          <Button onClick={handleSave} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">{editingWorkflow ? 'Save Changes' : 'Create Workflow'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
