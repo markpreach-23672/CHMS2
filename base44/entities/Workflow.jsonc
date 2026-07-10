@@ -18,6 +18,35 @@
       "type": "string",
       "title": "Trigger Connect Card ID"
     },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "connect_card",
+        "tag",
+        "calendar_date",
+        "person_date"
+      ],
+      "default": "connect_card",
+      "title": "Trigger Type"
+    },
+    "trigger_tag_id": {
+      "type": "string",
+      "title": "Trigger Tag ID"
+    },
+    "trigger_calendar_id": {
+      "type": "string",
+      "title": "Trigger Calendar ID"
+    },
+    "trigger_person_date_field": {
+      "type": "string",
+      "enum": [
+        "birth_date",
+        "first_visit_date",
+        "baptism_date",
+        "membership_date"
+      ],
+      "title": "Trigger Person Date Field"
+    },
     "is_active": {
       "type": "boolean",
       "title": "Active",

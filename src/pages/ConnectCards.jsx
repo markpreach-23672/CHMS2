@@ -15,6 +15,28 @@ import WorkflowTemplatePicker from '@/components/workflows/WorkflowTemplatePicke
 import WorkflowAnalytics from '@/components/workflows/WorkflowAnalytics';
 import BulkEnrollDialog from '@/components/workflows/BulkEnrollDialog';
 
+const PERSON_DATE_LABELS = {
+  birth_date: 'Birthday',
+  first_visit_date: 'First Visit Date',
+  baptism_date: 'Baptism Date',
+  membership_date: 'Membership Date',
+};
+
+const triggerLabel = (wf, cards, tags, calendars) => {
+  switch (wf.trigger_type) {
+    case 'tag':
+      return `Group: ${tags.find((t) => t.id === wf.trigger_tag_id)?.name || 'Unknown'}`;
+    case 'calendar_date':
+      return `Calendar: ${calendars.find((c) => c.id === wf.trigger_calendar_id)?.name || 'Unknown'}`;
+    case 'person_date':
+      return `Person date: ${PERSON_DATE_LABELS[wf.trigger_person_date_field] || wf.trigger_person_date_field}`;
+    case 'connect_card':
+    default:
+      if (wf.trigger_connect_card_id) return `Card: ${cards.find((c) => c.id === wf.trigger_connect_card_id)?.name || 'Unknown'}`;
+      return 'Connect card';
+  }
+};
+
 export default function ConnectCards() {
   const [cards, setCards] = useState([]);
   const [workflows, setWorkflows] = useState([]);
@@ -27,6 +49,7 @@ export default function ConnectCards() {
   const [submitCard, setSubmitCard] = useState(null);
   const [users, setUsers] = useState([]);
   const [tags, setTags] = useState([]);
+  const [calendars, setCalendars] = useState([]);
   const [shareCard, setShareCard] = useState(null);
   const [editingCard, setEditingCard] = useState(null);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -45,6 +68,8 @@ export default function ConnectCards() {
       setUsers(data.users || []);
       setTags(data.tags || []);
       setSteps(data.steps || {});
+      const cals = await base44.entities.DepartmentCalendar.list().catch(() => []);
+      setCalendars(cals);
     } catch (err) {
       console.error('Failed to load connect cards:', err);
     } finally {
@@ -243,6 +268,10 @@ export default function ConnectCards() {
                           <span>{wfSteps.length} steps</span>
                           <span>{activeCount} active enrollments</span>
                         </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-xs">
+                          <span className="text-slate-400">Trigger:</span>
+                          <span className="font-medium text-slate-600">{triggerLabel(wf, cards, tags, calendars)}</span>
+                        </div>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100" onClick={(e) => e.stopPropagation()}><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
@@ -404,6 +433,9 @@ export default function ConnectCards() {
       {/* Workflow Form */}
       {showWorkflowForm && (
         <WorkflowForm
+          cards={cards}
+          tags={tags}
+          calendars={calendars}
           onSave={async (data) => {
             try {
               const created = await base44.entities.Workflow.create(data);
@@ -594,13 +626,27 @@ function AddStepButton({ onAdd, users, tags }) {
   );
 }
 
-function WorkflowForm({ onSave, onClose }) {
+function WorkflowForm({ cards, tags, calendars, onSave, onClose }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [triggerType, setTriggerType] = useState('connect_card');
+  const [triggerConnectCardId, setTriggerConnectCardId] = useState('');
+  const [triggerTagId, setTriggerTagId] = useState('');
+  const [triggerCalendarId, setTriggerCalendarId] = useState('');
+  const [triggerPersonDateField, setTriggerPersonDateField] = useState('birth_date');
+
+  const handleSave = () => {
+    const data = { name, description: description || undefined, is_active: true, trigger_type: triggerType };
+    if (triggerType === 'connect_card' && triggerConnectCardId) data.trigger_connect_card_id = triggerConnectCardId;
+    if (triggerType === 'tag' && triggerTagId) data.trigger_tag_id = triggerTagId;
+    if (triggerType === 'calendar_date' && triggerCalendarId) data.trigger_calendar_id = triggerCalendarId;
+    if (triggerType === 'person_date') data.trigger_person_date_field = triggerPersonDateField;
+    onSave(data);
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>New Workflow</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div>
@@ -611,10 +657,63 @@ function WorkflowForm({ onSave, onClose }) {
             <Label className="text-xs font-medium text-slate-600">Description</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" rows={2} />
           </div>
+          <div>
+            <Label className="text-xs font-medium text-slate-600">Trigger Type</Label>
+            <Select value={triggerType} onValueChange={setTriggerType}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="connect_card">Connect Card</SelectItem>
+                <SelectItem value="tag">Group / Tag</SelectItem>
+                <SelectItem value="calendar_date">Calendar Date</SelectItem>
+                <SelectItem value="person_date">Person Date</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {triggerType === 'connect_card' && (
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Triggering Connect Card</Label>
+              <select value={triggerConnectCardId} onChange={(e) => setTriggerConnectCardId(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                <option value="">Select a connect card...</option>
+                {cards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          {triggerType === 'tag' && (
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Triggering Group / Tag</Label>
+              <select value={triggerTagId} onChange={(e) => setTriggerTagId(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                <option value="">Select a group/tag...</option>
+                {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          )}
+          {triggerType === 'calendar_date' && (
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Triggering Calendar</Label>
+              <select value={triggerCalendarId} onChange={(e) => setTriggerCalendarId(e.target.value)} className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm">
+                <option value="">Select a calendar...</option>
+                {calendars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          {triggerType === 'person_date' && (
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Person Date Field</Label>
+              <Select value={triggerPersonDateField} onValueChange={setTriggerPersonDateField}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="birth_date">Birthday</SelectItem>
+                  <SelectItem value="first_visit_date">First Visit Date</SelectItem>
+                  <SelectItem value="baptism_date">Baptism Date</SelectItem>
+                  <SelectItem value="membership_date">Membership Date</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ name, description: description || undefined, is_active: true })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">Create Workflow</Button>
+          <Button onClick={handleSave} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">Create Workflow</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
