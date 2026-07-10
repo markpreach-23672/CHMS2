@@ -73,6 +73,16 @@
       ],
       "default": "read",
       "title": "Reports Access"
+    },
+    "settings_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "none",
+      "title": "Settings Access"
     }
   },
   "required": [

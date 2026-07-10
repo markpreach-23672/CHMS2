@@ -12,6 +12,7 @@ const MODULES = [
   { key: 'connect_cards_access', label: 'Connect Cards', hint: 'View/edit cards & workflows' },
   { key: 'tags_access', label: 'Tags', hint: 'View/assign tags' },
   { key: 'reports_access', label: 'Reports', hint: 'View/generate reports' },
+  { key: 'settings_access', label: 'Settings', hint: 'View/edit church settings & staff' },
 ];
 
 export default function PermissionCategoryForm({ category, onSave, onClose }) {
@@ -24,6 +25,7 @@ export default function PermissionCategoryForm({ category, onSave, onClose }) {
     connect_cards_access: category?.connect_cards_access || 'none',
     tags_access: category?.tags_access || 'read',
     reports_access: category?.reports_access || 'read',
+    settings_access: category?.settings_access || 'none',
   });
 
   const setModule = (key, value) => setAccess((prev) => ({ ...prev, [key]: value }));

@@ -529,6 +529,7 @@ function PermissionsTab() {
     { key: 'connect_cards_access', label: 'Connect Cards' },
     { key: 'tags_access', label: 'Tags' },
     { key: 'reports_access', label: 'Reports' },
+    { key: 'settings_access', label: 'Settings' },
   ];
 
   return (
