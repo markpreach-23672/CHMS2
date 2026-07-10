@@ -11,6 +11,7 @@ import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree,
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import LocationsTab from '@/components/settings/LocationsTab';
 import AddFromMembersDialog from '@/components/settings/AddFromMembersDialog';
+import PermissionCategoryForm from '@/components/settings/PermissionCategoryForm';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -491,6 +492,8 @@ function StaffTab() {
 function PermissionsTab() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editCategory, setEditCategory] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -503,7 +506,15 @@ function PermissionsTab() {
 
   useEffect(() => { load(); }, [load]);
 
-  const accessLabel = { none: 'No Access', read: 'Read', write: 'Read & Write' };
+  const handleDelete = async (cat) => {
+    if (!confirm(`Delete role "${cat.name}"? Staff assigned to it will lose this permission set.`)) return;
+    try {
+      await base44.entities.PermissionCategory.delete(cat.id);
+      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+    } catch (err) { alert('Failed to delete role.'); }
+  };
+
+  const accessLabel = { none: 'No Access', read: 'View', write: 'View & Edit' };
   const accessColor = { none: 'bg-slate-100 text-slate-400', read: 'bg-blue-50 text-blue-600', write: 'bg-emerald-50 text-emerald-600' };
 
   const modules = [
@@ -517,21 +528,37 @@ function PermissionsTab() {
 
   return (
     <div>
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 text-sm text-amber-800">
-        <Shield size={16} className="inline mr-1.5" />
-        Permission categories define what staff members can access. Assign a category to each staff member from their profile.
+      <div className="flex items-start justify-between mb-4 gap-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 flex-1">
+          <Shield size={16} className="inline mr-1.5" />
+          Define staff roles and the areas each can access. Then assign a role to each staff member on the Staff tab.
+        </div>
+        <Button variant="outline" onClick={() => { setEditCategory(null); setShowForm(true); }} className="flex-shrink-0">
+          <Plus size={15} className="mr-1.5" />Add Role
+        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
           <div className="col-span-2 p-8 text-center text-sm text-slate-400">Loading...</div>
         ) : categories.length === 0 ? (
-          <div className="col-span-2 p-8 text-center text-sm text-slate-400">No permission categories yet.</div>
+          <div className="col-span-2 p-8 text-center text-sm text-slate-400">No staff roles yet. Add one to define what your team can access.</div>
         ) : (
           categories.map((cat) => (
             <div key={cat.id} className="bg-white rounded-xl border border-slate-200 p-5">
-              <h3 className="font-semibold text-slate-900 text-sm mb-1">{cat.name}</h3>
-              <p className="text-xs text-slate-400 mb-3">{cat.description || 'No description'}</p>
-              <div className="space-y-1.5">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-slate-900 text-sm">{cat.name}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{cat.description || 'No description'}</p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100"><MoreHorizontal size={15} className="text-slate-400" /></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setEditCategory(cat); setShowForm(true); }}><Pencil size={14} className="mr-1.5" />Edit</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(cat)}><Trash2 size={14} className="mr-1.5" />Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="space-y-1.5 mt-3">
                 {modules.map((mod) => (
                   <div key={mod.key} className="flex items-center justify-between">
                     <span className="text-xs text-slate-600">{mod.label}</span>
@@ -545,6 +572,26 @@ function PermissionsTab() {
           ))
         )}
       </div>
+
+      {showForm && (
+        <PermissionCategoryForm
+          category={editCategory}
+          onSave={async (data) => {
+            try {
+              if (editCategory) {
+                const updated = await base44.entities.PermissionCategory.update(editCategory.id, data);
+                setCategories((prev) => prev.map((c) => (c.id === editCategory.id ? updated : c)));
+              } else {
+                const created = await base44.entities.PermissionCategory.create(data);
+                setCategories((prev) => [...prev, created]);
+              }
+              setShowForm(false);
+              setEditCategory(null);
+            } catch (err) { alert('Failed to save role.'); }
+          }}
+          onClose={() => { setShowForm(false); setEditCategory(null); }}
+        />
+      )}
     </div>
   );
 }
