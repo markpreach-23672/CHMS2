@@ -7,14 +7,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree, UserCog, MapPin } from 'lucide-react';
+import { Plus, Trash2, Pencil, MoreHorizontal, Users, Shield, Palette, ListTree, UserCog, MapPin, Zap } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import LocationsTab from '@/components/settings/LocationsTab';
 import AddFromMembersDialog from '@/components/settings/AddFromMembersDialog';
 import PermissionCategoryForm from '@/components/settings/PermissionCategoryForm';
+import AutomationsTab from '@/components/settings/AutomationsTab';
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [user, setUser] = useState(null);
+  const [permCat, setPermCat] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then((u) => {
+      setUser(u);
+      if (u?.permission_category_id) {
+        base44.entities.PermissionCategory.get(u.permission_category_id).then(setPermCat).catch(() => {});
+      }
+    }).catch(() => {});
+  }, []);
+
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'church_admin';
+  const automationsAccess = isAdmin ? 'write' : (permCat?.automations_access || 'none');
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -29,6 +44,7 @@ export default function Settings() {
           <TabsTrigger value="fields"><ListTree size={14} className="mr-1.5" />Custom Fields</TabsTrigger>
           <TabsTrigger value="staff"><Users size={14} className="mr-1.5" />Staff</TabsTrigger>
           <TabsTrigger value="permissions"><Shield size={14} className="mr-1.5" />Permissions</TabsTrigger>
+          {automationsAccess !== 'none' && <TabsTrigger value="automations"><Zap size={14} className="mr-1.5" />Automations</TabsTrigger>}
           <TabsTrigger value="locations"><MapPin size={14} className="mr-1.5" />Locations</TabsTrigger>
         </TabsList>
 
@@ -36,6 +52,7 @@ export default function Settings() {
         <TabsContent value="fields"><CustomFieldsTab /></TabsContent>
         <TabsContent value="staff"><StaffTab /></TabsContent>
         <TabsContent value="permissions"><PermissionsTab /></TabsContent>
+        {automationsAccess !== 'none' && <TabsContent value="automations"><AutomationsTab canEdit={automationsAccess === 'write'} /></TabsContent>}
         <TabsContent value="locations"><LocationsTab /></TabsContent>
       </Tabs>
     </div>
@@ -530,6 +547,7 @@ function PermissionsTab() {
     { key: 'tags_access', label: 'Tags' },
     { key: 'reports_access', label: 'Reports' },
     { key: 'settings_access', label: 'Settings' },
+    { key: 'automations_access', label: 'Automations' },
   ];
 
   return (

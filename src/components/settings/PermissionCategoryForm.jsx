@@ -13,6 +13,7 @@ const MODULES = [
   { key: 'tags_access', label: 'Tags', hint: 'View/assign tags' },
   { key: 'reports_access', label: 'Reports', hint: 'View/generate reports' },
   { key: 'settings_access', label: 'Settings', hint: 'View/edit church settings & staff' },
+  { key: 'automations_access', label: 'Automations', hint: 'Create/manage automations' },
 ];
 
 export default function PermissionCategoryForm({ category, onSave, onClose }) {
@@ -26,6 +27,7 @@ export default function PermissionCategoryForm({ category, onSave, onClose }) {
     tags_access: category?.tags_access || 'read',
     reports_access: category?.reports_access || 'read',
     settings_access: category?.settings_access || 'none',
+    automations_access: category?.automations_access || 'none',
   });
 
   const setModule = (key, value) => setAccess((prev) => ({ ...prev, [key]: value }));

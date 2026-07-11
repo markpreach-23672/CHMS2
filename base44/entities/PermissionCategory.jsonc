@@ -83,6 +83,16 @@
       ],
       "default": "none",
       "title": "Settings Access"
+    },
+    "automations_access": {
+      "type": "string",
+      "enum": [
+        "none",
+        "read",
+        "write"
+      ],
+      "default": "none",
+      "title": "Automations Access"
     }
   },
   "required": [
