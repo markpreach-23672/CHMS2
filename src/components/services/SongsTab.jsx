@@ -44,12 +44,12 @@ export default function SongsTab({ churchId }) {
     setEditItem(null);
   };
 
-  const filtered = songs.filter((s) => !search || `${s.title} ${s.artist || ''}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = songs.filter((s) => !search || `${s.title} ${s.artist || ''} ${s.ccli_number || ''}`.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div>
       <div className="flex gap-2 mb-3">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search songs..." className="max-w-xs" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title, artist, or CCLI #..." className="max-w-xs" />
         <div className="flex-1" />
         <Button variant="outline" onClick={() => setShowCCLI(true)}>
           <Search size={15} className="mr-1.5" />Search CCLI

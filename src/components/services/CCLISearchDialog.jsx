@@ -32,7 +32,7 @@ export default function CCLISearchDialog({ onPick, onClose }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Song title or artist..."
+            placeholder="Song title, artist, or CCLI #..."
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />

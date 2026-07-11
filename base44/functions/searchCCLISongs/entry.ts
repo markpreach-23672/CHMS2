@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
 
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt: `Search for Christian worship songs matching: "${query}".
+The query may be a song title, an artist name, or a CCLI song number — handle any of these.
 Find up to 6 real, well-known worship songs that match. For each song provide:
 - title: the exact song title
 - artist: the primary artist/author (e.g. "Hillsong Worship", "Chris Tomlin")
