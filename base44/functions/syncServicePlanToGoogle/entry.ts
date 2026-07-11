@@ -27,7 +27,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { accessToken } = await svc.connectors.getConnection('googlecalendar');
+    // Prefer the current church's own connected Google account; fall back to the shared connection
+    let accessToken;
+    try {
+      const conn = await svc.connectors.getCurrentAppUserConnection('6a52279de7bab96b1a1891ab');
+      accessToken = conn?.accessToken;
+    } catch { /* automation context or app user not connected */ }
+    if (!accessToken) {
+      ({ accessToken } = await svc.connectors.getConnection('googlecalendar'));
+    }
     const gcal = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
     const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
 

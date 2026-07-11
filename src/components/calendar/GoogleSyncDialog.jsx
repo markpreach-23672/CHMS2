@@ -1,16 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { RefreshCw, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { RefreshCw, CheckCircle, Loader2, ExternalLink, Link2 } from 'lucide-react';
+
+const GOOGLE_CONNECTOR_ID = '6a52279de7bab96b1a1891ab';
 
 export default function GoogleSyncDialog({ calendar, onSyncComplete, onClose }) {
   const [googleCalId, setGoogleCalId] = useState(calendar.google_calendar_id || '');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
+  const [connected, setConnected] = useState(null);
+  const [connecting, setConnecting] = useState(false);
+
+  const checkConnection = async () => {
+    try {
+      const res = await base44.functions.invoke('googleConnectionStatus', {});
+      setConnected(!!res.data.connected);
+    } catch {
+      setConnected(false);
+    }
+  };
+
+  useEffect(() => { checkConnection(); }, []);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const url = await base44.connectors.connectAppUser(GOOGLE_CONNECTOR_ID);
+      const popup = window.open(url, '_blank');
+      const timer = setInterval(() => {
+        if (!popup || popup.closed) {
+          clearInterval(timer);
+          setConnecting(false);
+          checkConnection();
+        }
+      }, 500);
+    } catch {
+      setConnecting(false);
+      alert('Could not start Google connection.');
+    }
+  };
 
   const handleSave = async () => {
     if (!googleCalId.trim()) return;
@@ -67,6 +100,20 @@ export default function GoogleSyncDialog({ calendar, onSyncComplete, onClose }) 
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">Calendar: <span className="font-medium">{calendar.name}</span></p>
+
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center gap-2">
+              <Link2 size={16} className={connected ? 'text-emerald-600' : 'text-slate-400'} />
+              <span className="text-sm text-slate-700">
+                {connected === null ? 'Checking Google connection…' : connected ? 'Your Google account is connected' : 'Google account not connected'}
+              </span>
+            </div>
+            {connected === false && (
+              <Button size="sm" variant="outline" onClick={handleConnect} disabled={connecting}>
+                {connecting ? <Loader2 size={14} className="animate-spin" /> : 'Connect Google'}
+              </Button>
+            )}
+          </div>
 
           {calendar.google_calendar_id && (
             <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-lg">

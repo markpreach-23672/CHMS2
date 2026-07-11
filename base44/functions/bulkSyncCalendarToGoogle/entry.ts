@@ -16,7 +16,15 @@ Deno.serve(async (req) => {
     }
 
     const googleCalendarId = deptCal.google_calendar_id;
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
+    // Prefer the current church's own connected Google account; fall back to the shared connection
+    let accessToken;
+    try {
+      const conn = await base44.asServiceRole.connectors.getCurrentAppUserConnection('6a52279de7bab96b1a1891ab');
+      accessToken = conn?.accessToken;
+    } catch { /* app user not connected */ }
+    if (!accessToken) {
+      ({ accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar'));
+    }
     const authHeader = { Authorization: `Bearer ${accessToken}` };
 
     let timezone = 'America/New_York';
