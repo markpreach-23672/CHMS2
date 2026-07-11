@@ -42,6 +42,10 @@
       "type": "string",
       "format": "date-time",
       "title": "Team Email Sent At"
+    },
+    "google_event_id": {
+      "type": "string",
+      "title": "Google Calendar Event ID"
     }
   },
   "required": [
