@@ -47,6 +47,11 @@
       "format": "date",
       "title": "Birth Date"
     },
+    "anniversary_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Anniversary Date"
+    },
     "photo_url": {
       "type": "string",
       "title": "Photo URL"

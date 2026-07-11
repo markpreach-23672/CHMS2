@@ -30,6 +30,7 @@ export default function PersonForm({ person, onSave, onClose }) {
     first_visit_date: '',
     baptism_date: '',
     membership_date: '',
+    anniversary_date: '',
     ...person,
   });
   const [customFields, setCustomFields] = useState([]);
@@ -79,6 +80,7 @@ export default function PersonForm({ person, onSave, onClose }) {
       if (!data.first_visit_date) delete data.first_visit_date;
       if (!data.baptism_date) delete data.baptism_date;
       if (!data.membership_date) delete data.membership_date;
+      if (!data.anniversary_date) delete data.anniversary_date;
 
       if (isEdit) {
         saved = await base44.entities.Person.update(person.id, data);
@@ -290,7 +292,7 @@ export default function PersonForm({ person, onSave, onClose }) {
           </div>
 
           {/* Milestone Dates */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <Label className="text-xs font-medium text-slate-600">First Visit</Label>
               <Input type="date" value={formData.first_visit_date || ''} onChange={(e) => handleChange('first_visit_date', e.target.value)} className="mt-1" />
@@ -302,6 +304,10 @@ export default function PersonForm({ person, onSave, onClose }) {
             <div>
               <Label className="text-xs font-medium text-slate-600">Membership Date</Label>
               <Input type="date" value={formData.membership_date || ''} onChange={(e) => handleChange('membership_date', e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Anniversary</Label>
+              <Input type="date" value={formData.anniversary_date || ''} onChange={(e) => handleChange('anniversary_date', e.target.value)} className="mt-1" />
             </div>
           </div>
 

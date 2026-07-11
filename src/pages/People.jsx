@@ -34,6 +34,35 @@ import BulkWorkflowDialog from '@/components/people/BulkWorkflowDialog';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import TagGroupMessenger from '@/components/people/TagGroupMessenger';
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+const parseDate = (s) => {
+  if (!s) return null;
+  const d = new Date(s.length <= 10 ? s + 'T00:00:00' : s);
+  return isNaN(d) ? null : d;
+};
+
+const calcAge = (birthDate) => {
+  const b = parseDate(birthDate);
+  if (!b) return null;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age >= 0 ? age : null;
+};
+
+const birthMonthName = (birthDate) => {
+  const b = parseDate(birthDate);
+  return b ? MONTHS[b.getMonth()] : null;
+};
+
+const formatDate = (s) => {
+  const d = parseDate(s);
+  if (!d) return null;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 export default function People() {
   const [people, setPeople] = useState([]);
   const [tags, setTags] = useState([]);
@@ -313,6 +342,10 @@ export default function People() {
               <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Name</th>
               <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Contact</th>
               <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Tags</th>
+              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Birthday</th>
+              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Age</th>
+              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Birth Month</th>
+              <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Anniversary</th>
               <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
               <th className="w-10 px-4 py-3"></th>
             </tr>
@@ -320,11 +353,11 @@ export default function People() {
           <tbody className="divide-y divide-slate-50">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-400">Loading people...</td>
+                <td colSpan={10} className="px-4 py-12 text-center text-sm text-slate-400">Loading people...</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={10} className="px-4 py-12 text-center">
                   <p className="text-sm text-slate-400 mb-3">No people found</p>
                   <Button onClick={() => { setEditPerson(null); setShowForm(true); }} variant="outline" size="sm">
                     <Plus size={14} className="mr-1.5" />
@@ -335,6 +368,8 @@ export default function People() {
             ) : (
               filtered.map((person) => {
                 const personTags = getPersonTags(person);
+                const age = calcAge(person.birth_date);
+                const bMonth = birthMonthName(person.birth_date);
                 return (
                   <tr key={person.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-4 py-3">
@@ -420,6 +455,18 @@ export default function People() {
                           </span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-slate-600">{formatDate(person.birth_date) || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-slate-600">{age != null ? age : '—'}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      <span className="text-xs text-slate-600">{bMonth || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      <span className="text-xs text-slate-600">{formatDate(person.anniversary_date) || '—'}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
