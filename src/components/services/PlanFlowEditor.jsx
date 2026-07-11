@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Pencil, ChevronUp, ChevronDown, Music, ListOrdered } from 'lucide-react';
+import { Plus, Trash2, Pencil, ChevronUp, ChevronDown, Music, ListOrdered, FileText, FileMusic, Play } from 'lucide-react';
+import { songLinks } from '@/components/services/songLinks';
 
 export default function PlanFlowEditor({ plan, churchId, items, setItems, songs, setSongs, people }) {
   const [editItem, setEditItem] = useState(null);
@@ -86,6 +87,16 @@ export default function PlanFlowEditor({ plan, churchId, items, setItems, songs,
                       {item.person_id && ` · ${personName(item.person_id)}`}
                       {item.notes && ` · ${item.notes}`}
                     </p>
+                    {song && songLinks(song).length > 0 && (
+                      <div className="flex gap-3 mt-0.5">
+                        {songLinks(song).map((l) => (
+                          <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-indigo-500 hover:text-indigo-700 hover:underline">
+                            {l.label === 'Listen' ? <Play size={10} /> : l.label === 'Lyrics' ? <FileText size={10} /> : <FileMusic size={10} />}
+                            {l.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 <button onClick={() => { setEditItem(item); setShowForm(true); }} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-slate-600 p-1"><Pencil size={13} /></button>
