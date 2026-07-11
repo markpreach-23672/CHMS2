@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Trash2, Pencil, Music, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Pencil, Music, ExternalLink, Search } from 'lucide-react';
+import CCLISearchDialog from '@/components/services/CCLISearchDialog';
 
 export default function SongsTab({ churchId }) {
   const [songs, setSongs] = useState([]);
@@ -13,6 +14,8 @@ export default function SongsTab({ churchId }) {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [search, setSearch] = useState('');
+  const [showCCLI, setShowCCLI] = useState(false);
+  const [prefill, setPrefill] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,7 +51,10 @@ export default function SongsTab({ churchId }) {
       <div className="flex gap-2 mb-3">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search songs..." className="max-w-xs" />
         <div className="flex-1" />
-        <Button onClick={() => { setEditItem(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+        <Button variant="outline" onClick={() => setShowCCLI(true)}>
+          <Search size={15} className="mr-1.5" />Search CCLI
+        </Button>
+        <Button onClick={() => { setEditItem(null); setPrefill(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700">
           <Plus size={15} className="mr-1.5" />Add Song
         </Button>
       </div>
@@ -84,18 +90,32 @@ export default function SongsTab({ churchId }) {
       {showForm && (
         <SongForm
           item={editItem}
+          prefill={prefill}
           churchId={churchId}
           onSaved={handleSaved}
-          onClose={() => { setShowForm(false); setEditItem(null); }}
+          onClose={() => { setShowForm(false); setEditItem(null); setPrefill(null); }}
+        />
+      )}
+
+      {showCCLI && (
+        <CCLISearchDialog
+          onPick={(s) => {
+            setShowCCLI(false);
+            setEditItem(null);
+            setPrefill({ title: s.title || '', artist: s.artist || '', default_key: s.default_key || '', ccli_number: s.ccli_number || '', song_url: s.song_url || '' });
+            setShowForm(true);
+          }}
+          onClose={() => setShowCCLI(false)}
         />
       )}
     </div>
   );
 }
 
-function SongForm({ item, churchId, onSaved, onClose }) {
+function SongForm({ item, prefill, churchId, onSaved, onClose }) {
   const [form, setForm] = useState({
     title: '', artist: '', default_key: '', bpm: '', ccli_number: '', song_url: '', lyrics_url: '', score_url: '', notes: '',
+    ...prefill,
     ...item,
   });
   const [saving, setSaving] = useState(false);
