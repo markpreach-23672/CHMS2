@@ -19,7 +19,8 @@
       "enum": [
         "birthday",
         "anniversary",
-        "form_submission"
+        "form_submission",
+        "monthly_digest"
       ],
       "title": "Trigger Type",
       "default": "birthday"
@@ -28,7 +29,8 @@
       "type": "string",
       "enum": [
         "everyone",
-        "tag"
+        "tag",
+        "saved_search"
       ],
       "title": "Target Type",
       "default": "everyone"
@@ -36,6 +38,10 @@
     "target_tag_id": {
       "type": "string",
       "title": "Target Tag ID"
+    },
+    "target_saved_search_id": {
+      "type": "string",
+      "title": "Target Saved Search ID"
     },
     "trigger_form_id": {
       "type": "string",
@@ -72,6 +78,19 @@
       "title": "Offset Days",
       "default": 0
     },
+    "day_of_month": {
+      "type": "number",
+      "title": "Day of Month",
+      "default": 28
+    },
+    "notify_user_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Notify User IDs",
+      "default": []
+    },
     "is_active": {
       "type": "boolean",
       "title": "Active",
@@ -80,8 +99,7 @@
   },
   "required": [
     "name",
-    "trigger_type",
-    "action_type"
+    "trigger_type"
   ],
   "rls": {
     "create": {
