@@ -1,62 +1,28 @@
 {
-  "name": "ServicePlan",
+  "name": "NotificationSetting",
   "type": "object",
   "properties": {
     "church_id": {
       "type": "string",
       "title": "Church ID"
     },
-    "service_type_id": {
-      "type": "string",
-      "title": "Service Type ID"
+    "reminders_enabled": {
+      "type": "boolean",
+      "title": "Service Reminders Enabled",
+      "default": true
     },
-    "title": {
-      "type": "string",
-      "title": "Plan Title"
+    "reminder_days_before": {
+      "type": "number",
+      "title": "Days Before Service",
+      "default": 3
     },
-    "service_date": {
+    "reminder_time": {
       "type": "string",
-      "format": "date",
-      "title": "Service Date"
-    },
-    "service_time": {
-      "type": "string",
-      "title": "Start Time",
-      "default": "10:00"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "draft",
-        "scheduled",
-        "completed"
-      ],
-      "title": "Status",
-      "default": "draft"
-    },
-    "notes": {
-      "type": "string",
-      "title": "Notes"
-    },
-    "email_sent_at": {
-      "type": "string",
-      "format": "date-time",
-      "title": "Team Email Sent At"
-    },
-    "reminder_sent_at": {
-      "type": "string",
-      "format": "date-time",
-      "title": "Reminder Email Sent At"
-    },
-    "google_event_id": {
-      "type": "string",
-      "title": "Google Calendar Event ID"
+      "title": "Send Time (HH:00)",
+      "default": "09:00"
     }
   },
-  "required": [
-    "title",
-    "service_date"
-  ],
+  "required": [],
   "rls": {
     "create": {
       "$or": [

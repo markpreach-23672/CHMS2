@@ -6,6 +6,7 @@ import SongsTab from '@/components/services/SongsTab';
 import TeamsTab from '@/components/services/TeamsTab';
 import ServiceTypesTab from '@/components/services/ServiceTypesTab';
 import VolunteerReportTab from '@/components/services/VolunteerReportTab';
+import NotificationSettingsTab from '@/components/services/NotificationSettingsTab';
 
 export default function Services() {
   const [churchId, setChurchId] = useState('');
@@ -43,6 +44,7 @@ export default function Services() {
           <TabsTrigger value="teams">Teams</TabsTrigger>
           <TabsTrigger value="types">Service Types</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
         <TabsContent value="plans" className="mt-4">
           <PlansTab churchId={churchId} people={people} />
@@ -58,6 +60,9 @@ export default function Services() {
         </TabsContent>
         <TabsContent value="reports" className="mt-4">
           <VolunteerReportTab people={people} />
+        </TabsContent>
+        <TabsContent value="notifications" className="mt-4">
+          <NotificationSettingsTab churchId={churchId} />
         </TabsContent>
       </Tabs>
     </div>
