@@ -33,8 +33,14 @@ export default function TaskList({ tasks, people, categories, careGroups, servic
         const names = assigneeIds.slice(0, 3).map((id) => personById[id]).filter(Boolean)
           .map((p) => `${p.first_name} ${p.last_name}`).join(', ');
 
+        const statusColor = done
+          ? 'border-l-emerald-500 bg-emerald-50/40'
+          : overdue
+            ? 'border-l-red-500 bg-red-50/40'
+            : 'border-l-yellow-400 bg-yellow-50/40';
+
         return (
-          <div key={task.id} className={`bg-white border rounded-xl p-4 group ${done ? 'opacity-60 border-slate-100' : 'border-slate-200'}`}>
+          <div key={task.id} className={`border border-l-4 rounded-xl p-4 group ${statusColor} ${done ? 'opacity-70 border-slate-100' : 'border-slate-200'}`}>
             <div className="flex items-start gap-3">
               {iAmAssignee ? (
                 <button onClick={() => onToggleComplete(task)} className="mt-0.5 text-slate-300 hover:text-emerald-500" title={iCompleted ? 'Mark not done' : 'Mark done'}>
@@ -48,6 +54,11 @@ export default function TaskList({ tasks, people, categories, careGroups, servic
                   <span className={`text-sm font-medium ${done ? 'line-through text-slate-400' : 'text-slate-900'}`}>{task.title}</span>
                   {cat && <Badge variant="outline" style={{ borderColor: cat.color, color: cat.color }} className="text-[10px]">{cat.name}</Badge>}
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium}`}>{task.priority}</span>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    done ? 'bg-emerald-100 text-emerald-700' : overdue ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {done ? 'Completed' : overdue ? 'Overdue' : 'In Progress'}
+                  </span>
                 </div>
                 {task.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{task.description}</p>}
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500 flex-wrap">

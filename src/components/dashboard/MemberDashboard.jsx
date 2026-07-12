@@ -7,6 +7,7 @@ import MemberGivingSection from '@/components/portal/MemberGivingSection';
 import MemberOnboarding from '@/components/portal/MemberOnboarding';
 import MemberTagsCard from '@/components/dashboard/MemberTagsCard';
 import HelpDeskChat from '@/components/helpdesk/HelpDeskChat';
+import MyTasksWidget from '@/components/tasks/MyTasksWidget';
 
 export default function MemberDashboard({ user }) {
   const [person, setPerson] = useState(null);
@@ -40,6 +41,8 @@ export default function MemberDashboard({ user }) {
         <h1 className="text-2xl font-bold text-slate-900">Welcome, {firstName}</h1>
         <p className="text-slate-500 text-sm mt-1">Here's your personal information, family, tags, and giving.</p>
       </div>
+
+      <MyTasksWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {person ? (
