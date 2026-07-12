@@ -7,6 +7,7 @@ import TeamsTab from '@/components/services/TeamsTab';
 import ServiceTypesTab from '@/components/services/ServiceTypesTab';
 import VolunteerReportTab from '@/components/services/VolunteerReportTab';
 import NotificationSettingsTab from '@/components/services/NotificationSettingsTab';
+import MediaLibraryTab from '@/components/services/MediaLibraryTab';
 
 export default function Services() {
   const [churchId, setChurchId] = useState('');
@@ -41,6 +42,7 @@ export default function Services() {
         <TabsList>
           <TabsTrigger value="plans">Plans</TabsTrigger>
           <TabsTrigger value="songs">Songs</TabsTrigger>
+          <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="teams">Teams</TabsTrigger>
           <TabsTrigger value="types">Service Types</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -51,6 +53,9 @@ export default function Services() {
         </TabsContent>
         <TabsContent value="songs" className="mt-4">
           <SongsTab churchId={churchId} />
+        </TabsContent>
+        <TabsContent value="media" className="mt-4">
+          <MediaLibraryTab churchId={churchId} />
         </TabsContent>
         <TabsContent value="teams" className="mt-4">
           <TeamsTab churchId={churchId} people={people} />
