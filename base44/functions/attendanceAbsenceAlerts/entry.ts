@@ -35,6 +35,8 @@ Deno.serve(async (req) => {
     const people = await base44.asServiceRole.entities.Person.list('first_name', 2000);
     const tags = await base44.asServiceRole.entities.Tag.list('name', 1000);
     const tagById = Object.fromEntries(tags.map((t) => [t.id, t]));
+    const folders = await base44.asServiceRole.entities.TagFolder.list('name', 500);
+    const folderById = Object.fromEntries(folders.map((f) => [f.id, f]));
     const personById = Object.fromEntries(people.map((p) => [p.id, p]));
 
     // Group sessions by tag (oldest -> newest)
@@ -53,8 +55,16 @@ Deno.serve(async (req) => {
       if (tagSessions.length < 3) continue;
 
       const latest = tagSessions[tagSessions.length - 1];
-      const leader = latest.leader_person_id ? personById[latest.leader_person_id] : null;
-      if (!leader || !leader.email) continue; // no leader to notify
+      // Recipients: tag leaders (e.g. teachers) + folder leader (e.g. area director) + event leader
+      const tag = tagById[tagId];
+      const folder = tag?.folder_id ? folderById[tag.folder_id] : null;
+      const recipientIds = new Set([
+        ...(tag?.leader_person_ids || []),
+        ...(folder?.leader_person_id ? [folder.leader_person_id] : []),
+        ...(latest.leader_person_id ? [latest.leader_person_id] : []),
+      ]);
+      const recipients = [...recipientIds].map((id) => personById[id]).filter((p) => p && p.email);
+      if (recipients.length === 0) continue; // nobody to notify
 
       const expected = people.filter((p) => (p.tag_ids || []).includes(tagId));
       const flagged = [];
@@ -74,17 +84,19 @@ Deno.serve(async (req) => {
         return `- ${person.first_name} ${person.last_name}: missed ${streak} straight sessions (${contact})`;
       });
 
-      try {
-        await base44.asServiceRole.integrations.Core.SendEmail({
-          to: leader.email,
-          subject: `Attendance alert: ${flagged.length} ${tagName} member${flagged.length === 1 ? '' : 's'} need a check-in`,
-          body: `Hi ${leader.first_name},\n\nThe following people in "${tagName}" have missed 3 or more consecutive sessions over the past 6 weeks:\n\n${lines.join('\n')}\n\nA quick call or text could make all the difference.\n\n— Easy Flow Church`,
-        });
-        alertsSent++;
-        details.push({ tag: tagName, leader: leader.email, flagged: flagged.length });
-      } catch (e) {
-        console.error(`Failed to email leader ${leader.email}:`, e.message);
+      for (const leader of recipients) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: leader.email,
+            subject: `Attendance alert: ${flagged.length} ${tagName} member${flagged.length === 1 ? '' : 's'} need a check-in`,
+            body: `Hi ${leader.first_name},\n\nThe following people in "${tagName}" have missed 3 or more consecutive sessions over the past 6 weeks:\n\n${lines.join('\n')}\n\nA quick call or text could make all the difference.\n\n— Easy Flow Church`,
+          });
+          alertsSent++;
+        } catch (e) {
+          console.error(`Failed to email leader ${leader.email}:`, e.message);
+        }
       }
+      details.push({ tag: tagName, leaders: recipients.map((r) => r.email), flagged: flagged.length });
     }
 
     return Response.json({ alerts: alertsSent, details });

@@ -10,6 +10,10 @@
       "type": "string",
       "title": "Folder Name"
     },
+    "leader_person_id": {
+      "type": "string",
+      "title": "Folder Leader (Person ID)"
+    },
     "sort_order": {
       "type": "number",
       "title": "Sort Order",

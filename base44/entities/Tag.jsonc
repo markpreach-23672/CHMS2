@@ -22,6 +22,14 @@
     "description": {
       "type": "string",
       "title": "Description"
+    },
+    "leader_person_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tag Leader Person IDs",
+      "default": []
     }
   },
   "required": [

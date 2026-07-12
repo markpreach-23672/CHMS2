@@ -21,6 +21,7 @@ import {
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import EmailMessageDialog from '@/components/people/EmailMessageDialog';
 import { downloadPeopleCsv } from '@/utils/csvExport';
+import MemberPicker from '@/components/caregroups/MemberPicker';
 
 const TAG_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6'];
 
@@ -31,6 +32,7 @@ export default function Tags() {
   const [loading, setLoading] = useState(true);
   const [showTagForm, setShowTagForm] = useState(false);
   const [showFolderForm, setShowFolderForm] = useState(false);
+  const [editFolder, setEditFolder] = useState(null);
   const [editTag, setEditTag] = useState(null);
   const [textTag, setTextTag] = useState(null);
   const [emailTag, setEmailTag] = useState(null);
@@ -138,12 +140,21 @@ export default function Tags() {
                   <Folder size={16} className="text-slate-400" />
                   <h2 className="text-sm font-semibold text-slate-900">{folder.name}</h2>
                   <span className="text-xs text-slate-400">{folderTags(folder.id).length} tags</span>
+                  {folder.leader_person_id && (() => {
+                    const lead = people.find((p) => p.id === folder.leader_person_id);
+                    return lead ? (
+                      <span className="text-xs text-indigo-500 font-medium">Led by {lead.first_name} {lead.last_name}</span>
+                    ) : null;
+                  })()}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="p-1.5 rounded-lg hover:bg-slate-100">
                     <MoreHorizontal size={15} className="text-slate-400" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setEditFolder(folder); setShowFolderForm(true); }}>
+                      <Pencil size={13} className="mr-2" /> Edit Folder
+                    </DropdownMenuItem>
                     <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteFolder(folder)}>
                       Delete Folder
                     </DropdownMenuItem>
@@ -214,6 +225,7 @@ export default function Tags() {
         <TagForm
           tag={editTag}
           folders={folders}
+          people={people}
           onSave={async (data) => {
             try {
               if (editTag) {
@@ -236,16 +248,24 @@ export default function Tags() {
       {/* Folder Form */}
       {showFolderForm && (
         <FolderForm
-          onSave={async (name) => {
+          folder={editFolder}
+          people={people}
+          onSave={async (data) => {
             try {
-              const created = await base44.entities.TagFolder.create({ name });
-              setFolders((prev) => [...prev, created]);
+              if (editFolder) {
+                const updated = await base44.entities.TagFolder.update(editFolder.id, data);
+                setFolders((prev) => prev.map((f) => (f.id === editFolder.id ? updated : f)));
+              } else {
+                const created = await base44.entities.TagFolder.create(data);
+                setFolders((prev) => [...prev, created]);
+              }
               setShowFolderForm(false);
+              setEditFolder(null);
             } catch (err) {
-              alert('Failed to create folder.');
+              alert('Failed to save folder.');
             }
           }}
-          onClose={() => setShowFolderForm(false)}
+          onClose={() => { setShowFolderForm(false); setEditFolder(null); }}
         />
       )}
 
@@ -319,8 +339,9 @@ function TagChip({ tag, count, onEdit, onDelete, onText, onEmail, onDownload }) 
   );
 }
 
-function TagForm({ tag, folders, onSave, onClose }) {
+function TagForm({ tag, folders, people, onSave, onClose }) {
   const [name, setName] = useState(tag?.name || '');
+  const [leaderIds, setLeaderIds] = useState(tag?.leader_person_ids || []);
   const [color, setColor] = useState(tag?.color || TAG_COLORS[0]);
   const [folderId, setFolderId] = useState(tag?.folder_id || '');
   const [description, setDescription] = useState(tag?.description || '');
@@ -370,6 +391,12 @@ function TagForm({ tag, folders, onSave, onClose }) {
             </select>
           </div>
           <div>
+            <Label className="text-xs font-medium text-slate-600">Tag Leaders (receive absence alerts)</Label>
+            <div className="mt-1">
+              <MemberPicker people={people} selectedIds={leaderIds} onChange={setLeaderIds} />
+            </div>
+          </div>
+          <div>
             <Label className="text-xs font-medium text-slate-600">Description</Label>
             <Input
               value={description}
@@ -382,7 +409,7 @@ function TagForm({ tag, folders, onSave, onClose }) {
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => onSave({ name, color, folder_id: folderId || undefined, description })}
+            onClick={() => onSave({ name, color, folder_id: folderId || undefined, description, leader_person_ids: leaderIds })}
             disabled={!name.trim()}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
@@ -394,34 +421,50 @@ function TagForm({ tag, folders, onSave, onClose }) {
   );
 }
 
-function FolderForm({ onSave, onClose }) {
-  const [name, setName] = useState('');
+function FolderForm({ folder, people, onSave, onClose }) {
+  const [name, setName] = useState(folder?.name || '');
+  const [leaderId, setLeaderId] = useState(folder?.leader_person_id || '');
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>New Folder</DialogTitle>
+          <DialogTitle>{folder ? 'Edit Folder' : 'New Folder'}</DialogTitle>
         </DialogHeader>
-        <div>
-          <Label className="text-xs font-medium text-slate-600">Folder Name *</Label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Ministry Teams"
-            className="mt-1"
-            autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name)}
-          />
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs font-medium text-slate-600">Folder Name *</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Sunday School"
+              className="mt-1"
+              autoFocus
+            />
+          </div>
+          <div>
+            <Label className="text-xs font-medium text-slate-600">Folder Leader / Director</Label>
+            <select
+              value={leaderId}
+              onChange={(e) => setLeaderId(e.target.value)}
+              className="mt-1 w-full h-9 px-3 rounded-md border border-input bg-transparent text-sm"
+            >
+              <option value="">No leader</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-400 mt-1">Receives absence alerts for every tag in this folder.</p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
-            onClick={() => onSave(name)}
+            onClick={() => onSave({ name, leader_person_id: leaderId || '' })}
             disabled={!name.trim()}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
-            Create Folder
+            {folder ? 'Save' : 'Create Folder'}
           </Button>
         </DialogFooter>
       </DialogContent>
