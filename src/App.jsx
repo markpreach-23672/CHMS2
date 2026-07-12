@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
+import MasterDashboard from '@/pages/MasterDashboard';
 import People from '@/pages/People';
 import PersonDetail from '@/pages/PersonDetail';
 import Tags from '@/pages/Tags';
@@ -67,6 +68,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Landing />} />
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/master" element={<MasterDashboard />} />
         <Route path="/people" element={<People />} />
         <Route path="/people/:id" element={<PersonDetail />} />
         <Route path="/tags" element={<Tags />} />

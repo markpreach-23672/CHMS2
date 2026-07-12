@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Users, Tag, Search, DollarSign, Calendar as CalendarIcon, CreditCard, Settings, LayoutDashboard, LogOut, LogIn, ChevronRight, Home, BarChart3, Heart, FileText, Vote, LifeBuoy, Music } from 'lucide-react';
+import { Users, Tag, Search, DollarSign, Calendar as CalendarIcon, CreditCard, Settings, LayoutDashboard, LogOut, LogIn, ChevronRight, Home, BarChart3, Heart, FileText, Vote, LifeBuoy, Music, Building2 } from 'lucide-react';
 
 export default function Layout() {
   const [user, setUser] = useState(null);
@@ -59,6 +59,23 @@ export default function Layout() {
           </Link>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {user?.role === 'super_admin' && (
+            <>
+              <p className="px-3 py-2 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Master Account</p>
+              <Link
+                to="/master"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+                  location.pathname.startsWith('/master')
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Building2 size={17} />
+                Master Dashboard
+                {location.pathname.startsWith('/master') && <ChevronRight size={14} className="ml-auto" />}
+              </Link>
+            </>
+          )}
           <p className="px-3 py-2 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Main</p>
           {navItems.slice(0, 4).map((item) => {
             const Icon = item.icon;

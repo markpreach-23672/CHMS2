@@ -15,6 +15,16 @@
       "title": "Public Site URL",
       "description": "The full public URL of your church app (e.g. https://easy-church-flow.base44.app)"
     },
+    "custom_domain": {
+      "type": "string",
+      "title": "Custom Web Link",
+      "description": "Optional custom domain / web link for this church"
+    },
+    "monthly_rate": {
+      "type": "number",
+      "title": "Monthly Rate ($)",
+      "default": 0
+    },
     "logo_url": {
       "type": "string",
       "title": "Logo URL"

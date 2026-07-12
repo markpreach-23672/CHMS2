@@ -62,6 +62,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Log sent texts for master dashboard reporting
+    try {
+      const churchId = user.church_id || null;
+      const nowIso = new Date().toISOString();
+      const logs = results.map((r) => ({ church_id: churchId, to: r.to, status: r.status === 'sent' ? 'sent' : 'failed', sent_at: nowIso }));
+      if (logs.length > 0) await base44.asServiceRole.entities.TextMessageLog.bulkCreate(logs);
+    } catch (logErr) {
+      console.error('sendSMS: failed to log messages:', logErr.message);
+    }
+
     return Response.json({ sent, failed, total: recipients.length, results });
   } catch (error) {
     console.error('sendSMS error:', error.message);
