@@ -21,14 +21,12 @@ export default function Tasks() {
   const [editingTask, setEditingTask] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
 
-  const loadTasks = useCallback(async (cid) => {
-    const query = cid ? { church_id: cid } : {};
-    setTasks(await base44.entities.Task.filter(query, '-created_date', 500));
+  const loadTasks = useCallback(async () => {
+    setTasks(await base44.entities.Task.list('-created_date', 500));
   }, []);
 
-  const loadCategories = useCallback(async (cid) => {
-    const query = cid ? { church_id: cid } : {};
-    setCategories(await base44.entities.TaskCategory.filter(query, 'name'));
+  const loadCategories = useCallback(async () => {
+    setCategories(await base44.entities.TaskCategory.list('name'));
   }, []);
 
   useEffect(() => {
@@ -36,16 +34,15 @@ export default function Tasks() {
       let u = null;
       try { u = await base44.auth.me(); } catch (e) { /* not logged in */ }
       setUser(u);
-      const cid = u?.church_id || null;
-      setChurchId(cid);
-      const query = cid ? { church_id: cid } : {};
-      const [ppl, groups, teams] = await Promise.all([
-        cid ? base44.entities.Person.filter(query, 'first_name') : base44.entities.Person.list('first_name'),
-        base44.entities.CareGroup.filter(query),
-        base44.entities.ServiceTeam.filter(query),
-        loadTasks(cid),
-        loadCategories(cid),
+      const [ppl, groups, teams, churches] = await Promise.all([
+        base44.entities.Person.list('first_name', 1000),
+        base44.entities.CareGroup.list(),
+        base44.entities.ServiceTeam.list(),
+        base44.entities.Church.list(),
+        loadTasks(),
+        loadCategories(),
       ]);
+      setChurchId(churches[0]?.id || null);
       setPeople(ppl);
       setCareGroups(groups);
       setServiceTeams(teams);

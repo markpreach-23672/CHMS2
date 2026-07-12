@@ -16,12 +16,11 @@ export default function MyTasksWidget() {
       try {
         const user = await base44.auth.me();
         if (!user) { setMyTasks([]); return; }
-        const query = user.church_id ? { church_id: user.church_id } : {};
         const [people, tasks, careGroups, serviceTeams] = await Promise.all([
-          base44.entities.Person.filter(query, 'first_name'),
-          base44.entities.Task.filter(query, '-created_date', 500),
-          base44.entities.CareGroup.filter(query),
-          base44.entities.ServiceTeam.filter(query),
+          base44.entities.Person.list('first_name', 1000),
+          base44.entities.Task.list('-created_date', 500),
+          base44.entities.CareGroup.list(),
+          base44.entities.ServiceTeam.list(),
         ]);
         const me = people.find((p) => p.email && user.email && p.email.toLowerCase() === user.email.toLowerCase());
         if (!me) { setMyTasks([]); return; }

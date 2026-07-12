@@ -15,18 +15,13 @@ export default function Attendance() {
 
   useEffect(() => {
     (async () => {
-      let cid = null;
-      try {
-        const user = await base44.auth.me();
-        cid = user?.church_id || null;
-      } catch (e) { /* not logged in */ }
-      setChurchId(cid);
-      const query = cid ? { church_id: cid } : {};
-      const [ppl, evts, tgs] = await Promise.all([
-        cid ? base44.entities.Person.filter(query, 'first_name') : base44.entities.Person.list('first_name'),
-        base44.entities.CalendarEvent.filter(query, '-start_time', 300),
-        base44.entities.Tag.filter(query, 'name'),
+      const [ppl, evts, tgs, churches] = await Promise.all([
+        base44.entities.Person.list('first_name', 1000),
+        base44.entities.CalendarEvent.list('-start_time', 300),
+        base44.entities.Tag.list('name'),
+        base44.entities.Church.list(),
       ]);
+      setChurchId(churches[0]?.id || null);
       setPeople(ppl);
       setTags(tgs);
       // Only tagged events (tags define who is expected) within the last 8 weeks / next 2 weeks
