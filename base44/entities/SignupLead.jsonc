@@ -1,0 +1,78 @@
+{
+  "name": "SignupLead",
+  "type": "object",
+  "properties": {
+    "church_name": {
+      "type": "string",
+      "title": "Church Name"
+    },
+    "contact_name": {
+      "type": "string",
+      "title": "Contact Name"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
+    "state": {
+      "type": "string",
+      "title": "State"
+    },
+    "congregation_size": {
+      "type": "string",
+      "enum": [
+        "under_50",
+        "50_150",
+        "150_500",
+        "over_500"
+      ],
+      "title": "Congregation Size"
+    },
+    "message": {
+      "type": "string",
+      "title": "Message"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "contacted",
+        "converted",
+        "closed"
+      ],
+      "default": "new",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "church_name",
+    "contact_name",
+    "email"
+  ],
+  "rls": {
+    "create": true,
+    "read": {
+      "user_condition": {
+        "role": "super_admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "super_admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "super_admin"
+      }
+    }
+  }
+}
