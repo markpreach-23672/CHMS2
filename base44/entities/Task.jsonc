@@ -1,0 +1,146 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "church_id": {
+      "type": "string",
+      "title": "Church ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Task Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "category_id": {
+      "type": "string",
+      "title": "Category ID"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Priority",
+      "default": "medium"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Due Date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "completed"
+      ],
+      "title": "Status",
+      "default": "open"
+    },
+    "assigned_by_user_id": {
+      "type": "string",
+      "title": "Assigned By (User ID)"
+    },
+    "assigned_by_name": {
+      "type": "string",
+      "title": "Assigned By Name"
+    },
+    "assignee_person_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Assignee Person IDs",
+      "default": []
+    },
+    "assignee_group_type": {
+      "type": "string",
+      "enum": [
+        "care_group",
+        "service_team"
+      ],
+      "title": "Assignee Group Type"
+    },
+    "assignee_group_id": {
+      "type": "string",
+      "title": "Assignee Group ID"
+    },
+    "notify_method": {
+      "type": "string",
+      "enum": [
+        "none",
+        "email",
+        "text",
+        "both"
+      ],
+      "title": "Notify Method",
+      "default": "email"
+    },
+    "completed_person_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Completed Person IDs",
+      "default": []
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.church_id": "{{user.data.church_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    }
+  }
+}

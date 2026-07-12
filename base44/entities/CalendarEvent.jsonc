@@ -10,6 +10,10 @@
       "type": "string",
       "title": "Calendar ID"
     },
+    "leader_person_id": {
+      "type": "string",
+      "title": "Event Leader (Person ID)"
+    },
     "title": {
       "type": "string",
       "title": "Event Title"
