@@ -23,6 +23,7 @@ import Settings from '@/pages/Settings';
 import Families from '@/pages/Families';
 import Reports from '@/pages/Reports';
 import Volunteers from '@/pages/Volunteers';
+import CareGroups from '@/pages/CareGroups';
 import Services from '@/pages/Services';
 import PublicConnectCard from '@/pages/PublicConnectCard';
 import Forms from '@/pages/Forms';
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/families" element={<Families />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/volunteers" element={<Volunteers />} />
+        <Route path="/care-groups" element={<CareGroups />} />
         <Route path="/services" element={<Services />} />
         <Route path="/forms" element={<Forms />} />
         <Route path="/elections" element={<Elections />} />

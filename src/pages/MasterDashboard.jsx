@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import AddChurchDialog from '@/components/master/AddChurchDialog';
 import ChurchStatsTable from '@/components/master/ChurchStatsTable';
-import { Building2, Users, DollarSign, Plus, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Building2, Users, DollarSign, Plus, RefreshCw, HeartHandshake, ArrowRight } from 'lucide-react';
 
 const fmt = (n) => '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -84,6 +85,17 @@ export default function MasterDashboard() {
           </div>
         ))}
       </div>
+
+      <Link to="/care-groups" className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition-all group">
+        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <HeartHandshake size={20} />
+        </div>
+        <div className="flex-1">
+          <div className="font-semibold text-slate-900 text-sm">Care Groups</div>
+          <div className="text-xs text-slate-500">Assign leaders, members, and group calendars for care ministries</div>
+        </div>
+        <ArrowRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
+      </Link>
 
       <ChurchStatsTable churches={churches} />
 
