@@ -437,7 +437,7 @@ export default function PersonDetail() {
           </div>
 
           {/* Giving */}
-          {isAdmin && (
+          {(
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -501,9 +501,7 @@ export default function PersonDetail() {
                 const events = [];
                 if (person.created_date) events.push({ date: person.created_date, label: 'Profile created', icon: '👤' });
                 enrollments.forEach(e => events.push({ date: e.enrolled_date, label: 'Enrolled in workflow', icon: '📋' }));
-                if (isAdmin) {
-                  donations.forEach(d => events.push({ date: d.donation_date, label: `Gave $${(d.amount || 0).toFixed(2)}`, icon: '💰' }));
-                }
+                donations.forEach(d => events.push({ date: d.donation_date, label: `Gave $${(d.amount || 0).toFixed(2)}`, icon: '💰' }));
                 events.sort((a, b) => moment(b.date).diff(moment(a.date)));
                 if (events.length === 0) return <p className="text-xs text-slate-400">No activity recorded.</p>;
                 return events.slice(0, 15).map((e, i) => (
