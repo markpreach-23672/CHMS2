@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Search } from 'lucide-react';
+import { getMyChurchId } from '@/lib/churchContext';
 
 const ROLE_OPTIONS = [
   { value: 'head_of_household', label: 'Head of Household' },
@@ -47,9 +48,10 @@ export default function AddFamilyMemberDialog({ currentPerson, onClose, onAdded 
   const ensureFamily = async () => {
     if (currentPerson.family_id) return currentPerson.family_id;
     const famName = `${currentPerson.last_name || currentPerson.first_name || 'Family'} Family`;
+    const churchId = currentPerson.church_id || await getMyChurchId();
     const fam = await base44.entities.Family.create({
       family_name: famName,
-      church_id: currentPerson.church_id,
+      church_id: churchId,
       address: currentPerson.address,
       city: currentPerson.city,
       state: currentPerson.state,
@@ -88,7 +90,7 @@ export default function AddFamilyMemberDialog({ currentPerson, onClose, onAdded 
         phone: newPhone.trim(),
         family_id: famId,
         family_role: role,
-        church_id: currentPerson.church_id,
+        church_id: currentPerson.church_id || await getMyChurchId(),
         status: 'active',
       });
       onAdded();

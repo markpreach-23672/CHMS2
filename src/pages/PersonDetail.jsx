@@ -385,12 +385,10 @@ export default function PersonDetail() {
                 <Users size={15} className="text-slate-400" />
                 Family
               </h3>
-              <button
-                onClick={() => setShowAddFamily(true)}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                + Add Member
-              </button>
+              <Button size="sm" variant="outline" onClick={() => setShowAddFamily(true)} className="h-7 text-xs text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700">
+                <Plus size={13} className="mr-1" />
+                Add Family Member
+              </Button>
             </div>
             {family ? (
               <div>
