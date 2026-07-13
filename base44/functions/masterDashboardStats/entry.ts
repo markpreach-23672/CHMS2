@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
         id: church.id,
         name: church.name,
         site_url: church.site_url || '',
+        subdomain: church.subdomain || '',
         custom_domain: church.custom_domain || '',
         monthly_rate: church.monthly_rate || 0,
         subscription_status: church.subscription_status || 'trial',

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { churchSlug, churchLoginUrl } from '@/lib/churchSlug';
 
-const EMPTY = { name: '', email: '', phone: '', site_url: '', custom_domain: '', monthly_rate: '' };
+const EMPTY = { name: '', email: '', phone: '', site_url: '', custom_domain: '', monthly_rate: '', admin_email: '' };
 
 export default function AddChurchDialog({ open, onOpenChange, onCreated }) {
   const [form, setForm] = useState(EMPTY);
@@ -18,7 +18,7 @@ export default function AddChurchDialog({ open, onOpenChange, onCreated }) {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      await base44.entities.Church.create({
+      const created = await base44.entities.Church.create({
         name: form.name.trim(),
         subdomain: churchSlug(form.name) || undefined,
         email: form.email || undefined,
@@ -27,6 +27,18 @@ export default function AddChurchDialog({ open, onOpenChange, onCreated }) {
         custom_domain: form.custom_domain || undefined,
         monthly_rate: form.monthly_rate ? Number(form.monthly_rate) : 0,
       });
+      if (form.admin_email.trim()) {
+        try {
+          const res = await base44.functions.invoke('inviteStaffMember', {
+            email: form.admin_email.trim(),
+            role: 'church_admin',
+            church_id: created.id,
+          });
+          alert(res.data?.message || 'Admin invite sent.');
+        } catch (err) {
+          alert('Church created, but admin invite failed: ' + (err.message || 'unknown error'));
+        }
+      }
       setForm(EMPTY);
       onOpenChange(false);
       onCreated();
@@ -68,6 +80,11 @@ export default function AddChurchDialog({ open, onOpenChange, onCreated }) {
           <div>
             <Label className="text-xs">Custom Web Link (optional)</Label>
             <Input value={form.custom_domain} onChange={(e) => set('custom_domain', e.target.value)} placeholder="https://mychurch.org" className="mt-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Church Admin Email (master admin)</Label>
+            <Input value={form.admin_email} onChange={(e) => set('admin_email', e.target.value)} placeholder="admin@church.org" className="mt-1" />
+            <p className="text-[11px] text-slate-400 mt-1">They'll get an email invite and full admin access to this church.</p>
           </div>
           <div>
             <Label className="text-xs">Monthly Rate ($)</Label>

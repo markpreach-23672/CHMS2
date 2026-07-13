@@ -97,7 +97,7 @@ export default function MasterDashboard() {
         <ArrowRight size={16} className="text-slate-300 group-hover:text-indigo-500 transition-colors" />
       </Link>
 
-      <ChurchStatsTable churches={churches} />
+      <ChurchStatsTable churches={churches} onChanged={loadStats} />
 
       <AddChurchDialog open={showAdd} onOpenChange={setShowAdd} onCreated={loadStats} />
     </div>

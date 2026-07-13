@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     if (user.role !== 'super_admin' && user.role !== 'church_admin') {
       return Response.json({ error: 'Only admins can invite or promote staff.' }, { status: 403 });
     }
-    const { email, role } = await req.json();
+    const { email, role, church_id } = await req.json();
     const rawEmail = (email || '').trim();
     const cleanEmail = rawEmail.toLowerCase();
     if (!cleanEmail) return Response.json({ error: 'Email is required.' }, { status: 400 });
@@ -19,10 +19,12 @@ Deno.serve(async (req) => {
     const allUsers = await base44.asServiceRole.entities.User.list('-created_date', 500);
     const existing = allUsers.find((u) => (u.email || '').toLowerCase() === cleanEmail);
     if (existing) {
-      if (existing.role === role) {
+      const updates = { role };
+      if (church_id) updates.church_id = church_id;
+      if (existing.role === role && !church_id) {
         return Response.json({ success: true, action: 'none', message: `${existing.email} is already ${role}.` });
       }
-      await base44.asServiceRole.entities.User.update(existing.id, { role });
+      await base44.asServiceRole.entities.User.update(existing.id, updates);
       return Response.json({ success: true, action: 'promoted', message: `${existing.email} was updated to ${role}.` });
     }
 
@@ -38,7 +40,9 @@ Deno.serve(async (req) => {
       const refreshed = await base44.asServiceRole.entities.User.list('-created_date', 500);
       const created = refreshed.find((u) => (u.email || '').toLowerCase() === cleanEmail);
       if (created) {
-        await base44.asServiceRole.entities.User.update(created.id, { role });
+        const updates = { role };
+        if (church_id) updates.church_id = church_id;
+        await base44.asServiceRole.entities.User.update(created.id, updates);
         roleSet = true;
       }
     } catch (e) {

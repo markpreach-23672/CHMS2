@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, Rocket, UserPlus } from 'lucide-react';
+import InviteAdminDialog from '@/components/master/InviteAdminDialog';
+import { churchLoginUrl } from '@/lib/churchSlug';
 
 const fmt = (n) => '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -11,7 +15,25 @@ const STATUS_COLORS = {
   cancelled: 'bg-slate-100 text-slate-500',
 };
 
-export default function ChurchStatsTable({ churches }) {
+export default function ChurchStatsTable({ churches, onChanged }) {
+  const [inviteChurch, setInviteChurch] = useState(null);
+  const [publishingId, setPublishingId] = useState(null);
+
+  const handlePublish = async (church) => {
+    setPublishingId(church.id);
+    try {
+      await base44.entities.Church.update(church.id, {
+        subscription_status: 'active',
+        subscription_started_date: new Date().toISOString().split('T')[0],
+      });
+      onChanged?.();
+    } catch (err) {
+      alert('Failed to publish: ' + (err.message || 'unknown error'));
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
       <table className="w-full text-sm">
@@ -24,6 +46,7 @@ export default function ChurchStatsTable({ churches }) {
             <th className="px-4 py-3 text-right">Monthly Rate</th>
             <th className="px-4 py-3 text-right">Texts (MTD)</th>
             <th className="px-4 py-3">Links</th>
+            <th className="px-4 py-3">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -52,15 +75,37 @@ export default function ChurchStatsTable({ churches }) {
                       Custom link <ExternalLink size={11} />
                     </a>
                   )}
+                  {c.subdomain && (
+                    <a href={churchLoginUrl(c.subdomain)} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1 text-xs">
+                      Login page <ExternalLink size={11} />
+                    </a>
+                  )}
+                </div>
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-col gap-1.5">
+                  {c.subscription_status !== 'active' && (
+                    <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                      disabled={publishingId === c.id}
+                      onClick={() => handlePublish(c)}>
+                      <Rocket size={12} /> {publishingId === c.id ? 'Publishing...' : 'Publish'}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setInviteChurch(c)}>
+                    <UserPlus size={12} /> Invite Admin
+                  </Button>
                 </div>
               </td>
             </tr>
           ))}
           {churches.length === 0 && (
-            <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-400">No churches yet. Click "Add Church" to get started.</td></tr>
+            <tr><td colSpan={8} className="px-4 py-10 text-center text-slate-400">No churches yet. Click "Add Church" to get started.</td></tr>
           )}
         </tbody>
       </table>
+      {inviteChurch && (
+        <InviteAdminDialog church={inviteChurch} open={!!inviteChurch} onOpenChange={(o) => !o && setInviteChurch(null)} />
+      )}
     </div>
   );
 }
