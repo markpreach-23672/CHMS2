@@ -22,6 +22,7 @@ import PersonForm from '@/components/people/PersonForm';
 import TagPicker from '@/components/people/TagPicker';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import AddFamilyMemberDialog from '@/components/people/AddFamilyMemberDialog';
+import EmailPersonStatementDialog from '@/components/people/EmailPersonStatementDialog';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -41,6 +42,7 @@ export default function PersonDetail() {
   const [folders, setFolders] = useState([]);
   const [volunteerRoles, setVolunteerRoles] = useState([]);
   const [showAddFamily, setShowAddFamily] = useState(false);
+  const [showEmailStatement, setShowEmailStatement] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -133,6 +135,9 @@ export default function PersonDetail() {
   const personVolunteerRoles = (person.volunteer_role_ids || []).map((rid) => volunteerRoles.find((r) => r.id === rid)).filter(Boolean);
   const fullName = `${person.first_name} ${person.last_name}`;
   const totalGiving = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+  const ytdGiving = donations
+    .filter((d) => moment(d.donation_date).year() === moment().year())
+    .reduce((sum, d) => sum + (d.amount || 0), 0);
 
   const visibleCustomFields = customFields.filter(f => !f.is_private || currentUser?.role === 'admin');
   const customFieldSections = {};
@@ -437,9 +442,31 @@ export default function PersonDetail() {
                 <DollarSign size={15} className="text-slate-400" />
                 Giving History
               </h3>
-              <span className="text-sm font-bold text-slate-900">
-                ${totalGiving.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowEmailStatement(true)}>
+                  <Mail size={12} className="mr-1" />
+                  Email Report
+                </Button>
+                <Link to={`/giving/statement/${person.id}`}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs">
+                    Print Report
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-500">This Year ({moment().year()})</p>
+                <p className="text-lg font-bold text-slate-900">
+                  ${ytdGiving.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs text-slate-500">All Time</p>
+                <p className="text-lg font-bold text-slate-900">
+                  ${totalGiving.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
             </div>
             {donations.length > 0 ? (
               <div className="space-y-2">
@@ -519,6 +546,13 @@ export default function PersonDetail() {
         <TextMessageDialog
           recipients={[textRecipient]}
           onClose={() => setTextRecipient(null)}
+        />
+      )}
+
+      {showEmailStatement && (
+        <EmailPersonStatementDialog
+          person={person}
+          onClose={() => setShowEmailStatement(false)}
         />
       )}
 

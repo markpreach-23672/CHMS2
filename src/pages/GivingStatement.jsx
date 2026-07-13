@@ -4,7 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Printer, Users, User } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Printer, Users, User, Pencil } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import moment from 'moment';
 
@@ -23,6 +24,10 @@ export default function GivingStatement() {
   const [year, setYear] = useState(moment().year().toString());
   const [startDate, setStartDate] = useState(moment().startOf('year').format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(moment().format('YYYY-MM-DD'));
+  const [editLetter, setEditLetter] = useState(false);
+  const [customGreeting, setCustomGreeting] = useState('');
+  const [customNote, setCustomNote] = useState('');
+  const [customFooter, setCustomFooter] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -105,9 +110,14 @@ export default function GivingStatement() {
           <Link to="/giving" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
             <ArrowLeft size={16} />Back to Giving
           </Link>
-          <Button onClick={() => window.print()} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-            <Printer size={14} className="mr-1.5" />Print
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setEditLetter(!editLetter)} size="sm" variant="outline">
+              <Pencil size={14} className="mr-1.5" />{editLetter ? 'Done Editing' : 'Edit Letter'}
+            </Button>
+            <Button onClick={() => window.print()} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+              <Printer size={14} className="mr-1.5" />Print
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-4 flex-wrap">
           {person.family_id && familyMembers.length > 0 && (
@@ -148,6 +158,39 @@ export default function GivingStatement() {
             )}
           </div>
         </div>
+        {editLetter && (
+          <div className="mt-3 pt-3 border-t border-slate-100 grid gap-3 max-w-2xl">
+            <div>
+              <Label className="text-xs text-slate-500">Greeting</Label>
+              <Input
+                value={customGreeting}
+                onChange={(e) => setCustomGreeting(e.target.value)}
+                placeholder={`Dear ${statementMode === 'family' && familyMembers.length > 0 ? person.first_name + ' & Family' : person.first_name},`}
+                className="mt-1 h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500">Note of Appreciation</Label>
+              <Textarea
+                value={customNote}
+                onChange={(e) => setCustomNote(e.target.value)}
+                placeholder={`Thank you for your generous contributions to ${church?.name || 'our church'} during ${dateLabel}. The following is a record of your giving for tax purposes:`}
+                rows={3}
+                className="mt-1 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500">501(c)(3) Tax Statement</Label>
+              <Textarea
+                value={customFooter}
+                onChange={(e) => setCustomFooter(e.target.value)}
+                placeholder="No goods or services were provided in exchange for these contributions, making them fully tax-deductible to the extent allowed by law."
+                rows={2}
+                className="mt-1 text-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Printable statement */}
@@ -173,9 +216,9 @@ export default function GivingStatement() {
           )}
         </div>
 
-        <p className="text-sm text-slate-700 mb-4">Dear {statementMode === 'family' && familyMembers.length > 0 ? person.first_name + ' & Family' : person.first_name},</p>
-        <p className="text-sm text-slate-700 mb-6">
-          Thank you for your generous contributions to {church?.name || 'our church'} during {dateLabel}. The following is a record of your giving for tax purposes:
+        <p className="text-sm text-slate-700 mb-4">{customGreeting || `Dear ${statementMode === 'family' && familyMembers.length > 0 ? person.first_name + ' & Family' : person.first_name},`}</p>
+        <p className="text-sm text-slate-700 mb-6 whitespace-pre-wrap">
+          {customNote || `Thank you for your generous contributions to ${church?.name || 'our church'} during ${dateLabel}. The following is a record of your giving for tax purposes:`}
         </p>
 
         {fundBreakdown.length > 0 && (
@@ -234,8 +277,8 @@ export default function GivingStatement() {
         {church?.email && <p className="text-xs text-slate-500">{church.email}</p>}
 
         <div className="mt-8 pt-4 border-t border-slate-100">
-          <p className="text-xs text-slate-400 italic">
-            No goods or services were provided in exchange for these contributions, making them fully tax-deductible to the extent allowed by law.
+          <p className="text-xs text-slate-400 italic whitespace-pre-wrap">
+            {customFooter || 'No goods or services were provided in exchange for these contributions, making them fully tax-deductible to the extent allowed by law.'}
           </p>
         </div>
       </div>

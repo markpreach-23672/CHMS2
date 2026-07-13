@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { person_id, year, combine_family, start_date, end_date } = body;
+    const { person_id, year, combine_family, start_date, end_date, custom_greeting, custom_message, custom_footer } = body;
     const targetYear = year || new Date().getFullYear();
 
     const donations = await base44.asServiceRole.entities.Donation.list('-donation_date', 2000);
@@ -126,8 +126,9 @@ Deno.serve(async (req) => {
           <p style="font-size:12px;color:#64748b;margin:4px 0 0;">${[church.address, church.city, church.state, church.zip].filter(Boolean).join(', ')}</p>
         </div>
         <p style="font-size:12px;color:#64748b;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        <p style="font-size:14px;">Dear ${greetingName},</p>
-        <p style="font-size:14px;">Thank you for your generous contributions to ${church.name} during ${dateLabel}. Below is a summary of your giving for your tax records:</p>
+        <p style="font-size:14px;">${custom_greeting || `Dear ${greetingName},`}</p>
+        ${custom_message ? `<p style="font-size:14px;">${custom_message}</p>` : ''}
+        <p style="font-size:14px;">Below is a record of your giving to ${church.name} during ${dateLabel} for your tax records:</p>
         ${fundRows ? `<p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;margin:12px 0 4px;">Summary by Fund</p><table style="width:100%;border-collapse:collapse;font-size:13px;margin:0 0 16px;"><tr style="background:#f8fafc;"><th style="padding:6px 12px;text-align:left;">Fund</th><th style="padding:6px 12px;text-align:right;">Total</th></tr>${fundRows}</table>` : ''}
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;">
           <thead><tr style="background:#f8fafc;">
@@ -145,7 +146,7 @@ Deno.serve(async (req) => {
         ${members.length > 1 ? `<p style="font-size:12px;color:#94a3b8;">This statement includes contributions from: ${members.map(m => m.first_name + ' ' + m.last_name).join(', ')}.</p>` : ''}
         <p style="font-size:14px;">Thank you for your faithful generosity and partnership in ministry.</p>
         <p style="font-size:14px;">With gratitude,<br/><strong>${church.name}</strong></p>
-        <p style="font-size:11px;color:#94a3b8;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">No goods or services were provided in exchange for these contributions, making them fully tax-deductible to the extent allowed by law.</p>
+        <p style="font-size:11px;color:#94a3b8;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">${custom_footer || 'No goods or services were provided in exchange for these contributions, making them fully tax-deductible to the extent allowed by law.'}</p>
       </div>`;
 
       try {
