@@ -140,7 +140,8 @@ export default function PersonDetail() {
     .filter((d) => moment(d.donation_date).year() === moment().year())
     .reduce((sum, d) => sum + (d.amount || 0), 0);
 
-  const visibleCustomFields = customFields.filter(f => !f.is_private || currentUser?.role === 'admin');
+  const isAdmin = ['admin', 'church_admin', 'super_admin'].includes(currentUser?.role);
+  const visibleCustomFields = customFields.filter(f => !f.is_private || isAdmin);
   const customFieldSections = {};
   visibleCustomFields.forEach(f => {
     const sec = f.section || 'Other';
@@ -436,7 +437,7 @@ export default function PersonDetail() {
           </div>
 
           {/* Giving */}
-          {currentUser?.role === 'admin' && (
+          {isAdmin && (
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -500,7 +501,7 @@ export default function PersonDetail() {
                 const events = [];
                 if (person.created_date) events.push({ date: person.created_date, label: 'Profile created', icon: '👤' });
                 enrollments.forEach(e => events.push({ date: e.enrolled_date, label: 'Enrolled in workflow', icon: '📋' }));
-                if (currentUser?.role === 'admin') {
+                if (isAdmin) {
                   donations.forEach(d => events.push({ date: d.donation_date, label: `Gave $${(d.amount || 0).toFixed(2)}`, icon: '💰' }));
                 }
                 events.sort((a, b) => moment(b.date).diff(moment(a.date)));
