@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Rocket, UserPlus } from 'lucide-react';
+import { ExternalLink, Rocket, UserPlus, CircleOff } from 'lucide-react';
 import InviteAdminDialog from '@/components/master/InviteAdminDialog';
 import { churchLoginUrl } from '@/lib/churchSlug';
 
@@ -29,6 +29,19 @@ export default function ChurchStatsTable({ churches, onChanged }) {
       onChanged?.();
     } catch (err) {
       alert('Failed to publish: ' + (err.message || 'unknown error'));
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
+  const handleUnpublish = async (church) => {
+    if (!confirm(`Unpublish ${church.name}? Their account will be marked as cancelled.`)) return;
+    setPublishingId(church.id);
+    try {
+      await base44.entities.Church.update(church.id, { subscription_status: 'cancelled' });
+      onChanged?.();
+    } catch (err) {
+      alert('Failed to unpublish: ' + (err.message || 'unknown error'));
     } finally {
       setPublishingId(null);
     }
@@ -84,11 +97,17 @@ export default function ChurchStatsTable({ churches, onChanged }) {
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-col gap-1.5">
-                  {c.subscription_status !== 'active' && (
+                  {c.subscription_status !== 'active' ? (
                     <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
                       disabled={publishingId === c.id}
                       onClick={() => handlePublish(c)}>
                       <Rocket size={12} /> {publishingId === c.id ? 'Publishing...' : 'Publish'}
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                      disabled={publishingId === c.id}
+                      onClick={() => handleUnpublish(c)}>
+                      <CircleOff size={12} /> {publishingId === c.id ? 'Updating...' : 'Unpublish'}
                     </Button>
                   )}
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setInviteChurch(c)}>
