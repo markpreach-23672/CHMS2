@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { base44 } from '@/api/base44Client';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, ClipboardList } from 'lucide-react';
+import FunnelBarChart from '@/components/dashboard/FunnelBarChart';
 
 const STEP_LABELS = {
   email: 'Email',
@@ -14,8 +14,11 @@ const STEP_LABELS = {
   remove_tag: 'Remove Tag',
 };
 
+const TASK_TYPES = ['task', 'staff_notify', 'no_response_alert'];
+
 export default function GuestFollowupFunnel() {
-  const [funnel, setFunnel] = useState(null);
+  const [guestRows, setGuestRows] = useState(null);
+  const [taskRows, setTaskRows] = useState(null);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +31,7 @@ export default function GuestFollowupFunnel() {
     ])
       .then(([cards, workflows, allSteps, allEnrollments]) => {
         const card = cards.find((c) => /first.?time.?guest/i.test(c.name) || /first.?time.?guest/i.test(c.title || ''));
-        if (!card) { setFunnel(null); return; }
+        if (!card) { setGuestRows(null); return; }
         const wfId = card.workflow_id;
         const workflow = workflows.find((w) => w.id === wfId);
         const steps = allSteps
@@ -36,15 +39,20 @@ export default function GuestFollowupFunnel() {
           .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
         const enrollments = allEnrollments.filter((e) => e.workflow_id === wfId);
         const totalGuests = enrollments.length;
-        const rows = [{ label: 'Filled Card', count: totalGuests, start: true }];
+
+        const gRows = [{ label: 'Filled Card', count: totalGuests, start: true }];
+        const tRows = [];
         steps.forEach((step, i) => {
           const done = enrollments.filter((e) => {
             const stepsDone = e.status === 'completed' ? steps.length : e.current_step || 0;
             return stepsDone > i;
           }).length;
-          rows.push({ label: `${i + 1}. ${STEP_LABELS[step.step_type] || step.step_type}`, count: done });
+          const row = { label: `${i + 1}. ${STEP_LABELS[step.step_type] || step.step_type}`, count: done };
+          if (TASK_TYPES.includes(step.step_type)) tRows.push(row);
+          else gRows.push(row);
         });
-        setFunnel(rows);
+        setGuestRows(totalGuests > 0 ? gRows : []);
+        setTaskRows(totalGuests > 0 ? tRows : []);
         setMeta({ workflowName: workflow?.name || 'Follow-up Workflow', totalGuests, stepCount: steps.length });
       })
       .catch(() => {})
@@ -58,39 +66,26 @@ export default function GuestFollowupFunnel() {
       : `${meta.totalGuests} guest${meta.totalGuests === 1 ? '' : 's'} filled out the card · ${meta.stepCount} follow-up step${meta.stepCount === 1 ? '' : 's'}`;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 mb-6">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-        <div>
-          <h2 className="font-semibold text-slate-900 text-sm">First-Time Guest Follow-up</h2>
-          <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
-        </div>
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-indigo-50 text-indigo-600">
-          <UserCheck size={18} />
-        </div>
-      </div>
-      <div className="p-5">
-        {loading ? (
-          <div className="h-[300px] flex items-center justify-center text-sm text-slate-400">Loading chart…</div>
-        ) : !funnel ? (
-          <div className="h-[300px] flex items-center justify-center text-sm text-slate-400">No First-Time Guest connect card found.</div>
-        ) : meta.totalGuests === 0 ? (
-          <div className="h-[300px] flex items-center justify-center text-sm text-slate-400">No guests have filled out this card yet.</div>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={funnel} layout="vertical" margin={{ left: 10, right: 30, top: 5, bottom: 5 }}>
-              <CartesianGrid horizontal={false} stroke="#f1f5f9" />
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fill: '#334155' }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }} />
-              <Bar dataKey="count" name="Guests" radius={[0, 4, 4, 0]}>
-                {funnel.map((entry, i) => (
-                  <Cell key={i} fill={entry.start ? '#4f46e5' : '#10b981'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
+    <>
+      <FunnelBarChart
+        title="First-Time Guest Follow-up"
+        subtitle={subtitle}
+        icon={UserCheck}
+        iconClass="bg-indigo-50 text-indigo-600"
+        rows={loading ? null : guestRows}
+        emptyMessage={loading ? 'Loading chart…' : !guestRows ? 'No First-Time Guest connect card found.' : 'No guests have filled out this card yet.'}
+        barColor="#10b981"
+      />
+      <FunnelBarChart
+        title="Follow-up Tasks"
+        subtitle={loading ? 'Loading…' : 'Task and staff-alert steps in the guest follow-up workflow'}
+        icon={ClipboardList}
+        iconClass="bg-amber-50 text-amber-600"
+        rows={loading ? null : taskRows}
+        emptyMessage={loading ? 'Loading chart…' : !taskRows ? 'No First-Time Guest connect card found.' : taskRows && taskRows.length === 0 ? 'No task steps in this workflow yet.' : 'No task activity yet.'}
+        barColor="#f59e0b"
+        height={200}
+      />
+    </>
   );
 }
