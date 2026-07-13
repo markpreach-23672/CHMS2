@@ -36,6 +36,7 @@ import HelpDesk from '@/pages/HelpDesk';
 import PublicElection from '@/pages/PublicElection';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
+import ChurchLogin from '@/pages/ChurchLogin';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -65,6 +66,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/church/:subdomain" element={<ChurchLogin />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
