@@ -14,6 +14,7 @@ import EmailStatementDialog from '@/components/giving/EmailStatementDialog';
 import PrintStatementDialog from '@/components/giving/PrintStatementDialog';
 import PledgesTab from '@/components/giving/PledgesTab';
 import ExportReportDialog from '@/components/giving/ExportReportDialog';
+import DateInput from '@/components/ui/date-input';
 import moment from 'moment';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -323,7 +324,7 @@ function DonationForm({ people, funds, onSave, onClose }) {
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Date</Label>
-              <Input type="date" value={donationDate} onChange={(e) => setDonationDate(e.target.value)} className="mt-1" />
+              <DateInput value={donationDate} onChange={setDonationDate} className="mt-1" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

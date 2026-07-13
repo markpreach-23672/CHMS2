@@ -7,6 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, X, Plus, Upload, FileText } from 'lucide-react';
+import DateInput from '@/components/ui/date-input';
 
 export default function FormRenderer({ fields, values, onChange, errors = {}, disabled = false, preview = false }) {
   const [uploading, setUploading] = useState({});
@@ -66,7 +67,7 @@ export default function FormRenderer({ fields, values, onChange, errors = {}, di
               <Input type="tel" value={value || ''} onChange={(e) => handleChange(field.id, e.target.value)} disabled={disabled} placeholder="(555) 123-4567" className={error ? 'border-red-400' : ''} />
             )}
             {field.type === 'date' && (
-              <Input type="date" value={value || ''} onChange={(e) => handleChange(field.id, e.target.value)} disabled={disabled} className={error ? 'border-red-400' : ''} />
+              <DateInput value={value || ''} onChange={(v) => handleChange(field.id, v)} disabled={disabled} inputClassName={error ? 'border-red-400' : ''} />
             )}
             {field.type === 'name' && (
               <div className="grid grid-cols-2 gap-2">

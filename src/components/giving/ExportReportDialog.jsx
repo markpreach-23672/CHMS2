@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, FileSpreadsheet, Target } from 'lucide-react';
+import DateInput from '@/components/ui/date-input';
 import moment from 'moment';
 
 function escapeCSV(value) {
@@ -143,11 +144,11 @@ export default function ExportReportDialog({ donations, pledges, people, funds, 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium text-slate-600">From Date</Label>
-                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1" />
+                <DateInput value={dateFrom} onChange={setDateFrom} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs font-medium text-slate-600">To Date</Label>
-                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1" />
+                <DateInput value={dateTo} onChange={setDateTo} className="mt-1" />
               </div>
             </div>
           )}

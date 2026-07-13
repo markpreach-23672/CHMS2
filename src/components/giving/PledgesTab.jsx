@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, MoreHorizontal, Pencil, Trash2, TrendingUp, Target, FileBarChart } from 'lucide-react';
 import PledgeSummaryReport from '@/components/giving/PledgeSummaryReport';
+import DateInput from '@/components/ui/date-input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -216,11 +217,11 @@ function PledgeForm({ pledge, people, funds, onSave, onClose }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-xs font-medium text-slate-600">Start Date *</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1" />
+              <DateInput value={startDate} onChange={setStartDate} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">End Date</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1" />
+              <DateInput value={endDate} onChange={setEndDate} className="mt-1" />
             </div>
           </div>
         </div>

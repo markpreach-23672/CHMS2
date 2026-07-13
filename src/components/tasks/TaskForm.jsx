@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MemberPicker from '@/components/caregroups/MemberPicker';
+import DateInput from '@/components/ui/date-input';
 import { Loader2 } from 'lucide-react';
 
 export default function TaskForm({ open, onOpenChange, task, user, people, categories, careGroups, serviceTeams, churchId, onSaved }) {
@@ -102,7 +103,7 @@ export default function TaskForm({ open, onOpenChange, task, user, people, categ
             </div>
             <div>
               <Label>Due Date</Label>
-              <Input className="mt-1" type="date" value={form.due_date} onChange={(e) => setForm(f => ({ ...f, due_date: e.target.value }))} />
+              <DateInput className="mt-1" value={form.due_date} onChange={(v) => setForm(f => ({ ...f, due_date: v }))} />
             </div>
           </div>
 

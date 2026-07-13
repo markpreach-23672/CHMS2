@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCog, Plus, Trash2, Users } from 'lucide-react';
+import DateInput from '@/components/ui/date-input';
 
 const FAMILY_ROLES = [
   { value: 'head_of_household', label: 'Head of Household' },
@@ -97,7 +98,7 @@ export default function MemberProfileEditor({ person, onSaved }) {
         <div><Label className="text-xs">City</Label><Input value={form.city || ''} onChange={(e) => set('city', e.target.value)} className="mt-1" /></div>
         <div><Label className="text-xs">State</Label><Input value={form.state || ''} onChange={(e) => set('state', e.target.value)} className="mt-1" /></div>
         <div><Label className="text-xs">ZIP</Label><Input value={form.zip || ''} onChange={(e) => set('zip', e.target.value)} className="mt-1" /></div>
-        <div><Label className="text-xs">Birth Date</Label><Input type="date" value={form.birth_date || ''} onChange={(e) => set('birth_date', e.target.value)} className="mt-1" /></div>
+        <div><Label className="text-xs">Birth Date</Label><DateInput value={form.birth_date || ''} onChange={(v) => set('birth_date', v)} className="mt-1" /></div>
         <div><Label className="text-xs">Gender</Label><Select value={form.gender || 'unspecified'} onValueChange={(v) => set('gender', v)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem><SelectItem value="unspecified">Unspecified</SelectItem></SelectContent></Select></div>
         <div className="col-span-2"><Label className="text-xs">Marital Status</Label><Select value={form.marital_status || 'single'} onValueChange={(v) => set('marital_status', v)}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="single">Single</SelectItem><SelectItem value="married">Married</SelectItem><SelectItem value="divorced">Divorced</SelectItem><SelectItem value="widowed">Widowed</SelectItem><SelectItem value="separated">Separated</SelectItem></SelectContent></Select></div>
       </div>

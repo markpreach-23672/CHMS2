@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Upload, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import DateInput from '@/components/ui/date-input';
 
 export default function PersonForm({ person, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -246,12 +247,7 @@ export default function PersonForm({ person, onSave, onClose }) {
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Birth Date</Label>
-              <Input
-                type="date"
-                value={formData.birth_date}
-                onChange={(e) => handleChange('birth_date', e.target.value)}
-                className="mt-1"
-              />
+              <DateInput value={formData.birth_date} onChange={(v) => handleChange('birth_date', v)} className="mt-1" />
             </div>
           </div>
 
@@ -295,19 +291,19 @@ export default function PersonForm({ person, onSave, onClose }) {
           <div className="grid grid-cols-4 gap-4">
             <div>
               <Label className="text-xs font-medium text-slate-600">First Visit</Label>
-              <Input type="date" value={formData.first_visit_date || ''} onChange={(e) => handleChange('first_visit_date', e.target.value)} className="mt-1" />
+              <DateInput value={formData.first_visit_date || ''} onChange={(v) => handleChange('first_visit_date', v)} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Baptism Date</Label>
-              <Input type="date" value={formData.baptism_date || ''} onChange={(e) => handleChange('baptism_date', e.target.value)} className="mt-1" />
+              <DateInput value={formData.baptism_date || ''} onChange={(v) => handleChange('baptism_date', v)} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Membership Date</Label>
-              <Input type="date" value={formData.membership_date || ''} onChange={(e) => handleChange('membership_date', e.target.value)} className="mt-1" />
+              <DateInput value={formData.membership_date || ''} onChange={(v) => handleChange('membership_date', v)} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Anniversary</Label>
-              <Input type="date" value={formData.anniversary_date || ''} onChange={(e) => handleChange('anniversary_date', e.target.value)} className="mt-1" />
+              <DateInput value={formData.anniversary_date || ''} onChange={(v) => handleChange('anniversary_date', v)} className="mt-1" />
             </div>
           </div>
 
@@ -350,9 +346,11 @@ export default function PersonForm({ person, onSave, onClose }) {
                         <div className="mt-2">
                           <Checkbox checked={cfValue === true || cfValue === 'true'} onCheckedChange={(v) => handleCustomFieldChange(field.name, v)} />
                         </div>
+                      ) : field.field_type === 'date' ? (
+                        <DateInput value={cfValue || ''} onChange={(v) => handleCustomFieldChange(field.name, v)} className="mt-1" />
                       ) : (
                         <Input
-                          type={field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
+                          type={field.field_type === 'number' ? 'number' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
                           value={cfValue || ''}
                           onChange={(e) => handleCustomFieldChange(field.name, e.target.value)}
                           className="mt-1"

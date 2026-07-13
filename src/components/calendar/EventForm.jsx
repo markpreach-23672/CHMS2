@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertTriangle } from 'lucide-react';
+import DateInput from '@/components/ui/date-input';
 import moment from 'moment';
 
 export default function EventForm({ calendars, selectedDate, events, getCalendar, locations, tags, editingEvent, onSave, onClose }) {
@@ -166,7 +167,7 @@ export default function EventForm({ calendars, selectedDate, events, getCalendar
               )}
               <div>
                 <Label className="text-xs font-medium text-slate-600">Ends (optional)</Label>
-                <Input type="date" value={recEndDate} onChange={(e) => setRecEndDate(e.target.value)} className="mt-1" />
+                <DateInput value={recEndDate} onChange={setRecEndDate} className="mt-1" />
                 <p className="text-xs text-slate-400 mt-1">Leave blank to repeat indefinitely.</p>
               </div>
             </div>
