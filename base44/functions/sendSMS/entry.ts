@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const authHeader = 'Basic ' + btoa(`${accountSid}:${authToken}`);
+
     let sent = 0;
     let failed = 0;
     const results = [];
