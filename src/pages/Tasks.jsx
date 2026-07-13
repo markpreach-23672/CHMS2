@@ -7,6 +7,7 @@ import TaskForm from '@/components/tasks/TaskForm';
 import CategoryManager from '@/components/tasks/CategoryManager';
 import { resolveAssigneeIds } from '@/components/tasks/taskUtils';
 import { ListTodo, Plus, FolderCog } from 'lucide-react';
+import { getMyChurchId } from '@/lib/churchContext';
 
 export default function Tasks() {
   const [user, setUser] = useState(null);
@@ -34,15 +35,15 @@ export default function Tasks() {
       let u = null;
       try { u = await base44.auth.me(); } catch (e) { /* not logged in */ }
       setUser(u);
-      const [ppl, groups, teams, churches] = await Promise.all([
+      const [ppl, groups, teams, cid] = await Promise.all([
         base44.entities.Person.list('first_name', 1000),
         base44.entities.CareGroup.list(),
         base44.entities.ServiceTeam.list(),
-        base44.entities.Church.list(),
+        getMyChurchId(),
         loadTasks(),
         loadCategories(),
       ]);
-      setChurchId(u?.church_id || churches[0]?.id || null);
+      setChurchId(cid);
       setPeople(ppl);
       setCareGroups(groups);
       setServiceTeams(teams);

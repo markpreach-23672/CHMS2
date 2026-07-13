@@ -8,7 +8,9 @@ Deno.serve(async (req) => {
     if (user.role !== 'super_admin' && user.role !== 'church_admin') {
       return Response.json({ error: 'Only admins can invite or promote staff.' }, { status: 403 });
     }
-    const { email, role, church_id } = await req.json();
+    const { email, role, church_id: bodyChurchId } = await req.json();
+    // Default to the inviter's own church so new staff are linked to the right church.
+    const church_id = bodyChurchId || user.church_id || null;
     const rawEmail = (email || '').trim();
     const cleanEmail = rawEmail.toLowerCase();
     if (!cleanEmail) return Response.json({ error: 'Email is required.' }, { status: 400 });

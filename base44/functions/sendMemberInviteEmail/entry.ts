@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!email) return Response.json({ error: 'Email required' }, { status: 400 });
 
     const churches = await base44.asServiceRole.entities.Church.list();
-    const church = churches[0];
+    const church = (user.church_id && churches.find((c) => c.id === user.church_id)) || churches[0];
     const fromEmail = church?.resend_from_email || 'Church <onboarding@resend.dev>';
     const churchName = church?.name || 'our church';
     const siteUrl = (church?.site_url || '').replace(/\/$/, '');

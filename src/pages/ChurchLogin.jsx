@@ -17,6 +17,8 @@ export default function ChurchLogin() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Remember which church's login page was used so the account gets linked to it.
+    if (subdomain) localStorage.setItem('pending_church_subdomain', subdomain);
     (async () => {
       try {
         const results = await base44.entities.Church.filter({ subdomain });
@@ -34,6 +36,7 @@ export default function ChurchLogin() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
+      try { await base44.functions.invoke('linkUserToChurch', { subdomain }); } catch (e) { /* linked later */ }
       window.location.href = "/";
     } catch (err) {
       setError(err.message || "Invalid email or password");
