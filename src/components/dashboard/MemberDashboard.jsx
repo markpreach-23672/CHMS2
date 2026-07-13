@@ -8,6 +8,7 @@ import MemberOnboarding from '@/components/portal/MemberOnboarding';
 import MemberTagsCard from '@/components/dashboard/MemberTagsCard';
 import HelpDeskChat from '@/components/helpdesk/HelpDeskChat';
 import MyTasksWidget from '@/components/tasks/MyTasksWidget';
+import CareAlertsWidget from '@/components/dashboard/CareAlertsWidget';
 
 export default function MemberDashboard({ user }) {
   const [person, setPerson] = useState(null);
@@ -43,6 +44,8 @@ export default function MemberDashboard({ user }) {
       </div>
 
       <MyTasksWidget />
+
+      <CareAlertsWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {person ? (

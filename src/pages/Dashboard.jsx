@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import MemberDashboard from '@/components/dashboard/MemberDashboard';
 import HelpDeskTicketsCard from '@/components/helpdesk/HelpDeskTicketsCard';
 import MyTasksWidget from '@/components/tasks/MyTasksWidget';
+import CareAlertsWidget from '@/components/dashboard/CareAlertsWidget';
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ people: 0, tags: 0, donations: 0, events: 0 });
@@ -79,6 +80,8 @@ function AdminDashboard() {
       </div>
 
       <MyTasksWidget />
+
+      <CareAlertsWidget />
 
       <GuestFollowupFunnel />
 
