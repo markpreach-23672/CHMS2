@@ -33,6 +33,7 @@ import BulkUpdateFieldsDialog from '@/components/people/BulkUpdateFieldsDialog';
 import BulkWorkflowDialog from '@/components/people/BulkWorkflowDialog';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import TagGroupMessenger from '@/components/people/TagGroupMessenger';
+import { formatPhone } from '@/utils/phoneFormat';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -394,7 +395,7 @@ export default function People() {
                             {person.first_name} {person.last_name}
                           </p>
                           <p className="text-xs text-slate-400 md:hidden">
-                            {person.email || person.phone || ''}
+                            {person.email || formatPhone(person.phone) || ''}
                           </p>
                         </div>
                       </Link>
@@ -412,7 +413,7 @@ export default function People() {
                             <DropdownMenuTrigger asChild>
                               <button className="text-xs text-slate-500 flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
                                 <Phone size={12} className="text-slate-400" />
-                                {person.phone}
+                                {formatPhone(person.phone)}
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">

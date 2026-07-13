@@ -23,6 +23,7 @@ import TagPicker from '@/components/people/TagPicker';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import AddFamilyMemberDialog from '@/components/people/AddFamilyMemberDialog';
 import EmailPersonStatementDialog from '@/components/people/EmailPersonStatementDialog';
+import { formatPhone } from '@/utils/phoneFormat';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -207,7 +208,7 @@ export default function PersonDetail() {
               {person.phone && (
                 <span className="text-sm text-slate-600 flex items-center gap-1.5">
                   <Phone size={14} className="text-slate-400" />
-                  {person.phone}
+                  {formatPhone(person.phone)}
                   <a href={`tel:${person.phone}`} className="ml-0.5 inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors" title={`Call ${person.phone}`}>
                     <Phone size={12} />
                   </a>
@@ -223,7 +224,7 @@ export default function PersonDetail() {
               {person.mobile && (
                 <span className="text-sm text-slate-600 flex items-center gap-1.5">
                   <Phone size={14} className="text-slate-400" />
-                  {person.mobile}
+                  {formatPhone(person.mobile)}
                   <a href={`tel:${person.mobile}`} className="ml-0.5 inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition-colors" title={`Call ${person.mobile}`}>
                     <Phone size={12} />
                   </a>

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserCog, Plus, Trash2, Users } from 'lucide-react';
 import DateInput from '@/components/ui/date-input';
+import { formatPhone } from '@/utils/phoneFormat';
 
 const FAMILY_ROLES = [
   { value: 'head_of_household', label: 'Head of Household' },
@@ -92,8 +93,8 @@ export default function MemberProfileEditor({ person, onSaved }) {
         <div><Label className="text-xs">First Name *</Label><Input value={form.first_name || ''} onChange={(e) => set('first_name', e.target.value)} className="mt-1" /></div>
         <div><Label className="text-xs">Last Name *</Label><Input value={form.last_name || ''} onChange={(e) => set('last_name', e.target.value)} className="mt-1" /></div>
         <div className="col-span-2"><Label className="text-xs">Email (locked)</Label><Input value={form.email || ''} disabled className="mt-1 bg-slate-50" /></div>
-        <div><Label className="text-xs">Phone</Label><Input value={form.phone || ''} onChange={(e) => set('phone', e.target.value)} className="mt-1" /></div>
-        <div><Label className="text-xs">Mobile</Label><Input value={form.mobile || ''} onChange={(e) => set('mobile', e.target.value)} className="mt-1" /></div>
+        <div><Label className="text-xs">Phone</Label><Input value={form.phone || ''} onChange={(e) => set('phone', formatPhone(e.target.value))} placeholder="(555) 555-5555" className="mt-1" /></div>
+        <div><Label className="text-xs">Mobile</Label><Input value={form.mobile || ''} onChange={(e) => set('mobile', formatPhone(e.target.value))} placeholder="(555) 555-5555" className="mt-1" /></div>
         <div className="col-span-2"><Label className="text-xs">Address</Label><Input value={form.address || ''} onChange={(e) => set('address', e.target.value)} className="mt-1" /></div>
         <div><Label className="text-xs">City</Label><Input value={form.city || ''} onChange={(e) => set('city', e.target.value)} className="mt-1" /></div>
         <div><Label className="text-xs">State</Label><Input value={form.state || ''} onChange={(e) => set('state', e.target.value)} className="mt-1" /></div>
@@ -130,7 +131,7 @@ export default function MemberProfileEditor({ person, onSaved }) {
               <Input placeholder="First name" value={newMember.first_name} onChange={(e) => setNewMember((p) => ({ ...p, first_name: e.target.value }))} className="h-8 text-sm" />
               <Input placeholder="Last name" value={newMember.last_name} onChange={(e) => setNewMember((p) => ({ ...p, last_name: e.target.value }))} className="h-8 text-sm" />
               <Input placeholder="Email" value={newMember.email} onChange={(e) => setNewMember((p) => ({ ...p, email: e.target.value }))} className="h-8 text-sm" />
-              <Input placeholder="Phone" value={newMember.phone} onChange={(e) => setNewMember((p) => ({ ...p, phone: e.target.value }))} className="h-8 text-sm" />
+              <Input placeholder="Phone" value={newMember.phone} onChange={(e) => setNewMember((p) => ({ ...p, phone: formatPhone(e.target.value) }))} className="h-8 text-sm" />
             </div>
             <Select value={newMember.family_role} onValueChange={(v) => setNewMember((p) => ({ ...p, family_role: v }))}>
               <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>

@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, Printer, Eye } from 'lucide-react';
 import moment from 'moment';
+import { formatPhone } from '@/utils/phoneFormat';
 
 const ALL_FIELDS = [
   { key: 'phone', label: 'Phone' },
@@ -63,12 +64,12 @@ export default function ChurchDirectory({ people, families, church, tags, savedS
 
   const getFieldValue = (p, key, family) => {
     switch (key) {
-      case 'phone': return p.phone || p.mobile || '';
-      case 'mobile': return p.mobile || '';
+      case 'phone': return formatPhone(p.phone || p.mobile) || '';
+      case 'mobile': return formatPhone(p.mobile) || '';
       case 'email': return p.email || '';
       case 'address': return [p.address, p.city, p.state, p.zip].filter(Boolean).join(', ');
       case 'birthday': return p.birth_date ? moment(p.birth_date).format('MMM D') : '';
-      case 'homePhone': return family?.home_phone || '';
+      case 'homePhone': return formatPhone(family?.home_phone) || '';
       case 'status': return p.status || '';
       case 'familyRole': return ROLE_LABELS[p.family_role] || '';
       case 'maritalStatus': return p.marital_status ? p.marital_status.charAt(0).toUpperCase() + p.marital_status.slice(1) : '';

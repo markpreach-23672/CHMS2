@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Search } from 'lucide-react';
 import { getMyChurchId } from '@/lib/churchContext';
+import { formatPhone } from '@/utils/phoneFormat';
 
 const ROLE_OPTIONS = [
   { value: 'head_of_household', label: 'Head of Household' },
@@ -177,7 +178,7 @@ export default function AddFamilyMemberDialog({ currentPerson, onClose, onAdded 
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Phone</Label>
-              <Input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="mt-1" />
+              <Input value={newPhone} onChange={(e) => setNewPhone(formatPhone(e.target.value))} placeholder="(555) 555-5555" className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Family Role</Label>

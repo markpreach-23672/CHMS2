@@ -10,6 +10,7 @@ import { Loader2, Upload, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/ui/date-input';
 import { getMyChurchId } from '@/lib/churchContext';
+import { formatPhone } from '@/utils/phoneFormat';
 
 export default function PersonForm({ person, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -232,8 +233,9 @@ export default function PersonForm({ person, onSave, onClose }) {
               <Label className="text-xs font-medium text-slate-600">Phone</Label>
               <Input
                 value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
+                onChange={(e) => handleChange('phone', formatPhone(e.target.value))}
                 className="mt-1"
+                placeholder="(555) 555-5555"
               />
             </div>
           </div>
@@ -243,8 +245,9 @@ export default function PersonForm({ person, onSave, onClose }) {
               <Label className="text-xs font-medium text-slate-600">Mobile</Label>
               <Input
                 value={formData.mobile}
-                onChange={(e) => handleChange('mobile', e.target.value)}
+                onChange={(e) => handleChange('mobile', formatPhone(e.target.value))}
                 className="mt-1"
+                placeholder="(555) 555-5555"
               />
             </div>
             <div>
@@ -354,7 +357,7 @@ export default function PersonForm({ person, onSave, onClose }) {
                         <Input
                           type={field.field_type === 'number' ? 'number' : field.field_type === 'email' ? 'email' : field.field_type === 'phone' ? 'tel' : 'text'}
                           value={cfValue || ''}
-                          onChange={(e) => handleCustomFieldChange(field.name, e.target.value)}
+                          onChange={(e) => handleCustomFieldChange(field.name, field.field_type === 'phone' ? formatPhone(e.target.value) : e.target.value)}
                           className="mt-1"
                         />
                       )}
