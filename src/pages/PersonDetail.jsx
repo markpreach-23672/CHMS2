@@ -22,6 +22,7 @@ import PersonForm from '@/components/people/PersonForm';
 import TagPicker from '@/components/people/TagPicker';
 import TextMessageDialog from '@/components/people/TextMessageDialog';
 import AddFamilyMemberDialog from '@/components/people/AddFamilyMemberDialog';
+import QuickFamilyLink from '@/components/people/QuickFamilyLink';
 import EmailPersonStatementDialog from '@/components/people/EmailPersonStatementDialog';
 import { formatPhone } from '@/utils/phoneFormat';
 
@@ -397,6 +398,7 @@ export default function PersonDetail() {
                 Add Family Member
               </Button>
             </div>
+            <QuickFamilyLink currentPerson={person} onLinked={loadData} />
             {family ? (
               <div>
                 <p className="text-sm font-medium text-slate-900 mb-3">{family.family_name} Family</p>
