@@ -41,6 +41,9 @@ export default function PersonForm({ person, onSave, onClose }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const isEdit = !!person?.id;
+  const baptizedField = customFields.find((f) => f.name === 'Baptized');
+  const holySpiritField = customFields.find((f) => f.name === 'Holy Spirit');
+  const otherCustomFields = customFields.filter((f) => !['Baptized', 'Holy Spirit', 'Membership Date', 'Baptism Date'].includes(f.name));
 
   useEffect(() => {
     base44.entities.CustomField.list().then(setCustomFields).catch(() => {});
@@ -293,14 +296,10 @@ export default function PersonForm({ person, onSave, onClose }) {
           </div>
 
           {/* Milestone Dates */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label className="text-xs font-medium text-slate-600">First Visit</Label>
               <DateInput value={formData.first_visit_date || ''} onChange={(v) => handleChange('first_visit_date', v)} className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-xs font-medium text-slate-600">Baptism Date</Label>
-              <DateInput value={formData.baptism_date || ''} onChange={(v) => handleChange('baptism_date', v)} className="mt-1" />
             </div>
             <div>
               <Label className="text-xs font-medium text-slate-600">Membership Date</Label>
@@ -311,13 +310,36 @@ export default function PersonForm({ person, onSave, onClose }) {
               <DateInput value={formData.anniversary_date || ''} onChange={(v) => handleChange('anniversary_date', v)} className="mt-1" />
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs font-medium text-slate-600">Baptism Date</Label>
+              <DateInput value={formData.baptism_date || ''} onChange={(v) => handleChange('baptism_date', v)} className="mt-1" />
+            </div>
+            {baptizedField && (
+              <div>
+                <Label className="text-xs font-medium text-slate-600">Baptized</Label>
+                <Select value={formData.custom_fields?.Baptized || ''} onValueChange={(v) => handleCustomFieldChange('Baptized', v)}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent>
+                    {(baptizedField.options || []).map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {holySpiritField && (
+              <div>
+                <Label className="text-xs font-medium text-slate-600">Holy Spirit</Label>
+                <DateInput value={formData.custom_fields?.['Holy Spirit'] || ''} onChange={(v) => handleCustomFieldChange('Holy Spirit', v)} className="mt-1" />
+              </div>
+            )}
+          </div>
 
           {/* Custom Fields */}
-          {customFields.length > 0 && (
+          {otherCustomFields.length > 0 && (
             <div className="pt-2 border-t border-slate-100">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Custom Fields</p>
               <div className="grid grid-cols-2 gap-4">
-                {customFields.map((field) => {
+                {otherCustomFields.map((field) => {
                   const cfValue = formData.custom_fields?.[field.name];
                   return (
                     <div key={field.id}>
