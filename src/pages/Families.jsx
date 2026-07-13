@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Trash2, Users, MoreHorizontal, ArrowLeft, Home, Phone, MapPin } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { formatPhone } from '@/utils/phoneFormat';
 
 export default function Families() {
   const [families, setFamilies] = useState([]);
@@ -70,7 +71,7 @@ export default function Families() {
           {selectedFamily.home_phone && (
             <p className="text-sm text-slate-500 flex items-center gap-1.5 mt-1">
               <Phone size={14} className="text-slate-400" />
-              {selectedFamily.home_phone}
+              {formatPhone(selectedFamily.home_phone)}
             </p>
           )}
         </div>
@@ -91,7 +92,7 @@ export default function Families() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-900">{member.first_name} {member.last_name}</p>
-                      <p className="text-xs text-slate-400">{member.email || member.phone || ''}</p>
+                      <p className="text-xs text-slate-400">{member.email || formatPhone(member.phone) || ''}</p>
                     </div>
                     <span className="text-xs text-slate-500">{roleLabel[member.family_role] || 'Member'}</span>
                   </Link>
@@ -206,7 +207,7 @@ function FamilyForm({ people, onSave, onClose }) {
             <div><Label className="text-xs font-medium text-slate-600">State</Label><Input value={state} onChange={(e) => setState(e.target.value)} className="mt-1" /></div>
             <div><Label className="text-xs font-medium text-slate-600">ZIP</Label><Input value={zip} onChange={(e) => setZip(e.target.value)} className="mt-1" /></div>
           </div>
-          <div><Label className="text-xs font-medium text-slate-600">Home Phone</Label><Input value={homePhone} onChange={(e) => setHomePhone(e.target.value)} className="mt-1" /></div>
+          <div><Label className="text-xs font-medium text-slate-600">Home Phone</Label><Input value={homePhone} onChange={(e) => setHomePhone(formatPhone(e.target.value))} className="mt-1" placeholder="(555) 555-5555" /></div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
