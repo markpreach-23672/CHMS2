@@ -42,7 +42,7 @@ export default function Tasks() {
         loadTasks(),
         loadCategories(),
       ]);
-      setChurchId(churches[0]?.id || null);
+      setChurchId(u?.church_id || churches[0]?.id || null);
       setPeople(ppl);
       setCareGroups(groups);
       setServiceTeams(teams);
