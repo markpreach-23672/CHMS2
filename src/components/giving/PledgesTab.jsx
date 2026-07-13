@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, MoreHorizontal, Pencil, Trash2, TrendingUp, Target, FileBarChart } from 'lucide-react';
 import PledgeSummaryReport from '@/components/giving/PledgeSummaryReport';
 import DateInput from '@/components/ui/date-input';
+import { getMyChurchId } from '@/lib/churchContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -56,7 +57,7 @@ export default function PledgesTab({ pledges, donations, people, funds, loading,
         const updated = await base44.entities.Pledge.update(editPledge.id, data);
         setPledges((prev) => prev.map((p) => (p.id === editPledge.id ? updated : p)));
       } else {
-        const created = await base44.entities.Pledge.create(data);
+        const created = await base44.entities.Pledge.create({ ...data, church_id: await getMyChurchId() });
         setPledges((prev) => [...prev, created]);
       }
       setShowForm(false);

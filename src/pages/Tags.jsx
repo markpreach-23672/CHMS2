@@ -22,6 +22,7 @@ import TextMessageDialog from '@/components/people/TextMessageDialog';
 import EmailMessageDialog from '@/components/people/EmailMessageDialog';
 import { downloadPeopleCsv } from '@/utils/csvExport';
 import MemberPicker from '@/components/caregroups/MemberPicker';
+import { getMyChurchId } from '@/lib/churchContext';
 
 const TAG_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6'];
 
@@ -232,7 +233,7 @@ export default function Tags() {
                 const updated = await base44.entities.Tag.update(editTag.id, data);
                 setTags((prev) => prev.map((t) => (t.id === editTag.id ? updated : t)));
               } else {
-                const created = await base44.entities.Tag.create(data);
+                const created = await base44.entities.Tag.create({ ...data, church_id: await getMyChurchId() });
                 setTags((prev) => [...prev, created]);
               }
               setShowTagForm(false);
@@ -256,7 +257,7 @@ export default function Tags() {
                 const updated = await base44.entities.TagFolder.update(editFolder.id, data);
                 setFolders((prev) => prev.map((f) => (f.id === editFolder.id ? updated : f)));
               } else {
-                const created = await base44.entities.TagFolder.create(data);
+                const created = await base44.entities.TagFolder.create({ ...data, church_id: await getMyChurchId() });
                 setFolders((prev) => [...prev, created]);
               }
               setShowFolderForm(false);

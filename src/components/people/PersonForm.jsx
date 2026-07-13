@@ -9,6 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Upload, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/ui/date-input';
+import { getMyChurchId } from '@/lib/churchContext';
 
 export default function PersonForm({ person, onSave, onClose }) {
   const [formData, setFormData] = useState({
@@ -86,6 +87,7 @@ export default function PersonForm({ person, onSave, onClose }) {
       if (isEdit) {
         saved = await base44.entities.Person.update(person.id, data);
       } else {
+        if (!data.church_id) data.church_id = await getMyChurchId();
         saved = await base44.entities.Person.create(data);
       }
       onSave(saved);

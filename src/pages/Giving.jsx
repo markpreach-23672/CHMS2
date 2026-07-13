@@ -15,6 +15,7 @@ import PrintStatementDialog from '@/components/giving/PrintStatementDialog';
 import PledgesTab from '@/components/giving/PledgesTab';
 import ExportReportDialog from '@/components/giving/ExportReportDialog';
 import DateInput from '@/components/ui/date-input';
+import { getMyChurchId } from '@/lib/churchContext';
 import moment from 'moment';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -232,7 +233,7 @@ export default function Giving() {
           funds={funds}
           onSave={async (data) => {
             try {
-              const created = await base44.entities.Donation.create(data);
+              const created = await base44.entities.Donation.create({ ...data, church_id: await getMyChurchId() });
               setDonations((prev) => [created, ...prev]);
               setShowDonationForm(false);
             } catch (err) {
@@ -274,7 +275,7 @@ export default function Giving() {
                 const updated = await base44.entities.Fund.update(editFund.id, data);
                 setFunds((prev) => prev.map((f) => (f.id === editFund.id ? updated : f)));
               } else {
-                const created = await base44.entities.Fund.create(data);
+                const created = await base44.entities.Fund.create({ ...data, church_id: await getMyChurchId() });
                 setFunds((prev) => [...prev, created]);
               }
               setShowFundForm(false);

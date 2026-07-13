@@ -57,6 +57,8 @@ export default function TaskForm({ open, onOpenChange, task, user, people, categ
       }
       onSaved();
       onOpenChange(false);
+    } catch (err) {
+      alert('Could not save task: ' + (err.message || 'unknown error'));
     } finally {
       setSaving(false);
     }

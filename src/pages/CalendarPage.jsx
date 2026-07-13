@@ -11,6 +11,7 @@ import EventForm from '@/components/calendar/EventForm';
 import GoogleSyncDialog from '@/components/calendar/GoogleSyncDialog';
 import ShareCalendarDialog from '@/components/calendar/ShareCalendarDialog';
 import EventActionsDialog from '@/components/calendar/EventActionsDialog';
+import { getMyChurchId } from '@/lib/churchContext';
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -243,7 +244,7 @@ export default function CalendarPage() {
                 setEvents((prev) => prev.map((e) => (e.id === editingEvent.id ? updated : e)));
                 setEditingEvent(null);
               } else {
-                const created = await base44.entities.CalendarEvent.create(data);
+                const created = await base44.entities.CalendarEvent.create({ ...data, church_id: await getMyChurchId() });
                 setEvents((prev) => [...prev, created]);
                 setShowEventForm(false);
               }
