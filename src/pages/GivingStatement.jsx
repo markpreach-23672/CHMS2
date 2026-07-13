@@ -86,6 +86,17 @@ export default function GivingStatement() {
     return Object.entries(byFund).map(([name, data]) => ({ name, ...data })).sort((a, b) => b.total - a.total);
   }, [rangeDonations, funds]);
 
+  const prevYear = (moment().year() - 1).toString();
+  const hasPrevYearGiving = useMemo(() => (
+    allDonations.some(d => includedIds.includes(d.person_id) && moment(d.donation_date).year().toString() === prevYear)
+  ), [allDonations, includedIds, prevYear]);
+
+  const printPreviousYear = () => {
+    setDateMode('year');
+    setYear(prevYear);
+    setTimeout(() => window.print(), 300);
+  };
+
   const dateLabel = dateMode === 'year'
     ? year
     : `${moment(startDate).format('MMM D, YYYY')} – ${moment(endDate).format('MMM D, YYYY')}`;
@@ -114,6 +125,11 @@ export default function GivingStatement() {
             <Button onClick={() => setEditLetter(!editLetter)} size="sm" variant="outline">
               <Pencil size={14} className="mr-1.5" />{editLetter ? 'Done Editing' : 'Edit Letter'}
             </Button>
+            {hasPrevYearGiving && (
+              <Button onClick={printPreviousYear} size="sm" variant="outline">
+                <Printer size={14} className="mr-1.5" />Print {prevYear} Statement
+              </Button>
+            )}
             <Button onClick={() => window.print()} size="sm" className="bg-indigo-600 hover:bg-indigo-700">
               <Printer size={14} className="mr-1.5" />Print
             </Button>
@@ -221,23 +237,6 @@ export default function GivingStatement() {
           {customNote || `Thank you for your generous contributions to ${church?.name || 'our church'} during ${dateLabel}. The following is a record of your giving for tax purposes:`}
         </p>
 
-        {fundBreakdown.length > 0 && (
-          <div className="mb-6">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Summary by Fund</p>
-            <table className="w-full text-sm mb-4">
-              <tbody>
-                {fundBreakdown.map((fund, i) => (
-                  <tr key={i} className="border-b border-slate-100">
-                    <td className="py-2 text-slate-600">{fund.name}</td>
-                    <td className="py-2 text-slate-400 text-right">{fund.count} {fund.count === 1 ? 'gift' : 'gifts'}</td>
-                    <td className="py-2 text-slate-900 text-right font-medium w-24">{fmt(fund.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
         {rangeDonations.length === 0 ? (
           <p className="text-sm text-slate-500 italic py-8 text-center">No donations recorded for {dateLabel}.</p>
         ) : (
@@ -262,7 +261,17 @@ export default function GivingStatement() {
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-slate-300">
-                <td colSpan={3} className="py-3 text-right font-bold text-slate-900">Total Giving for {dateLabel}:</td>
+                <td colSpan={4} className="pt-3 pb-1 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Totals by Department</td>
+              </tr>
+              {fundBreakdown.map((fund, i) => (
+                <tr key={i} className="border-b border-slate-100">
+                  <td colSpan={2} className="py-2 text-slate-600">{fund.name}</td>
+                  <td className="py-2 text-slate-400 text-right">{fund.count} {fund.count === 1 ? 'gift' : 'gifts'}</td>
+                  <td className="py-2 text-slate-900 text-right font-medium">{fmt(fund.total)}</td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-slate-300">
+                <td colSpan={3} className="py-3 text-right font-bold text-slate-900">Grand Total Giving for {dateLabel}:</td>
                 <td className="py-3 text-right font-bold text-slate-900 text-base">{fmt(total)}</td>
               </tr>
             </tfoot>
