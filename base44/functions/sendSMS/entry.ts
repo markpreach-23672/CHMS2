@@ -21,7 +21,9 @@ Deno.serve(async (req) => {
 
     const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const fromNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const rawFrom = Deno.env.get('TWILIO_PHONE_NUMBER') || '';
+    const fromDigits = rawFrom.replace(/\D/g, '');
+    const fromNumber = fromDigits ? `+${fromDigits.length === 10 ? '1' + fromDigits : fromDigits}` : '';
     if (!accountSid || !authToken || !fromNumber) {
       console.error('sendSMS: Twilio env vars missing');
       return Response.json({ error: 'Twilio is not configured' }, { status: 500 });
