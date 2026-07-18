@@ -2,6 +2,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const CRON_KEY = 'efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453';
 
+// Only allow http/https media URLs and encode them for safe use in an HTML attribute.
+function safeMediaUrl(u) {
+  if (!u) return null;
+  try {
+    const parsed = new URL(String(u));
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -330,9 +342,10 @@ async function processStep(base44, step, person, fromEmail, church, cardFields) 
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       const emailPayload = { from: fromEmail, to: person.email, subject };
-      if (step.media_url) {
+      const safeUrl = safeMediaUrl(step.media_url);
+      if (safeUrl) {
         const escaped = (body || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-        emailPayload.html = `<div>${escaped}<br><br><img src="${step.media_url}" style="max-width:100%;border-radius:8px;" /></div>`;
+        emailPayload.html = `<div>${escaped}<br><br><img src="${safeUrl}" style="max-width:100%;border-radius:8px;" /></div>`;
       } else {
         emailPayload.text = body;
       }

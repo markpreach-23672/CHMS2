@@ -9,8 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Only admins can invite or promote staff.' }, { status: 403 });
     }
     const { email, role, church_id: bodyChurchId } = await req.json();
-    // Default to the inviter's own church so new staff are linked to the right church.
-    const church_id = bodyChurchId || user.church_id || null;
+    // Only an existing super_admin may grant the super_admin role.
+    if (role === 'super_admin' && user.role !== 'super_admin') {
+      return Response.json({ error: 'Only a super admin can grant the super admin role.' }, { status: 403 });
+    }
+    // church_admins can only manage their own church; super_admins may target any church.
+    const church_id = user.role === 'super_admin' ? (bodyChurchId || user.church_id || null) : (user.church_id || null);
     const rawEmail = (email || '').trim();
     const cleanEmail = rawEmail.toLowerCase();
     if (!cleanEmail) return Response.json({ error: 'Email is required.' }, { status: 400 });
@@ -21,6 +25,10 @@ Deno.serve(async (req) => {
     const allUsers = await base44.asServiceRole.entities.User.list('-created_date', 500);
     const existing = allUsers.find((u) => (u.email || '').toLowerCase() === cleanEmail);
     if (existing) {
+      // A church_admin cannot modify a super_admin account.
+      if (existing.role === 'super_admin' && user.role !== 'super_admin') {
+        return Response.json({ error: 'Only a super admin can modify a super admin account.' }, { status: 403 });
+      }
       const updates = { role };
       if (church_id) updates.church_id = church_id;
       if (existing.role === role && !church_id) {

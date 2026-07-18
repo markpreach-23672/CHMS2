@@ -10,6 +10,9 @@ Deno.serve(async (req) => {
       user = null;
     }
     if (!user) return Response.json({ error: 'Please log in to send messages.' }, { status: 401 });
+    if (!['super_admin', 'church_admin', 'admin', 'staff'].includes(user.role)) {
+      return Response.json({ error: 'Staff or admin access required to send messages.' }, { status: 403 });
+    }
 
     const { recipients, message } = await req.json();
     if (!Array.isArray(recipients) || recipients.length === 0) {
