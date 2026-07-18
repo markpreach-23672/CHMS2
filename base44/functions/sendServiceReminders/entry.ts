@@ -27,6 +27,14 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const force = body.force === true; // manual "send now" ignores the time-of-day check
 
+    const CRON_KEY = 'efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453';
+    let user = null;
+    try { user = await base44.auth.me(); } catch (e) { user = null; }
+    const isAdmin = user && ['admin', 'super_admin', 'church_admin'].includes(user.role);
+    if (body.cron_key !== CRON_KEY && !isAdmin) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) return Response.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
 

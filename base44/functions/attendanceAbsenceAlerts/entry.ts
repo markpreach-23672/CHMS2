@@ -2,12 +2,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
 // Weekly job: for every attendance-tracked event tag, find people who have missed
 // 3 or more consecutive sessions (looking back 6 weeks) and email the event leader.
+const CRON_KEY = 'efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453';
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
     let user = null;
     try { user = await base44.auth.me(); } catch (e) { user = null; }
-    if (user && !['super_admin', 'church_admin'].includes(user.role)) {
+    const isAdmin = user && ['admin', 'super_admin', 'church_admin'].includes(user.role);
+    if (body.cron_key !== CRON_KEY && !isAdmin) {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 

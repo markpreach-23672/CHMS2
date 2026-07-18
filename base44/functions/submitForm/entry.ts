@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
     // Fire form-submission automations
     if (person) {
       try {
-        await base44.asServiceRole.functions.invoke('runAutomations', { event: 'form_submission', form_id, person_id: person.id });
+        await base44.asServiceRole.functions.invoke('runAutomations', { event: 'form_submission', form_id, person_id: person.id, cron_key: 'efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453' });
       } catch (err) {
         console.error(`Automations trigger failed: ${err.message}`);
       }

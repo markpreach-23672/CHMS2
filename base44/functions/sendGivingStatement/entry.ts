@@ -5,6 +5,9 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!['admin', 'super_admin', 'church_admin'].includes(user.role)) {
+      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    }
 
     const body = await req.json();
     const { person_id, year, combine_family, start_date, end_date, custom_greeting, custom_message, custom_footer } = body;

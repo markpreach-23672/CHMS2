@@ -1,8 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+const CRON_KEY = 'efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453';
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const reqBody = await req.json().catch(() => ({}));
+    let user = null;
+    try { user = await base44.auth.me(); } catch (e) { user = null; }
+    const isAdmin = user && ['admin', 'super_admin', 'church_admin'].includes(user.role);
+    if (reqBody.cron_key !== CRON_KEY && !isAdmin) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const churches = await base44.asServiceRole.entities.Church.list();
     const church = churches[0] || {};

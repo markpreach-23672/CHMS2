@@ -40,11 +40,17 @@ export default function PlanAssignments({ plan, churchId, assignments, setAssign
     } catch (err) { alert('Failed to assign team.'); }
   };
 
-  const copyFeedLink = (personId) => {
-    const url = `${window.location.origin}/functions/serviceScheduleICS?person_id=${personId}`;
-    navigator.clipboard.writeText(url);
-    setCopiedId(personId);
-    setTimeout(() => setCopiedId(''), 2000);
+  const copyFeedLink = async (personId) => {
+    try {
+      const res = await base44.functions.invoke('serviceScheduleICS', { person_id: personId });
+      const token = res.data?.token;
+      const url = `${window.location.origin}/functions/serviceScheduleICS?person_id=${personId}&token=${token}`;
+      await navigator.clipboard.writeText(url);
+      setCopiedId(personId);
+      setTimeout(() => setCopiedId(''), 2000);
+    } catch (err) {
+      alert('Failed to copy feed link.');
+    }
   };
 
   return (
