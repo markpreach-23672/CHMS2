@@ -1,0 +1,43 @@
+{
+  "name": "Daily Automations Runner",
+  "description": "Runs birthday & anniversary automations every morning at 8am local time.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 12 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_automations_runner",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runAutomations",
+            "args": {
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

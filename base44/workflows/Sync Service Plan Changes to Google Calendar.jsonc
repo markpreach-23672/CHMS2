@@ -1,0 +1,35 @@
+{
+  "name": "Sync Service Plan Changes to Google Calendar",
+  "description": "When a service plan's date, time, or title changes (or the plan is deleted), update or cancel the Google Calendar event so invitees stay current.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update",
+        "delete"
+      ],
+      "entity_name": "ServicePlan"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_service_plan_changes_to_google_calendar",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncServicePlanToGoogle",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

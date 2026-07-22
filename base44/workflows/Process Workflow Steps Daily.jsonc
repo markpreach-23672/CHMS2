@@ -1,0 +1,43 @@
+{
+  "name": "Process Workflow Steps Daily",
+  "description": "Processes delayed workflow steps (e.g., 3-day follow-up emails) for active enrollments",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 30,
+      "interval_unit": "minutes",
+      "interval_anchor": "2026-07-02T19:57:27.091000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "process_workflow_steps_daily",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processWorkflowSteps",
+            "args": {
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

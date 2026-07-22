@@ -1,0 +1,36 @@
+{
+  "name": "Sync Service Assignments to Google Calendar",
+  "description": "When someone is assigned to, changed on, or removed from a service plan, update the Google Calendar event and its invitees.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "entity_name": "PlanAssignment"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_service_assignments_to_google_calendar",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncServicePlanToGoogle",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

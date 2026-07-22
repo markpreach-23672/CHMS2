@@ -1,0 +1,35 @@
+{
+  "name": "Auto-push Calendar Events to Google",
+  "description": "Automatically pushes new and updated calendar events to the linked Google Calendar (skips calendars without Google sync enabled).",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "CalendarEvent"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_push_calendar_events_to_google",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncCalendarEventToGoogle",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

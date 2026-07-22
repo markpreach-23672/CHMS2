@@ -1,0 +1,34 @@
+{
+  "name": "Gmail Form Submission Notification",
+  "description": "Sends a Gmail notification to staff whenever a new form entry is submitted",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "FormEntry"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "gmail_form_submission_notification",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendFormGmailNotification",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
