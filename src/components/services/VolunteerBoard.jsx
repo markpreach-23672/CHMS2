@@ -53,7 +53,7 @@ export default function VolunteerBoard({ assignments, people, openPositions, onS
                         className="text-slate-300 hover:text-indigo-600 p-0.5">
                         <UserPlus size={14} />
                       </button>
-                      <span className="hidden">{provided.placeholder}</span>
+                      <div className="w-0 h-0 overflow-hidden">{provided.placeholder}</div>
                     </div>
                   )}
                 </Droppable>

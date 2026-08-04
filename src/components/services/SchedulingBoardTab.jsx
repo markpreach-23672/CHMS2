@@ -49,8 +49,10 @@ export default function SchedulingBoardTab({ churchId, people }) {
   };
 
   const handlePositionChange = async (assignment, position) => {
-    patch(assignment.id, { position });
-    await base44.entities.PlanAssignment.update(assignment.id, { position });
+    // Moving someone into an open role puts them back on the schedule
+    const data = { position, status: (assignment.status || 'scheduled') === 'declined' ? 'scheduled' : (assignment.status || 'scheduled') };
+    patch(assignment.id, data);
+    await base44.entities.PlanAssignment.update(assignment.id, data);
   };
 
   const handleRemove = async (assignment) => {
