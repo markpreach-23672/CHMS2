@@ -226,6 +226,7 @@ function RoleForm({ role, onSave, onClose }) {
   const [name, setName] = useState(role?.name || '');
   const [area, setArea] = useState(role?.area || 'General');
   const [description, setDescription] = useState(role?.description || '');
+  const [requirements, setRequirements] = useState(role?.requirements || '');
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -245,10 +246,15 @@ function RoleForm({ role, onSave, onClose }) {
             <Label className="text-xs font-medium text-slate-600">Description</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" rows={2} placeholder="Optional description of this role" />
           </div>
+          <div>
+            <Label className="text-xs font-medium text-slate-600">Requirements</Label>
+            <Textarea value={requirements} onChange={(e) => setRequirements(e.target.value)} className="mt-1" rows={2} placeholder="e.g. Background check, arrive 30 min early, training required" />
+            <p className="text-xs text-slate-400 mt-1">Shown when someone taps this role on the scheduling board.</p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSave({ name, area: area || 'General', description: description || undefined })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">
+          <Button onClick={() => onSave({ name, area: area || 'General', description: description || undefined, requirements: requirements || undefined })} disabled={!name.trim()} className="bg-indigo-600 hover:bg-indigo-700">
             {role ? 'Save' : 'Create'}
           </Button>
         </DialogFooter>

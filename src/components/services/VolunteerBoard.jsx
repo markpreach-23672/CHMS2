@@ -1,6 +1,7 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import VolunteerCard from '@/components/services/VolunteerCard';
+import RoleInfoPopover from '@/components/services/RoleInfoPopover';
 import { UserPlus, CircleSlash } from 'lucide-react';
 
 const STATUS_COLUMNS = [
@@ -9,7 +10,9 @@ const STATUS_COLUMNS = [
   { id: 'declined', label: 'Declined', color: 'bg-red-400' },
 ];
 
-export default function VolunteerBoard({ assignments, people, openPositions, onStatusChange, onPositionChange, onRemove, onAssignPosition }) {
+export default function VolunteerBoard({ assignments, people, openPositions, roleByName = {}, onStatusChange, onPositionChange, onRemove, onAssignPosition }) {
+  const roleFor = (pos) => roleByName[(pos || '').toLowerCase()];
+
   const personName = (id) => {
     const p = people.find((x) => x.id === id);
     return p ? `${p.first_name} ${p.last_name}` : 'Unknown';
@@ -48,7 +51,11 @@ export default function VolunteerBoard({ assignments, people, openPositions, onS
                   {(provided, snapshot) => (
                     <div ref={provided.innerRef} {...provided.droppableProps}
                       className={`rounded-lg border px-2.5 py-2 flex items-center gap-2 transition-colors ${snapshot.isDraggingOver ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
-                      <span className="text-sm text-slate-600 flex-1 truncate">{pos}</span>
+                      <RoleInfoPopover position={pos} role={roleFor(pos)}>
+                        <button type="button" className="text-sm text-slate-600 flex-1 truncate text-left hover:text-indigo-600 hover:underline">
+                          {pos}
+                        </button>
+                      </RoleInfoPopover>
                       <button onClick={() => onAssignPosition(pos)} title={`Assign someone as ${pos}`}
                         className="text-slate-300 hover:text-indigo-600 p-0.5">
                         <UserPlus size={14} />
@@ -78,7 +85,7 @@ export default function VolunteerBoard({ assignments, people, openPositions, onS
                     <Draggable draggableId={a.id} index={idx} key={a.id}>
                       {(dp) => (
                         <div ref={dp.innerRef} {...dp.draggableProps} {...dp.dragHandleProps}>
-                          <VolunteerCard assignment={a} personName={personName(a.person_id)} onRemove={onRemove} />
+                          <VolunteerCard assignment={a} personName={personName(a.person_id)} role={roleFor(a.position)} onRemove={onRemove} />
                         </div>
                       )}
                     </Draggable>

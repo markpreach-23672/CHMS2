@@ -10,6 +10,7 @@ const FALLBACK_POSITIONS = ['Worship Leader', 'Vocals', 'Keys', 'Guitar', 'Bass'
 export default function SchedulingBoardTab({ churchId, people }) {
   const [plans, setPlans] = useState([]);
   const [serviceTypes, setServiceTypes] = useState([]);
+  const [volunteerRoles, setVolunteerRoles] = useState([]);
   const [planId, setPlanId] = useState('');
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,12 +18,14 @@ export default function SchedulingBoardTab({ churchId, people }) {
 
   useEffect(() => {
     (async () => {
-      const [p, st] = await Promise.all([
+      const [p, st, vr] = await Promise.all([
         base44.entities.ServicePlan.list('-service_date', 100),
         base44.entities.ServiceType.list(),
+        base44.entities.VolunteerRole.list(),
       ]);
       setPlans(p);
       setServiceTypes(st);
+      setVolunteerRoles(vr);
       setPlanId(p[0]?.id || '');
       setLoading(false);
     })();
@@ -91,7 +94,7 @@ export default function SchedulingBoardTab({ churchId, people }) {
           </Select>
         </div>
         <p className="text-xs text-slate-500 pb-2">
-          Drag volunteers between Scheduled, Confirmed, and Declined — or onto an open position to move them into that role.
+          Drag volunteers between Scheduled, Confirmed, and Declined — or onto an open position to move them into that role. Click a role name to see its description and requirements.
         </p>
       </div>
 
@@ -99,6 +102,7 @@ export default function SchedulingBoardTab({ churchId, people }) {
         assignments={assignments}
         people={people}
         openPositions={openPositions}
+        roleByName={Object.fromEntries(volunteerRoles.map((r) => [r.name.toLowerCase(), r]))}
         onStatusChange={handleStatusChange}
         onPositionChange={handlePositionChange}
         onRemove={handleRemove}
