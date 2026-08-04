@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 function isoToDisplay(iso) {
@@ -21,10 +23,21 @@ function parseToIso(text) {
   return `${yy}-${String(mo).padStart(2, '0')}-${String(da).padStart(2, '0')}`;
 }
 
+function isoToDate(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return undefined;
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function dateToIso(date) {
+  if (!date) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export default function DateInput({ value, onChange, className, inputClassName, disabled, ...props }) {
   const [text, setText] = useState(isoToDisplay(value));
   const [focused, setFocused] = useState(false);
-  const nativeRef = useRef(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!focused) setText(isoToDisplay(value));
@@ -48,34 +61,27 @@ export default function DateInput({ value, onChange, className, inputClassName, 
         className={cn('pr-9', inputClassName)}
         {...props}
       />
-      <button
-        type="button"
-        tabIndex={-1}
-        disabled={disabled}
-        onClick={() => {
-          const el = nativeRef.current;
-          if (!el) return;
-          // showPicker() throws inside a cross-origin iframe (e.g. the app preview)
-          try {
-            if (el.showPicker) el.showPicker();
-            else el.click();
-          } catch {
-            el.click();
-          }
-        }}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 disabled:opacity-40"
-      >
-        <Calendar size={15} />
-      </button>
-      <input
-        ref={nativeRef}
-        type="date"
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className="absolute right-0 bottom-0 w-px h-px opacity-0 pointer-events-none"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            tabIndex={-1}
+            disabled={disabled}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 disabled:opacity-40"
+          >
+            <CalendarIcon size={15} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={isoToDate(value)}
+            defaultMonth={isoToDate(value)}
+            onSelect={(d) => { onChange(dateToIso(d)); setOpen(false); }}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
