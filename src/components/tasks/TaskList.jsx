@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { resolveAssigneeIds, groupLabel } from '@/components/tasks/taskUtils';
-import { CheckCircle2, Circle, Pencil, Trash2, Users, CalendarDays } from 'lucide-react';
+import { CheckCircle2, Circle, Pencil, Trash2, Users, CalendarDays, Repeat } from 'lucide-react';
 import { format, isBefore, startOfDay } from 'date-fns';
 
 const PRIORITY_STYLES = {
@@ -54,6 +54,9 @@ export default function TaskList({ tasks, people, categories, careGroups, servic
                   <span className={`text-sm font-medium ${done ? 'line-through text-slate-400' : 'text-slate-900'}`}>{task.title}</span>
                   {cat && <Badge variant="outline" style={{ borderColor: cat.color, color: cat.color }} className="text-[10px]">{cat.name}</Badge>}
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium}`}>{task.priority}</span>
+                  {task.is_recurring && (
+                    <span className="text-[10px] text-indigo-600 flex items-center gap-0.5"><Repeat size={11} /> {task.recurrence_frequency || 'weekly'}</span>
+                  )}
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                     done ? 'bg-emerald-100 text-emerald-700' : overdue ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
                   }`}>

@@ -37,10 +37,29 @@
       "type": "string",
       "enum": [
         "open",
+        "in_progress",
         "completed"
       ],
       "title": "Status",
       "default": "open"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "title": "Recurring",
+      "default": false
+    },
+    "recurrence_frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "title": "Recurrence Frequency"
+    },
+    "reminder_sent_for": {
+      "type": "string",
+      "title": "Reminder Sent For (due date)"
     },
     "assigned_by_user_id": {
       "type": "string",

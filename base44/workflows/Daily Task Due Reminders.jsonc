@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "America/Indianapolis",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Every morning at 8am, emails assignees a reminder for open tasks due today or tomorrow.",
+  "name": "Daily Task Due Reminders",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "daily_task_due_reminders",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_reminders": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendTaskDueReminders",
+            "args": {
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send due-date reminders",
+            "description": "Tasks due today or tomorrow"
+          }
+        }
+      }
+    ]
+  }
+}

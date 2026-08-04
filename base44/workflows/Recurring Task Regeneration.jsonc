@@ -1,0 +1,41 @@
+{
+  "name": "Recurring Task Regeneration",
+  "description": "When a recurring task is marked completed, automatically creates the next occurrence with the due date advanced by its frequency.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Task",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ .trigger.data.status == \"completed\" and .trigger.old_data.status != \"completed\" and .trigger.data.is_recurring == true }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "recurring_task_regeneration",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "create_next_occurrence": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "createNextRecurringTask",
+            "args": {
+              "task_id": "${ .trigger.entity_id }",
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Create next occurrence",
+            "description": "Copies the task with a new due date"
+          }
+        }
+      }
+    ]
+  }
+}

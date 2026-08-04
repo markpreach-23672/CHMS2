@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TaskList from '@/components/tasks/TaskList';
+import TaskKanban from '@/components/tasks/TaskKanban';
 import TaskForm from '@/components/tasks/TaskForm';
 import CategoryManager from '@/components/tasks/CategoryManager';
 import { resolveAssigneeIds } from '@/components/tasks/taskUtils';
-import { ListTodo, Plus, FolderCog } from 'lucide-react';
+import { ListTodo, Plus, FolderCog, List, LayoutGrid } from 'lucide-react';
 import { getMyChurchId } from '@/lib/churchContext';
 
 export default function Tasks() {
@@ -21,6 +22,7 @@ export default function Tasks() {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [showCategories, setShowCategories] = useState(false);
+  const [view, setView] = useState('list');
 
   const loadTasks = useCallback(async () => {
     setTasks(await base44.entities.Task.list('-created_date', 500));
@@ -64,6 +66,15 @@ export default function Tasks() {
     loadTasks(churchId);
   };
 
+  const handleStatusChange = async (task, status) => {
+    const updates = { status };
+    if (status === 'completed') updates.completed_person_ids = resolveAssigneeIds(task, careGroups, serviceTeams);
+    else if (task.status === 'completed') updates.completed_person_ids = [];
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, ...updates } : t)));
+    await base44.entities.Task.update(task.id, updates);
+    loadTasks();
+  };
+
   const handleDelete = async (task) => {
     if (!confirm(`Delete task "${task.title}"?`)) return;
     await base44.entities.Task.delete(task.id);
@@ -84,6 +95,14 @@ export default function Tasks() {
 
   const listProps = { people, categories, careGroups, serviceTeams, myPersonId, onToggleComplete: handleToggleComplete, onEdit: (t) => { setEditingTask(t); setShowForm(true); }, onDelete: handleDelete };
 
+  const renderTasks = (list, manage) =>
+    view === 'board' ? (
+      <TaskKanban tasks={list} people={people} categories={categories} careGroups={careGroups} serviceTeams={serviceTeams}
+        canManage={manage} onStatusChange={handleStatusChange} onEdit={listProps.onEdit} onDelete={handleDelete} />
+    ) : (
+      <TaskList tasks={list} canManage={manage} {...listProps} />
+    );
+
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -94,6 +113,16 @@ export default function Tasks() {
           <p className="text-sm text-slate-500">Assign projects and jobs to members, staff, or whole groups.</p>
         </div>
         <div className="flex gap-2">
+          <div className="flex rounded-md border border-slate-200 overflow-hidden">
+            <button onClick={() => setView('list')} title="List view"
+              className={`px-3 flex items-center ${view === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+              <List size={15} />
+            </button>
+            <button onClick={() => setView('board')} title="Board view"
+              className={`px-3 flex items-center ${view === 'board' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>
+              <LayoutGrid size={15} />
+            </button>
+          </div>
           <Button variant="outline" onClick={() => setShowCategories(true)}><FolderCog size={15} /> Categories</Button>
           <Button onClick={() => { setEditingTask(null); setShowForm(true); }} className="bg-indigo-600 hover:bg-indigo-700">
             <Plus size={15} /> New Task
@@ -109,13 +138,13 @@ export default function Tasks() {
         </TabsList>
         <TabsContent value="mine" className="mt-4">
           {!myPersonId && <p className="text-xs text-amber-600 mb-3">Your login email isn't linked to a person profile yet, so personal assignments can't be matched.</p>}
-          <TaskList tasks={myTasks} canManage={false} {...listProps} />
+          {renderTasks(myTasks, false)}
         </TabsContent>
         <TabsContent value="assigned" className="mt-4">
-          <TaskList tasks={assignedByMe} canManage {...listProps} />
+          {renderTasks(assignedByMe, true)}
         </TabsContent>
         <TabsContent value="all" className="mt-4">
-          <TaskList tasks={tasks} canManage={canManage} {...listProps} />
+          {renderTasks(tasks, canManage)}
         </TabsContent>
       </Tabs>
 

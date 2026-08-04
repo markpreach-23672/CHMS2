@@ -21,6 +21,7 @@ export default function TaskForm({ open, onOpenChange, task, user, people, categ
     assignee_group_type: task?.assignee_group_type || '',
     assignee_group_id: task?.assignee_group_id || '',
     notify_method: task?.notify_method || 'email',
+    recurrence: task?.is_recurring ? (task.recurrence_frequency || 'weekly') : 'none',
   }));
   const [assignMode, setAssignMode] = useState(task?.assignee_group_id ? 'group' : 'people');
   const [saving, setSaving] = useState(false);
@@ -31,8 +32,11 @@ export default function TaskForm({ open, onOpenChange, task, user, people, categ
     if (!form.title.trim()) return;
     setSaving(true);
     try {
+      const { recurrence, ...rest } = form;
       const data = {
-        ...form,
+        ...rest,
+        is_recurring: recurrence !== 'none',
+        recurrence_frequency: recurrence !== 'none' ? recurrence : undefined,
         assignee_person_ids: assignMode === 'people' ? form.assignee_person_ids : [],
         assignee_group_type: assignMode === 'group' && form.assignee_group_id ? form.assignee_group_type : undefined,
         assignee_group_id: assignMode === 'group' ? form.assignee_group_id : '',
@@ -107,6 +111,22 @@ export default function TaskForm({ open, onOpenChange, task, user, people, categ
               <Label>Due Date</Label>
               <DateInput className="mt-1" value={form.due_date} onChange={(v) => setForm(f => ({ ...f, due_date: v }))} />
             </div>
+          </div>
+
+          <div>
+            <Label>Repeat</Label>
+            <Select value={form.recurrence} onValueChange={(v) => setForm(f => ({ ...f, recurrence: v }))}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Does not repeat</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+            {form.recurrence !== 'none' && (
+              <p className="text-xs text-slate-400 mt-1">When this task is completed, the next occurrence is created automatically.</p>
+            )}
           </div>
 
           <div>
