@@ -48,6 +48,11 @@
       "format": "date-time",
       "title": "Reminder Email Sent At"
     },
+    "unfilled_alert_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Unfilled Role Alert Sent At"
+    },
     "google_event_id": {
       "type": "string",
       "title": "Google Calendar Event ID"

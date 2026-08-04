@@ -1,0 +1,47 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "America/Indianapolis",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Unfilled Volunteer Role Alerts",
+  "description": "Every hour, checks services happening in 48 hours and emails ministry leaders about any unfilled volunteer positions.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "unfilled_volunteer_role_alerts",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_unfilled_roles": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "unfilledRoleAlerts",
+            "args": {
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Check unfilled roles",
+            "description": "Email leaders 48h before service"
+          }
+        }
+      }
+    ]
+  }
+}
