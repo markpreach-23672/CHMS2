@@ -1,0 +1,101 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "new_member_welcome_journey",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "send_welcome_email": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sendWelcomeEmail",
+            "args": {
+              "person_id": "${ .trigger.entity_id }",
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "wait_three_days",
+          "x-base44": {
+            "title": "Send welcome email",
+            "description": "Uses the Welcome message template"
+          }
+        }
+      },
+      {
+        "wait_three_days": {
+          "wait": "P3D",
+          "then": "check_small_group_tag",
+          "x-base44": {
+            "title": "Wait 3 days"
+          }
+        }
+      },
+      {
+        "check_small_group_tag": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkSmallGroupTag",
+            "args": {
+              "person_id": "${ .trigger.entity_id }",
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "small_group_decision",
+          "x-base44": {
+            "title": "Check Small Group tag"
+          }
+        }
+      },
+      {
+        "small_group_decision": {
+          "switch": [
+            {
+              "when": "${ .check_small_group_tag.has_small_group == false }",
+              "then": "create_followup"
+            },
+            {
+              "when": "${ true }",
+              "then": "end"
+            }
+          ],
+          "x-base44": {
+            "title": "In a Small Group?",
+            "description": "Follow up only if not"
+          }
+        }
+      },
+      {
+        "create_followup": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "createMembershipFollowup",
+            "args": {
+              "person_id": "${ .trigger.entity_id }",
+              "cron_key": "efc_cron_9d4b71a6f3e24c58b0a7d1c9e6f28453"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Assign coordinator follow-up",
+            "description": "Helpdesk ticket + task"
+          }
+        }
+      }
+    ]
+  },
+  "description": "When a new person is created: send a welcome email, wait 3 days, then if they don't have a Small Group tag, open a helpdesk ticket and assign a follow-up task to the membership coordinator.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Person"
+    }
+  },
+  "name": "New Member Welcome Journey"
+}
