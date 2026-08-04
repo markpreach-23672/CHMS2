@@ -8,7 +8,7 @@ const COLUMNS = [
   { id: 'completed', label: 'Completed', color: 'bg-emerald-500' },
 ];
 
-export default function TaskKanban({ tasks, people, categories, careGroups, serviceTeams, canManage, onStatusChange, onEdit, onDelete }) {
+export default function TaskKanban({ tasks, people, categories, careGroups, serviceTeams, canManage, onStatusChange, onEdit, onDelete, columns = COLUMNS }) {
   const byStatus = (status) => tasks.filter((t) => (t.status || 'open') === status);
 
   const handleDragEnd = (result) => {
@@ -22,7 +22,7 @@ export default function TaskKanban({ tasks, people, categories, careGroups, serv
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <Droppable droppableId={col.id} key={col.id}>
             {(provided, snapshot) => (
               <div ref={provided.innerRef} {...provided.droppableProps}

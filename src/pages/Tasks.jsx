@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import TaskList from '@/components/tasks/TaskList';
 import TaskKanban from '@/components/tasks/TaskKanban';
+import ReachOutBoard from '@/components/tasks/ReachOutBoard';
 import TaskForm from '@/components/tasks/TaskForm';
 import CategoryManager from '@/components/tasks/CategoryManager';
 import { resolveAssigneeIds } from '@/components/tasks/taskUtils';
@@ -91,6 +92,8 @@ export default function Tasks() {
 
   const myTasks = tasks.filter((t) => myPersonId && resolveAssigneeIds(t, careGroups, serviceTeams).includes(myPersonId));
   const assignedByMe = tasks.filter((t) => user && t.assigned_by_user_id === user.id);
+  // Tasks created by automations/workflows have a name but no human user behind them
+  const reachOuts = tasks.filter((t) => !t.assigned_by_user_id && t.assigned_by_name);
   const canManage = user && ['super_admin', 'church_admin', 'admin'].includes(user.role);
 
   const listProps = { people, categories, careGroups, serviceTeams, myPersonId, onToggleComplete: handleToggleComplete, onEdit: (t) => { setEditingTask(t); setShowForm(true); }, onDelete: handleDelete };
@@ -134,6 +137,7 @@ export default function Tasks() {
         <TabsList>
           <TabsTrigger value="mine">My Tasks ({myTasks.filter((t) => t.status !== 'completed').length})</TabsTrigger>
           <TabsTrigger value="assigned">Assigned by Me ({assignedByMe.filter((t) => t.status !== 'completed').length})</TabsTrigger>
+          <TabsTrigger value="reachouts">Reach-Outs ({reachOuts.filter((t) => t.status !== 'completed').length})</TabsTrigger>
           <TabsTrigger value="all">All Tasks</TabsTrigger>
         </TabsList>
         <TabsContent value="mine" className="mt-4">
@@ -142,6 +146,11 @@ export default function Tasks() {
         </TabsContent>
         <TabsContent value="assigned" className="mt-4">
           {renderTasks(assignedByMe, true)}
+        </TabsContent>
+        <TabsContent value="reachouts" className="mt-4">
+          <ReachOutBoard tasks={reachOuts} people={people} categories={categories} careGroups={careGroups}
+            serviceTeams={serviceTeams} canManage={canManage} onStatusChange={handleStatusChange}
+            onEdit={listProps.onEdit} onDelete={handleDelete} />
         </TabsContent>
         <TabsContent value="all" className="mt-4">
           {renderTasks(tasks, canManage)}
