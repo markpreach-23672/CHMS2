@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlansTab from '@/components/services/PlansTab';
+import SchedulingBoardTab from '@/components/services/SchedulingBoardTab';
 import SongsTab from '@/components/services/SongsTab';
 import TeamsTab from '@/components/services/TeamsTab';
 import ServiceTypesTab from '@/components/services/ServiceTypesTab';
@@ -41,6 +42,7 @@ export default function Services() {
       <Tabs defaultValue="plans">
         <TabsList>
           <TabsTrigger value="plans">Plans</TabsTrigger>
+          <TabsTrigger value="board">Scheduling Board</TabsTrigger>
           <TabsTrigger value="songs">Songs</TabsTrigger>
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="teams">Teams</TabsTrigger>
@@ -50,6 +52,9 @@ export default function Services() {
         </TabsList>
         <TabsContent value="plans" className="mt-4">
           <PlansTab churchId={churchId} people={people} />
+        </TabsContent>
+        <TabsContent value="board" className="mt-4">
+          <SchedulingBoardTab churchId={churchId} people={people} />
         </TabsContent>
         <TabsContent value="songs" className="mt-4">
           <SongsTab churchId={churchId} />
