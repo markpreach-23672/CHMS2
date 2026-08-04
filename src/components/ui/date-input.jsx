@@ -54,7 +54,14 @@ export default function DateInput({ value, onChange, className, inputClassName, 
         disabled={disabled}
         onClick={() => {
           const el = nativeRef.current;
-          if (el) (el.showPicker ? el.showPicker() : el.click());
+          if (!el) return;
+          // showPicker() throws inside a cross-origin iframe (e.g. the app preview)
+          try {
+            if (el.showPicker) el.showPicker();
+            else el.click();
+          } catch {
+            el.click();
+          }
         }}
         className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 disabled:opacity-40"
       >
